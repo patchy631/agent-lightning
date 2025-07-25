@@ -1,6 +1,9 @@
 import json
 import logging
 from typing import Optional
+import numpy as np
+
+from .types import ParallelWorkerBase
 
 
 def configure_logger(level: int = logging.INFO, name: str = "agentlightning") -> logging.Logger:
@@ -18,7 +21,7 @@ def configure_logger(level: int = logging.INFO, name: str = "agentlightning") ->
     return logger
 
 
-class LightningLogger:
+class LightningLogger(ParallelWorkerBase):
     """Agent-lightning logger that supports tracing events and metrics throughout the training."""
 
     def log_event(self, event: str, data: dict):
@@ -41,8 +44,17 @@ class ConsoleLogger(LightningLogger):
     """A simple logger that logs messages to the console using Python's logging module."""
 
     def __init__(self, level: int = logging.INFO):
-        self.logger = configure_logger(level, name="agentlightning.logging.console")
+        self.logger = configure_logger(level, name="agentlightning.ConsoleLogger")
         self.default_level = level
+        self.worker_id: Optional[int] = None
+
+    def init_worker(self, worker_id: int):
+        super().init_worker(worker_id)
+        self.worker_id = worker_id
+
+    def teardown_worker(self, worker_id: int):
+        super().teardown_worker(worker_id)
+        self.worker_id = None
 
     def log_event(self, event: str, data: dict):
         data_str = str(data)
@@ -58,6 +70,10 @@ class ConsoleLogger(LightningLogger):
 
     def log_message(self, level: int, message: str):
         if level >= self.default_level:
+            if self.worker_id is not None:
+                message = f"(Worker-{self.worker_id}) {message}"
+            else:
+                message = f"(Main) {message}"
             self.logger.log(level, message)
         # else skip logging if below default level
 
@@ -71,14 +87,71 @@ class WandbLogger(LightningLogger):
         name: Optional[str] = None,
         config: Optional[dict] = None,
         *,
-        flush_every_n_events: int = 1000,
+        flush_every_n_events: int = 128,
+        aggregate_every_n_metrics: int = 128,
     ):
         import wandb
+        from wandb.sdk.wandb_run import Run
 
-        wandb.init(project=project, entity=entity, name=name, config=config)
+        self.wandb_run: Optional[Run] = None
+        self.wandb_run_id: Optional[str] = None
+
+        self.project = project
+        self.entity = entity
+        self.name = name
+        self.config = config or {}
 
         self.event_table: Optional[wandb.Table] = None
         self.flush_every_n_events = flush_every_n_events
+        self.aggregate_every_n_metrics = aggregate_every_n_metrics
+
+        self.metrics_buffer: dict[str, list[float]] = {}
+
+    def init(self):
+        import wandb
+
+        super().init()
+        self.wandb_run = wandb.init(
+            project=self.project,
+            entity=self.entity,
+            name=self.name,
+            config=self.config,
+            reinit=True,  # allow reinitialization
+            settings=wandb.Settings(x_label="worker_0", mode="shared", x_primary=True),
+        )
+        if self.wandb_run is None:
+            raise RuntimeError("Failed to initialize Wandb run.")
+        self.wandb_run_id = self.wandb_run.id
+
+    def init_worker(self, worker_id: int):
+        import wandb
+
+        super().init_worker(worker_id)
+        assert self.wandb_run_id is not None, "Wandb run ID must be set before initializing worker."
+        self.wandb_run = wandb.init(
+            id=self.wandb_run_id,
+            settings=wandb.Settings(x_label=f"worker_{worker_id}", mode="shared", x_primary=worker_id == 0),
+        )
+
+    def teardown_worker(self, worker_id: int):
+        import wandb
+
+        super().teardown_worker(worker_id)
+
+        for metric in self.metrics_buffer:
+            if len(self.metrics_buffer[metric]) > 0:
+                self._log_aggregated_metrics(metric)
+
+        wandb.finish(exit_code=0)
+
+    def teardown(self):
+        import wandb
+
+        super().teardown()
+        if self.wandb_run is not None:
+            wandb.finish(exit_code=0)
+            self.wandb_run = None
+            self.wandb_run_id = None
 
     def log_event(self, event: str, data: dict):
         import wandb
@@ -93,15 +166,40 @@ class WandbLogger(LightningLogger):
         self.event_table.add_data(event, data_str)
 
         if len(self.event_table.data) % self.flush_every_n_events == 0:
-            wandb.log({"events": self.event_table})
+            wandb.log({"client/events": self.event_table})
 
     def log_metric(self, metric: str, value: float, step: Optional[int] = None):
         import wandb
 
         if step is not None:
-            wandb.log({metric: value}, step=step)
+            wandb.log({"client_metric/" + metric: value}, step=step)
         else:
-            wandb.log({metric: value})
+            wandb.log({"client_metric/" + metric: value})
+
+        if metric not in self.metrics_buffer:
+            self.metrics_buffer[metric] = []
+        self.metrics_buffer[metric].append(value)
+        if len(self.metrics_buffer[metric]) >= self.aggregate_every_n_metrics:
+            self._log_aggregated_metrics(metric, step)
+            self.metrics_buffer[metric] = []
 
     def log_message(self, level: int, message: str):
         pass  # Wandb handles logging internally, so we don't need to implement this
+
+    def _log_aggregated_metrics(self, metric, step: Optional[int] = None):
+        import wandb
+
+        arr = np.array(self.metrics_buffer[metric])
+        aggregated_value = {
+            "mean": float(np.mean(arr)),
+            "max": float(np.max(arr)),
+            "min": float(np.min(arr)),
+            "std": float(np.std(arr)),
+            "count": int((~np.isnan(arr)).sum()),
+        }
+        for key, value in aggregated_value.items():
+            if value is not None:
+                if step is not None:
+                    wandb.log({"client_agg/" + metric + "/" + key: value}, step=step)
+                else:
+                    wandb.log({"client_agg/" + metric + "/" + key: value})
