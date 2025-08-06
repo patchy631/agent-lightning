@@ -11,6 +11,7 @@ pip install --pre vllm==0.10.1+gptoss \
     --extra-index-url https://download.pytorch.org/whl/nightly/cu128 \
     --index-strategy unsafe-best-match
 pip install --no-cache-dir verl
+pip install --no-cache-dir openai-harmony
 
 pip install --no-cache-dir -e .[dev,agent]
 # Upgrade agentops to the latest version
