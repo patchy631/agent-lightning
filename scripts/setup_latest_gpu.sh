@@ -8,8 +8,7 @@ pip install --no-cache-dir torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --
 pip install --no-cache-dir flash-attn --no-build-isolation
 pip install --pre vllm==0.10.1+gptoss \
     --extra-index-url https://wheels.vllm.ai/gpt-oss/ \
-    --extra-index-url https://download.pytorch.org/whl/nightly/cu128 \
-    --index-strategy unsafe-best-match
+    --extra-index-url https://download.pytorch.org/whl/nightly/cu128
 pip install --no-cache-dir verl
 pip install --no-cache-dir openai-harmony
 
