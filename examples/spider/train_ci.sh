@@ -3,7 +3,7 @@
 set -ex
 
 export N_GPUS=1
-export BASE_MODEL=Qwen/Qwen2.5-Coder-1.5B-Instruct
+export BASE_MODEL=openai/gpt-oss-20b
 export DATA_DIR=data
 export ROLLOUT_TP_SIZE=1
 export EXPERIMENT_NAME="spider_$(date +%Y%m%d%H%M%S)"
@@ -23,7 +23,7 @@ PYTHONUNBUFFERED=1 python -m agentlightning.verl \
     actor_rollout_ref.actor.ppo_mini_batch_size=32 \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=4 \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=4 \
-    actor_rollout_ref.rollout.multi_turn.format=llama3_json \
+    actor_rollout_ref.rollout.multi_turn.format=hermes \
     actor_rollout_ref.model.path=${BASE_MODEL} \
     data.max_prompt_length=4096 \
     data.max_response_length=2048 \

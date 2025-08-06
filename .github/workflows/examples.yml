@@ -14,7 +14,8 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        setup: [stable, latest]
+        setup: [latest]
+        # setup: [stable, latest]
       fail-fast: false
     container:
       image: ghcr.io/microsoft/agent-lightning/base:latest

@@ -6,12 +6,11 @@ pip install --no-cache-dir packaging ninja numpy pandas ipython ipykernel gdown 
 # This has to be pinned for VLLM to work.
 pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 pip install --no-cache-dir flash-attn --no-build-isolation
-pip install --no-cache-dir vllm
-
-git clone https://github.com/volcengine/verl
-cd verl
-pip install --no-cache-dir -e .
-cd ..
+pip install --pre vllm==0.10.1+gptoss \
+    --extra-index-url https://wheels.vllm.ai/gpt-oss/ \
+    --extra-index-url https://download.pytorch.org/whl/nightly/cu128 \
+    --index-strategy unsafe-best-match
+pip install --no-cache-dir verl
 
 pip install --no-cache-dir -e .[dev,agent]
 # Upgrade agentops to the latest version
