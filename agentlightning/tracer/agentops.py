@@ -4,6 +4,7 @@ import logging
 import os
 from contextlib import contextmanager
 from typing import List, Optional, TYPE_CHECKING
+import uuid
 
 import agentops.sdk.core
 import agentops
@@ -157,7 +158,9 @@ class AgentOpsTracer(BaseTracer):
                 os.environ["AGENTOPS_APP_URL"] = f"{uri}/notavailable"
                 os.environ["AGENTOPS_EXPORTER_ENDPOINT"] = f"{uri}/traces"
                 logger.info(f"[Worker {self.worker_id}] AgentOps API endpoint set to {uri}")
+            agentops.init(api_key=str(uuid.uuid4()))
             self._uploading_state = False
+
         else:
             if self._uploading_state is True:
                 return
@@ -166,14 +169,14 @@ class AgentOpsTracer(BaseTracer):
             os.environ.pop("AGENTOPS_APP_URL", None)
             os.environ.pop("AGENTOPS_EXPORTER_ENDPOINT", None)
             logger.info(f"[Worker {self.worker_id}] AgentOps API endpoint cleared.")
-            if os.environ.get("AGENTOPS_API_KEY") == "dummy":
-                logger.warning(
-                    f"[Worker {self.worker_id}] AGENTOPS_API_KEY is set to 'dummy'. This is not a valid key for uploading traces. "
-                    "Please set a valid API key in the environment."
+            if "AGENTOPS_API_KEY" not in os.environ:
+                raise RuntimeError(
+                    f"[Worker {self.worker_id}] AGENTOPS_API_KEY environment variable is not set. "
+                    "Please set it to a valid API key."
                 )
+            agentops.init(api_key=os.environ["AGENTOPS_API_KEY"])
             self._uploading_state = True
 
-        agentops.init()
         logger.info(f"[Worker {self.worker_id}] AgentOps SDK initialized with API key and endpoint.")
 
     @contextmanager
