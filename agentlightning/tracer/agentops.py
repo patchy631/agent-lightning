@@ -201,6 +201,7 @@ class AgentOpsTracer(BaseTracer):
                 end_state = "Error"
                 end_state_reason = str(e)
                 logger.error(f"[Worker {self.worker_id}] Error traced by AgentOps: {end_state_reason}")
+                raise
             finally:
                 agentops.end_session(
                     end_state=end_state,
