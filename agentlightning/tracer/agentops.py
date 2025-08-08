@@ -12,7 +12,7 @@ from agentops.sdk.core import TracingCore
 from agentops.sdk.processors import SpanProcessor
 from opentelemetry.sdk.trace import ReadableSpan
 
-from agentlightning.instrumentation.agentops import AgentOpsServerManager
+from agentlightning.instrumentation.agentops import AgentOpsServerManager, set_switch
 from agentlightning.instrumentation import instrument_all, uninstrument_all
 from agentlightning.types import Task
 from .base import BaseTracer
@@ -46,7 +46,8 @@ class AgentOpsTracer(BaseTracer):
         upload_every_n_tasks: Number of tasks between uploads to AgentOps.
                               `AGENTOPS_API_KEY` must be set in the environment.
         upload_every_n_tasks_trained: Number of tasks between uploads to AgentOps
-                                      when the agent is in training mode.
+                                      when the agent is in training mode. You need
+                                      `AGENTOPS_API_KEY` set to use this feature.
     """
 
     def __init__(
@@ -69,6 +70,9 @@ class AgentOpsTracer(BaseTracer):
         self._agentops_server_manager = AgentOpsServerManager(self.daemon)
         self._agentops_server_port_val: Optional[int] = None
         self._uploading_state: bool | None = None
+
+        self._original_provider = None
+        self._original_meter_provider = None
 
         if not self.agentops_managed:
             logger.warning("agentops_managed=False. You are responsible for AgentOps setup.")
@@ -122,7 +126,17 @@ class AgentOpsTracer(BaseTracer):
             logger.info(f"[Worker {worker_id}] Instrumentation applied.")
 
         if self.agentops_managed:
-            self._init_agentops_sdk(uploading=False)
+            if "AGENTOPS_API_KEY" not in os.environ:
+                logger.warning(
+                    f"[Worker {self.worker_id}] AGENTOPS_API_KEY environment variable is not set. "
+                    "Using local non-op server for tracing."
+                )
+                api_key = str(uuid.uuid4())  # Use a dummy key for local testing
+            else:
+                logger.info(f"[Worker {self.worker_id}] AgentOps API key found in environment.")
+                api_key = os.environ["AGENTOPS_API_KEY"]
+
+            agentops.init(api_key=api_key, auto_start_session=False)
 
         self._lightning_span_processor = LightningSpanProcessor()
 
@@ -142,60 +156,6 @@ class AgentOpsTracer(BaseTracer):
             self.uninstrument(worker_id)
             logger.info(f"[Worker {worker_id}] Instrumentation removed.")
 
-    def _init_agentops_sdk(self, uploading: bool = False):
-        if not uploading:
-            if self._uploading_state is False:
-                return
-            logger.debug(f"[Worker {self.worker_id}] Exiting uploading state for AgentOps SDK.")
-            if not self._agentops_server_port_val:
-                logger.warning(
-                    f"[Worker {self.worker_id}] AgentOps managed, but local server port is not available. "
-                    "Client may not connect as expected."
-                )
-            else:
-                uri = f"http://localhost:{self._agentops_server_port_val}"
-                os.environ["AGENTOPS_API_ENDPOINT"] = uri
-                os.environ["AGENTOPS_APP_URL"] = f"{uri}/notavailable"
-                os.environ["AGENTOPS_EXPORTER_ENDPOINT"] = f"{uri}/traces"
-                logger.info(f"[Worker {self.worker_id}] AgentOps API endpoint set to {uri}")
-
-            api_key = str(uuid.uuid4())
-
-        else:
-            if self._uploading_state is True:
-                return
-            logger.debug(f"[Worker {self.worker_id}] Entering uploading state for AgentOps SDK.")
-            os.environ.pop("AGENTOPS_API_ENDPOINT", None)
-            os.environ.pop("AGENTOPS_APP_URL", None)
-            os.environ.pop("AGENTOPS_EXPORTER_ENDPOINT", None)
-            logger.info(f"[Worker {self.worker_id}] AgentOps API endpoint cleared.")
-            if "AGENTOPS_API_KEY" not in os.environ:
-                raise RuntimeError(
-                    f"[Worker {self.worker_id}] AGENTOPS_API_KEY environment variable is not set. "
-                    "Please set it to a valid API key."
-                )
-
-            api_key = os.environ["AGENTOPS_API_KEY"]
-
-        agentops_client = agentops.get_client()
-        agentops_client.initialized = False  # Reset initialization state
-        instance = agentops.sdk.core.tracer
-
-        # The following code snippet are copied from agentops because they won't auto execute.
-        if agentops_client._init_trace_context and agentops_client._init_trace_context.span.is_recording():
-            logger.warning("Ending previously auto-started trace due to re-initialization.")
-
-            instance.end_trace(agentops_client._init_trace_context, "Reinitialized")
-
-        instance.shutdown()
-        agentops_client._init_trace_context = None
-        agentops_client._legacy_session_for_init_trace = None
-
-        agentops.init(api_key=api_key)
-        self._uploading_state = uploading
-
-        logger.info(f"[Worker {self.worker_id}] AgentOps SDK initialized with API key and endpoint.")
-
     @contextmanager
     def trace_context(self, name: Optional[str] = None, task: Optional[Task] = None, **kwargs):
         """
@@ -210,52 +170,49 @@ class AgentOpsTracer(BaseTracer):
         if not self._lightning_span_processor:
             raise RuntimeError("LightningSpanProcessor is not initialized. Call init_worker() first.")
 
-        if (
-            task is not None
-            and task.task_index is not None
-            and (
-                (
-                    task.mode == "train"
-                    and self.upload_every_n_tasks_trained is not None
-                    and task.task_index % self.upload_every_n_tasks_trained == 0
-                )
-                or (
-                    task.mode != "train"
-                    and self.upload_every_n_tasks is not None
-                    and task.task_index % self.upload_every_n_tasks == 0
-                )
+        task_index = task.task_index if task and task.task_index is not None else None
+        task_mode = task.mode if task else "unknown"
+        online_tracing = task_index is not None and (
+            (
+                task_mode == "train"
+                and self.upload_every_n_tasks_trained is not None
+                and task_index % self.upload_every_n_tasks_trained == 0
             )
-        ):
-            logger.info(f"[Worker {self.worker_id}] AgentOps online tracing for task {task.task_index}.")
-            self._init_agentops_sdk(uploading=True)
-            end_state = "Success"
-            end_state_reason = None
-            trace_context = None
-            try:
-                trace_context = agentops.start_trace(name or "session", tags=[f"task_{task.task_index:04d}"])
-                with self._lightning_span_processor:
-                    yield self._lightning_span_processor
-            except Exception as e:
-                end_state = "Error"
-                end_state_reason = str(e)
-                raise
-            finally:
-                if trace_context is None:
-                    logger.error(
-                        f"[Worker {self.worker_id}] Trace context is None. AgentOps might not be initialized properly."
-                    )
-                agentops.end_trace(trace_context=trace_context, end_state=end_state)
-                logger.info(
-                    f"[Worker {self.worker_id}] AgentOps trace ended with state: {end_state}, reason: {end_state_reason}"
-                )
-                import time
-
-                time.sleep(5)
-
+            or (
+                task_mode in ["val", "test"]
+                and self.upload_every_n_tasks is not None
+                and task_index % self.upload_every_n_tasks == 0
+            )
+        )
+        if online_tracing:
+            logger.info(
+                f"[Worker {self.worker_id}] AgentOps online tracing "
+                f"for task {task_index if task_index is not None else 'unknown'}."
+            )
+            set_switch(True)
         else:
-            self._init_agentops_sdk(uploading=False)
+            set_switch(False)
+
+        end_state = "Success"
+        end_state_reason = None
+        trace_context = None
+        try:
+            trace_context = agentops.start_trace(name or "session", tags=[f"{task_mode}_task_{task_index or 0:04d}"])
             with self._lightning_span_processor:
                 yield self._lightning_span_processor
+        except Exception as e:
+            end_state = "Error"
+            end_state_reason = str(e)
+            raise
+        finally:
+            if trace_context is None:
+                logger.error(
+                    f"[Worker {self.worker_id}] Trace context is None. AgentOps might not be initialized properly."
+                )
+            agentops.end_trace(trace_context=trace_context, end_state=end_state)
+            logger.info(
+                f"[Worker {self.worker_id}] AgentOps trace ended with state: {end_state}, reason: {end_state_reason}"
+            )
 
     def get_last_trace(self) -> List[ReadableSpan]:
         """
