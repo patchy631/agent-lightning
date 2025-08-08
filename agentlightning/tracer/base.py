@@ -41,7 +41,9 @@ class BaseTracer(ParallelWorkerBase):
     """
 
     @contextmanager
-    def trace_context(self, name: Optional[str] = None) -> Iterator[Any]:
+    def trace_context(
+        self, name: Optional[str] = None, task_index: Optional[int] = None, **kwargs: Any
+    ) -> Iterator[Any]:
         """
         Starts a new tracing context. This should be used as a context manager.
 
@@ -52,6 +54,7 @@ class BaseTracer(ParallelWorkerBase):
 
         Args:
             name: The name for the root span of this trace context.
+            task_index: An optional index for the task, useful for counting the tasks traced.
         """
         raise NotImplementedError()
 

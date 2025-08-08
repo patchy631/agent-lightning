@@ -76,7 +76,9 @@ class HttpTracer(BaseTracer):
         logger.info(f"[Worker {worker_id}] HttpTracer initialized.")
 
     @contextmanager
-    def trace_context(self, name: Optional[str] = None) -> Iterator[HTTPRecords]:
+    def trace_context(
+        self, name: Optional[str] = None, task_index: Optional[int] = None, **kwargs
+    ) -> Iterator[HTTPRecords]:
         """
         Starts a new HTTP tracing context. This should be used as a context manager.
 

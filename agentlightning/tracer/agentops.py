@@ -41,17 +41,28 @@ class AgentOpsTracer(BaseTracer):
                             yourself and the tracer might not work as expected.
         daemon: Whether the AgentOps server runs as a daemon process.
                 Only applicable if `agentops_managed` is True.
+        upload_every_n_tasks: Number of tasks between uploads to AgentOps.
+                              `AGENTOPS_API_KEY` must be set in the environment.
     """
 
-    def __init__(self, *, agentops_managed: bool = True, instrument_managed: bool = True, daemon: bool = True):
+    def __init__(
+        self,
+        *,
+        agentops_managed: bool = True,
+        instrument_managed: bool = True,
+        daemon: bool = True,
+        upload_every_n_tasks: int | None = None,
+    ):
         super().__init__()
         self._lightning_span_processor: Optional[LightningSpanProcessor] = None
         self.agentops_managed = agentops_managed
         self.instrument_managed = instrument_managed
         self.daemon = daemon
+        self.upload_every_n_tasks = upload_every_n_tasks
 
         self._agentops_server_manager = AgentOpsServerManager(self.daemon)
         self._agentops_server_port_val: Optional[int] = None
+        self._uploading_state: bool = False
 
         if not self.agentops_managed:
             logger.warning("agentops_managed=False. You are responsible for AgentOps setup.")
@@ -105,27 +116,7 @@ class AgentOpsTracer(BaseTracer):
             logger.info(f"[Worker {worker_id}] Instrumentation applied.")
 
         if self.agentops_managed:
-            if self._agentops_server_port_val:  # Use the stored, picklable port value
-                base_url = f"http://localhost:{self._agentops_server_port_val}"
-                env_vars_to_set = {
-                    "AGENTOPS_API_KEY": "dummy",
-                    "AGENTOPS_API_ENDPOINT": base_url,
-                    "AGENTOPS_APP_URL": f"{base_url}/notavailable",
-                    "AGENTOPS_EXPORTER_ENDPOINT": f"{base_url}/traces",
-                }
-                for key, value in env_vars_to_set.items():
-                    os.environ[key] = value
-                    logger.info(f"[Worker {worker_id}] Env var set: {key}={value}")
-            else:
-                logger.warning(
-                    f"[Worker {worker_id}] AgentOps managed, but local server port is not available. Client may not connect as expected."
-                )
-
-            if not agentops.get_client().initialized:
-                agentops.init()
-                logger.info(f"[Worker {worker_id}] AgentOps client initialized.")
-            else:
-                logger.warning(f"[Worker {worker_id}] AgentOps client was already initialized.")
+            self._init_agentops_sdk(uploading=False)
 
         self._lightning_span_processor = LightningSpanProcessor()
 
@@ -145,8 +136,43 @@ class AgentOpsTracer(BaseTracer):
             self.uninstrument(worker_id)
             logger.info(f"[Worker {worker_id}] Instrumentation removed.")
 
+    def _init_agentops_sdk(self, uploading: bool = False):
+        if not uploading:
+            if self._uploading_state is False:
+                return
+            logger.debug(f"[Worker {self.worker_id}] Exiting uploading state for AgentOps SDK.")
+            if not self._agentops_server_port_val:
+                logger.warning(
+                    f"[Worker {self.worker_id}] AgentOps managed, but local server port is not available. "
+                    "Client may not connect as expected."
+                )
+            else:
+                uri = f"http://localhost:{self._agentops_server_port_val}"
+                os.environ["AGENTOPS_API_ENDPOINT"] = uri
+                os.environ["AGENTOPS_APP_URL"] = f"{uri}/notavailable"
+                os.environ["AGENTOPS_EXPORTER_ENDPOINT"] = f"{uri}/traces"
+                logger.info(f"[Worker {self.worker_id}] AgentOps API endpoint set to {uri}")
+            self._uploading_state = False
+        else:
+            if self._uploading_state is True:
+                return
+            logger.debug(f"[Worker {self.worker_id}] Entering uploading state for AgentOps SDK.")
+            os.environ.pop("AGENTOPS_API_ENDPOINT", None)
+            os.environ.pop("AGENTOPS_APP_URL", None)
+            os.environ.pop("AGENTOPS_EXPORTER_ENDPOINT", None)
+            logger.info(f"[Worker {self.worker_id}] AgentOps API endpoint cleared.")
+            if os.environ.get("AGENTOPS_API_KEY") == "dummy":
+                logger.warning(
+                    f"[Worker {self.worker_id}] AGENTOPS_API_KEY is set to 'dummy'. This is not a valid key for uploading traces. "
+                    "Please set a valid API key in the environment."
+                )
+            self._uploading_state = True
+
+        agentops.init()
+        logger.info(f"[Worker {self.worker_id}] AgentOps SDK initialized with API key and endpoint.")
+
     @contextmanager
-    def trace_context(self, name: Optional[str] = None):
+    def trace_context(self, name: Optional[str] = None, task_index: Optional[int] = None, **kwargs):
         """
         Starts a new tracing context. This should be used as a context manager.
 
@@ -159,8 +185,31 @@ class AgentOpsTracer(BaseTracer):
         if not self._lightning_span_processor:
             raise RuntimeError("LightningSpanProcessor is not initialized. Call init_worker() first.")
 
-        with self._lightning_span_processor:
-            yield self._lightning_span_processor
+        if (
+            task_index is not None
+            and self.upload_every_n_tasks is not None
+            and task_index % self.upload_every_n_tasks == 0
+        ):
+            self._init_agentops_sdk(uploading=True)
+            end_state = "Success"
+            end_state_reason = None
+            try:
+                agentops.start_session(tags=[name, f"task_{task_index:04d}"])
+                with self._lightning_span_processor:
+                    yield self._lightning_span_processor
+            except Exception as e:
+                end_state = "Error"
+                end_state_reason = str(e)
+                logger.error(f"[Worker {self.worker_id}] Error traced by AgentOps: {end_state_reason}")
+            finally:
+                agentops.end_session(
+                    end_state=end_state,
+                    end_state_reason=end_state_reason,
+                )
+
+        else:
+            with self._lightning_span_processor:
+                yield self._lightning_span_processor
 
     def get_last_trace(self) -> List[ReadableSpan]:
         """
