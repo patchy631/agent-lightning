@@ -158,8 +158,8 @@ class AgentOpsTracer(BaseTracer):
                 os.environ["AGENTOPS_APP_URL"] = f"{uri}/notavailable"
                 os.environ["AGENTOPS_EXPORTER_ENDPOINT"] = f"{uri}/traces"
                 logger.info(f"[Worker {self.worker_id}] AgentOps API endpoint set to {uri}")
-            agentops.init(api_key=str(uuid.uuid4()))
-            self._uploading_state = False
+
+            api_key = str(uuid.uuid4())
 
         else:
             if self._uploading_state is True:
@@ -174,8 +174,25 @@ class AgentOpsTracer(BaseTracer):
                     f"[Worker {self.worker_id}] AGENTOPS_API_KEY environment variable is not set. "
                     "Please set it to a valid API key."
                 )
-            agentops.init(api_key=os.environ["AGENTOPS_API_KEY"])
-            self._uploading_state = True
+
+            api_key = os.environ["AGENTOPS_API_KEY"]
+
+        agentops_client = agentops.get_client()
+        agentops_client.initialized = False  # Reset initialization state
+        instance = agentops.sdk.core.tracer
+
+        # The following code snippet are copied from agentops because they won't auto execute.
+        if agentops_client._init_trace_context and agentops_client._init_trace_context.span.is_recording():
+            logger.warning("Ending previously auto-started trace due to re-initialization.")
+
+            instance.end_trace(agentops_client._init_trace_context, "Reinitialized")
+
+        instance.shutdown()
+        agentops_client._init_trace_context = None
+        agentops_client._legacy_session_for_init_trace = None
+
+        agentops.init(api_key=api_key)
+        self._uploading_state = uploading
 
         logger.info(f"[Worker {self.worker_id}] AgentOps SDK initialized with API key and endpoint.")
 
@@ -213,8 +230,9 @@ class AgentOpsTracer(BaseTracer):
             self._init_agentops_sdk(uploading=True)
             end_state = "Success"
             end_state_reason = None
+            trace_context = None
             try:
-                agentops.start_trace(name or "session", tags=[f"task_{task.task_index:04d}"])
+                trace_context = agentops.start_trace(name or "session", tags=[f"task_{task.task_index:04d}"])
                 with self._lightning_span_processor:
                     yield self._lightning_span_processor
             except Exception as e:
@@ -222,7 +240,11 @@ class AgentOpsTracer(BaseTracer):
                 end_state_reason = str(e)
                 raise
             finally:
-                agentops.end_trace(end_state=end_state)
+                if trace_context is None:
+                    logger.error(
+                        f"[Worker {self.worker_id}] Trace context is None. AgentOps might not be initialized properly."
+                    )
+                agentops.end_trace(trace_context=trace_context, end_state=end_state)
                 logger.info(
                     f"[Worker {self.worker_id}] AgentOps trace ended with state: {end_state}, reason: {end_state_reason}"
                 )
