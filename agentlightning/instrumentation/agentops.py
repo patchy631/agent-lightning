@@ -308,4 +308,6 @@ class SwitchableV4Client(V4Client):
             return super().post(*args, **kwargs)
         else:
             logger.debug("SwitchableV4Client is switched off, skipping post request.")
-            return requests.Response()
+            response = requests.Response()
+            response.status_code = 200
+            return response
