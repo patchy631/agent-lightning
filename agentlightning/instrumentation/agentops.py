@@ -10,7 +10,7 @@ import requests
 
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from agentops.sdk.exporters import AuthenticatedOTLPExporter
-from agentops.client.api import V4Client
+from agentops.client.api import V4Client, V3Client
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,7 @@ def _patch_exporters():
 
     agentops.sdk.core.AuthenticatedOTLPExporter = SwitchableAuthenticatedOTLPExporter
     agentops.sdk.core.OTLPMetricExporter = SwitchableOTLPMetricExporter
+    agentops.client.api.V3Client = SwitchableV3Client
     agentops.client.api.V4Client = SwitchableV4Client
 
 
@@ -44,6 +45,7 @@ def _unpatch_exporters():
 
     agentops.sdk.core.AuthenticatedOTLPExporter = AuthenticatedOTLPExporter
     agentops.sdk.core.OTLPMetricExporter = OTLPMetricExporter
+    agentops.client.api.V3Client = V3Client
     agentops.client.api.V4Client = V4Client
 
 
@@ -299,6 +301,16 @@ class SwitchableOTLPMetricExporter(OTLPMetricExporter):
             from opentelemetry.sdk.metrics.export import MetricExportResult
 
             return MetricExportResult.SUCCESS
+
+
+class SwitchableV3Client(V3Client):
+
+    async def async_request(self, *args, **kwargs):
+        if _switch:
+            return await super().async_request(*args, **kwargs)
+        else:
+            logger.debug("SwitchableV3Client is switched off, skipping async_request request.")
+            return {}
 
 
 class SwitchableV4Client(V4Client):
