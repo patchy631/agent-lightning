@@ -131,6 +131,16 @@ class AgentOpsTracer(BaseTracer):
                     f"[Worker {self.worker_id}] AGENTOPS_API_KEY environment variable is not set. "
                     "Using local non-op server for tracing."
                 )
+                base_url = f"http://localhost:{self._agentops_server_port_val}"
+                env_vars_to_set = {
+                    "AGENTOPS_API_ENDPOINT": base_url,
+                    "AGENTOPS_APP_URL": f"{base_url}/notavailable",
+                    "AGENTOPS_EXPORTER_ENDPOINT": f"{base_url}/traces",
+                }
+                for key, value in env_vars_to_set.items():
+                    os.environ[key] = value
+                    logger.info(f"[Worker {worker_id}] Env var set: {key}={value}")
+
                 api_key = str(uuid.uuid4())  # Use a dummy key for local testing
             else:
                 logger.info(f"[Worker {self.worker_id}] AgentOps API key found in environment.")
