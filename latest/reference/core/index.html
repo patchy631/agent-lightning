@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -2440,7 +2440,9 @@
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -2468,6 +2470,7 @@
 to define the agent's behavior for a single task. The agent's logic
 is completely decoupled from the server communication and training
 infrastructure.</p>
+
 
 
 
@@ -2945,6 +2948,7 @@ infrastructure.</p>
     </div>
 
 </div>
+
 
 
 
@@ -3904,7 +3908,9 @@ Override it for different asynchronous validation behavior.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -3932,6 +3938,7 @@ Override it for different asynchronous validation behavior.</p>
 (like model configurations), and posting completed rollouts back to the server.
 It provides both synchronous and asynchronous methods for these operations and
 includes a cache for resources.</p>
+
 
 
 
@@ -4422,6 +4429,7 @@ includes a cache for resources.</p>
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -5326,6 +5334,7 @@ from local collections instead of making HTTP requests to a remote server.</p>
 
 
 
+
               <details class="quote">
                 <summary>Source code in <code>agentlightning/client.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-256">256</a></span>
@@ -5581,6 +5590,7 @@ from local collections instead of making HTTP requests to a remote server.</p>
     </div>
 
 </div>
+
 
 
 
@@ -5877,7 +5887,9 @@ If tasks are already Task objects, returns them directly.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -5971,6 +5983,7 @@ it will also automatically trace each rollout using AgentOps.</p>
           </tr>
       </tbody>
     </table>
+
 
 
 
@@ -6458,6 +6471,7 @@ it will also automatically trace each rollout using AgentOps.</p>
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
@@ -6815,7 +6829,9 @@ it will also automatically trace each rollout using AgentOps.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -6924,6 +6940,7 @@ running a client-side agent fleet.</p>
           </tr>
       </tbody>
     </table>
+
 
 
 
@@ -7523,6 +7540,7 @@ running a client-side agent fleet.</p>
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
@@ -7641,7 +7659,9 @@ This is useful for cleaning up after crashes or unexpected exits.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -7679,7 +7699,9 @@ This is useful for cleaning up after crashes or unexpected exits.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -7846,7 +7868,9 @@ It will automatically handle the input and output of the function.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -7872,6 +7896,7 @@ It will automatically handle the input and output of the function.</p>
         <p>The main SDK class for developers to control the Agent Lightning Server.</p>
 <p>This class manages the server lifecycle, task queueing, resources updates,
 and retrieval of results, providing a simple interface for the optimization logic.</p>
+
 
 
 
@@ -8280,6 +8305,7 @@ and retrieval of results, providing a simple interface for the optimization logi
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -8789,6 +8815,7 @@ This holds the task queue, versioned resources, and completed rollouts.</p>
 
 
 
+
               <details class="quote">
                 <summary>Source code in <code>agentlightning/server.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-25"> 25</a></span>
@@ -9056,6 +9083,7 @@ This holds the task queue, versioned resources, and completed rollouts.</p>
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -9558,7 +9586,9 @@ Please always review the parsed construction arguments before using them.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -9853,6 +9883,7 @@ Please always review the parsed construction arguments before using them.</p>
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -9899,6 +9930,7 @@ Please always review the parsed construction arguments before using them.</p>
 </div>
 
 
+
 <div class="doc doc-object doc-class">
 
 
@@ -9916,6 +9948,7 @@ Please always review the parsed construction arguments before using them.</p>
 
 
         <p>A generic response message that can be used for various purposes.</p>
+
 
 
 
@@ -9946,6 +9979,7 @@ Please always review the parsed construction arguments before using them.</p>
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -10035,6 +10069,7 @@ for model inference, such as temperature, top_p, etc.</p>
 
 
 
+
               <details class="quote">
                 <summary>Source code in <code>agentlightning/types.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
@@ -10083,6 +10118,7 @@ for model inference, such as temperature, top_p, etc.</p>
 
 
 
+
   </div>
 
     </div>
@@ -10118,6 +10154,7 @@ for model inference, such as temperature, top_p, etc.</p>
 </ol>
 </details>        <p>Subclasses should implement the run() method and optionally override
 the lifecycle methods for custom initialization and cleanup behavior.</p>
+
 
 
 
@@ -10200,6 +10237,7 @@ the lifecycle methods for custom initialization and cleanup behavior.</p>
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -10306,6 +10344,7 @@ customized engines, but algos can only well operate on a subset of them.</p>
 
 
 
+
               <details class="quote">
                 <summary>Source code in <code>agentlightning/types.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-111">111</a></span>
@@ -10352,6 +10391,7 @@ customized engines, but algos can only well operate on a subset of them.</p>
 
 
 
+
   </div>
 
     </div>
@@ -10375,6 +10415,7 @@ customized engines, but algos can only well operate on a subset of them.</p>
 
 
         <p>Base class for all tunable resources.</p>
+
 
 
 
@@ -10412,6 +10453,7 @@ customized engines, but algos can only well operate on a subset of them.</p>
 
 
 
+
   </div>
 
     </div>
@@ -10438,6 +10480,7 @@ customized engines, but algos can only well operate on a subset of them.</p>
 <p>This message contains a dictionary of resources that clients should use
 for subsequent tasks. It is used to update the resources available to
 clients dynamically.</p>
+
 
 
 
@@ -10485,6 +10528,7 @@ clients dynamically.</p>
 
 
 
+
   </div>
 
     </div>
@@ -10508,6 +10552,7 @@ clients dynamically.</p>
 
 
         <p>The standard reporting object from client to server.</p>
+
 
 
 
@@ -10577,6 +10622,7 @@ clients dynamically.</p>
 
 
 
+
   </div>
 
     </div>
@@ -10600,6 +10646,7 @@ clients dynamically.</p>
 
 
         <p>A task (rollout request) to be processed by the client agent.</p>
+
 
 
 
@@ -10657,6 +10704,7 @@ clients dynamically.</p>
 
 
 
+
   </div>
 
     </div>
@@ -10687,6 +10735,7 @@ clients dynamically.</p>
 
 
 
+
               <details class="quote">
                 <summary>Source code in <code>agentlightning/types.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-24">24</a></span>
@@ -10708,6 +10757,7 @@ clients dynamically.</p>
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -10754,7 +10804,9 @@ clients dynamically.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -10792,7 +10844,9 @@ clients dynamically.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -10910,10 +10964,10 @@ clients dynamically.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
       
         <script src="../../js/timeago.min.js"></script>
       

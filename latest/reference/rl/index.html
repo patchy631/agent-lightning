@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -1201,6 +1201,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -1247,6 +1248,7 @@
 </div>
 
 
+
 <div class="doc doc-object doc-class">
 
 
@@ -1264,6 +1266,7 @@
         <p>The main SDK class for developers to control the Agent Lightning Server.</p>
 <p>This class manages the server lifecycle, task queueing, resources updates,
 and retrieval of results, providing a simple interface for the optimization logic.</p>
+
 
 
 
@@ -1672,6 +1675,7 @@ and retrieval of results, providing a simple interface for the optimization logi
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -2191,6 +2195,7 @@ RayPPOTrainer and focusing on the agent mode workflow.</p>
 
 
 
+
               <details class="quote">
                 <summary>Source code in <code>agentlightning/verl/trainer.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-43"> 43</a></span>
@@ -2506,7 +2511,10 @@ RayPPOTrainer and focusing on the agent mode workflow.</p>
 <span class="normal"><a href="#__codelineno-0-353">353</a></span>
 <span class="normal"><a href="#__codelineno-0-354">354</a></span>
 <span class="normal"><a href="#__codelineno-0-355">355</a></span>
-<span class="normal"><a href="#__codelineno-0-356">356</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="k">class</span><span class="w"> </span><span class="nc">AgentLightningTrainer</span><span class="p">(</span><span class="n">RayPPOTrainer</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-356">356</a></span>
+<span class="normal"><a href="#__codelineno-0-357">357</a></span>
+<span class="normal"><a href="#__codelineno-0-358">358</a></span>
+<span class="normal"><a href="#__codelineno-0-359">359</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="k">class</span><span class="w"> </span><span class="nc">AgentLightningTrainer</span><span class="p">(</span><span class="n">RayPPOTrainer</span><span class="p">):</span>
 <a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    Specialized PPO trainer for agent-based reinforcement learning.</span>
 <a id="__codelineno-0-46" name="__codelineno-0-46"></a>
@@ -2744,88 +2752,92 @@ RayPPOTrainer and focusing on the agent mode workflow.</p>
 <a id="__codelineno-0-278" name="__codelineno-0-278"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">agentlightning</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
 <a id="__codelineno-0-279" name="__codelineno-0-279"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">actor_rollout_ref</span><span class="o">.</span><span class="n">rollout</span><span class="o">.</span><span class="n">n</span><span class="p">,</span>
 <a id="__codelineno-0-280" name="__codelineno-0-280"></a>            <span class="n">train_information</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>                <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">actor_rollout_ref</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a>                <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">actor_rollout_ref</span><span class="o">.</span><span class="n">rollout</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a>            <span class="p">},</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>            <span class="n">tokenizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">,</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a>            <span class="n">mini_batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">actor_rollout_ref</span><span class="o">.</span><span class="n">actor</span><span class="o">.</span><span class="n">ppo_mini_batch_size</span><span class="p">,</span>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a>            <span class="n">pad_token_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token_id</span><span class="p">,</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a>        <span class="p">)</span>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">agent_mode_daemon</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<a id="__codelineno-0-289" name="__codelineno-0-289"></a>
-<a id="__codelineno-0-290" name="__codelineno-0-290"></a>        <span class="c1"># perform validation before training</span>
-<a id="__codelineno-0-291" name="__codelineno-0-291"></a>        <span class="c1"># currently, we only support validation using the reward_function.</span>
-<a id="__codelineno-0-292" name="__codelineno-0-292"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_reward_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;val_before_train&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
-<a id="__codelineno-0-293" name="__codelineno-0-293"></a>            <span class="n">val_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
-<a id="__codelineno-0-294" name="__codelineno-0-294"></a>            <span class="k">assert</span> <span class="n">val_metrics</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">val_metrics</span><span class="si">=}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-295" name="__codelineno-0-295"></a>            <span class="n">pprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial validation metrics: </span><span class="si">{</span><span class="n">val_metrics</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-296" name="__codelineno-0-296"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">val_metrics</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="p">)</span>
-<a id="__codelineno-0-297" name="__codelineno-0-297"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;val_only&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-<a id="__codelineno-0-298" name="__codelineno-0-298"></a>                <span class="k">return</span>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a>        <span class="c1"># add tqdm</span>
-<a id="__codelineno-0-301" name="__codelineno-0-301"></a>        <span class="n">progress_bar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">total_training_steps</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Training Progress&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-281" name="__codelineno-0-281"></a>                <span class="c1"># Note (Zhiyuan): To avoid further patch into vllm async server, using the same sentence to get the naming here.</span>
+<a id="__codelineno-0-282" name="__codelineno-0-282"></a>                <span class="c1"># However, it is possible that verl updates the naming and causes incompatibility.</span>
+<a id="__codelineno-0-283" name="__codelineno-0-283"></a>                <span class="c1"># Reference: https://github.com/volcengine/verl/blob/5b5e09d9cc20625e436d01f69d9cc739ff681c54/verl/workers/rollout/vllm_rollout/vllm_async_server.py#L217</span>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a>                <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">actor_rollout_ref</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]),</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a>                <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">actor_rollout_ref</span><span class="o">.</span><span class="n">rollout</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a>            <span class="p">},</span>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a>            <span class="n">tokenizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">,</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a>            <span class="n">mini_batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">actor_rollout_ref</span><span class="o">.</span><span class="n">actor</span><span class="o">.</span><span class="n">ppo_mini_batch_size</span><span class="p">,</span>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a>            <span class="n">pad_token_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token_id</span><span class="p">,</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>        <span class="p">)</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">agent_mode_daemon</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>        <span class="c1"># perform validation before training</span>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a>        <span class="c1"># currently, we only support validation using the reward_function.</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_reward_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;val_before_train&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a>            <span class="n">val_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a>            <span class="k">assert</span> <span class="n">val_metrics</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">val_metrics</span><span class="si">=}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a>            <span class="n">pprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial validation metrics: </span><span class="si">{</span><span class="n">val_metrics</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">val_metrics</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="p">)</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;val_only&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a>                <span class="k">return</span>
 <a id="__codelineno-0-302" name="__codelineno-0-302"></a>
-<a id="__codelineno-0-303" name="__codelineno-0-303"></a>        <span class="c1"># we start from step 1</span>
-<a id="__codelineno-0-304" name="__codelineno-0-304"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-0-305" name="__codelineno-0-305"></a>        <span class="n">last_val_metrics</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-306" name="__codelineno-0-306"></a>
-<a id="__codelineno-0-307" name="__codelineno-0-307"></a>        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">total_epochs</span><span class="p">):</span>
-<a id="__codelineno-0-308" name="__codelineno-0-308"></a>            <span class="k">for</span> <span class="n">batch_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_dataloader</span><span class="p">:</span>
-<a id="__codelineno-0-309" name="__codelineno-0-309"></a>                <span class="n">metrics</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-310" name="__codelineno-0-310"></a>                <span class="n">timing_raw</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-311" name="__codelineno-0-311"></a>                <span class="n">is_last_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_training_steps</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a>                <span class="c1"># train step</span>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a>                <span class="n">metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_train_step</span><span class="p">(</span><span class="n">batch_dict</span><span class="p">)</span>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a>        <span class="c1"># add tqdm</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a>        <span class="n">progress_bar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">total_training_steps</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Training Progress&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a>
+<a id="__codelineno-0-306" name="__codelineno-0-306"></a>        <span class="c1"># we start from step 1</span>
+<a id="__codelineno-0-307" name="__codelineno-0-307"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-308" name="__codelineno-0-308"></a>        <span class="n">last_val_metrics</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-309" name="__codelineno-0-309"></a>
+<a id="__codelineno-0-310" name="__codelineno-0-310"></a>        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">total_epochs</span><span class="p">):</span>
+<a id="__codelineno-0-311" name="__codelineno-0-311"></a>            <span class="k">for</span> <span class="n">batch_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_dataloader</span><span class="p">:</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a>                <span class="n">metrics</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-313" name="__codelineno-0-313"></a>                <span class="n">timing_raw</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-314" name="__codelineno-0-314"></a>                <span class="n">is_last_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_training_steps</span>
 <a id="__codelineno-0-315" name="__codelineno-0-315"></a>
-<a id="__codelineno-0-316" name="__codelineno-0-316"></a>                <span class="c1"># validate</span>
-<a id="__codelineno-0-317" name="__codelineno-0-317"></a>                <span class="k">if</span> <span class="p">(</span>
-<a id="__codelineno-0-318" name="__codelineno-0-318"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">val_reward_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>                    <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">test_freq</span> <span class="o">&gt;</span> <span class="mi">0</span>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a>                    <span class="ow">and</span> <span class="p">(</span><span class="n">is_last_step</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">test_freq</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>                <span class="p">):</span>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a>                    <span class="k">with</span> <span class="n">_timer</span><span class="p">(</span><span class="s2">&quot;validate&quot;</span><span class="p">,</span> <span class="n">timing_raw</span><span class="p">):</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a>                        <span class="n">val_metrics</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>                        <span class="k">if</span> <span class="n">is_last_step</span><span class="p">:</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>                            <span class="n">last_val_metrics</span> <span class="o">=</span> <span class="n">val_metrics</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>                    <span class="n">metrics</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">val_metrics</span><span class="p">)</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">save_freq</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>                    <span class="n">is_last_step</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">save_freq</span> <span class="o">==</span> <span class="mi">0</span>
-<a id="__codelineno-0-330" name="__codelineno-0-330"></a>                <span class="p">):</span>
-<a id="__codelineno-0-331" name="__codelineno-0-331"></a>                    <span class="k">with</span> <span class="n">_timer</span><span class="p">(</span><span class="s2">&quot;save_checkpoint&quot;</span><span class="p">,</span> <span class="n">timing_raw</span><span class="p">):</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a>                        <span class="bp">self</span><span class="o">.</span><span class="n">_save_checkpoint</span><span class="p">()</span>
-<a id="__codelineno-0-333" name="__codelineno-0-333"></a>
-<a id="__codelineno-0-334" name="__codelineno-0-334"></a>                <span class="c1"># step metrics</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>                <span class="n">metrics</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-<a id="__codelineno-0-336" name="__codelineno-0-336"></a>                    <span class="p">{</span>
-<a id="__codelineno-0-337" name="__codelineno-0-337"></a>                        <span class="s2">&quot;training/global_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="p">,</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a>                        <span class="s2">&quot;training/epoch&quot;</span><span class="p">:</span> <span class="n">epoch</span><span class="p">,</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a>                    <span class="p">}</span>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a>                <span class="p">)</span>
-<a id="__codelineno-0-341" name="__codelineno-0-341"></a>
-<a id="__codelineno-0-342" name="__codelineno-0-342"></a>                <span class="c1"># TODO: make a canonical logger that supports various backend</span>
-<a id="__codelineno-0-343" name="__codelineno-0-343"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="p">)</span>
+<a id="__codelineno-0-316" name="__codelineno-0-316"></a>                <span class="c1"># train step</span>
+<a id="__codelineno-0-317" name="__codelineno-0-317"></a>                <span class="n">metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_train_step</span><span class="p">(</span><span class="n">batch_dict</span><span class="p">)</span>
+<a id="__codelineno-0-318" name="__codelineno-0-318"></a>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a>                <span class="c1"># validate</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a>                <span class="k">if</span> <span class="p">(</span>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">val_reward_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>                    <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">test_freq</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a>                    <span class="ow">and</span> <span class="p">(</span><span class="n">is_last_step</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">test_freq</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a>                <span class="p">):</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a>                    <span class="k">with</span> <span class="n">_timer</span><span class="p">(</span><span class="s2">&quot;validate&quot;</span><span class="p">,</span> <span class="n">timing_raw</span><span class="p">):</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a>                        <span class="n">val_metrics</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a>                        <span class="k">if</span> <span class="n">is_last_step</span><span class="p">:</span>
+<a id="__codelineno-0-328" name="__codelineno-0-328"></a>                            <span class="n">last_val_metrics</span> <span class="o">=</span> <span class="n">val_metrics</span>
+<a id="__codelineno-0-329" name="__codelineno-0-329"></a>                    <span class="n">metrics</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">val_metrics</span><span class="p">)</span>
+<a id="__codelineno-0-330" name="__codelineno-0-330"></a>
+<a id="__codelineno-0-331" name="__codelineno-0-331"></a>                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">save_freq</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a>                    <span class="n">is_last_step</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">save_freq</span> <span class="o">==</span> <span class="mi">0</span>
+<a id="__codelineno-0-333" name="__codelineno-0-333"></a>                <span class="p">):</span>
+<a id="__codelineno-0-334" name="__codelineno-0-334"></a>                    <span class="k">with</span> <span class="n">_timer</span><span class="p">(</span><span class="s2">&quot;save_checkpoint&quot;</span><span class="p">,</span> <span class="n">timing_raw</span><span class="p">):</span>
+<a id="__codelineno-0-335" name="__codelineno-0-335"></a>                        <span class="bp">self</span><span class="o">.</span><span class="n">_save_checkpoint</span><span class="p">()</span>
+<a id="__codelineno-0-336" name="__codelineno-0-336"></a>
+<a id="__codelineno-0-337" name="__codelineno-0-337"></a>                <span class="c1"># step metrics</span>
+<a id="__codelineno-0-338" name="__codelineno-0-338"></a>                <span class="n">metrics</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+<a id="__codelineno-0-339" name="__codelineno-0-339"></a>                    <span class="p">{</span>
+<a id="__codelineno-0-340" name="__codelineno-0-340"></a>                        <span class="s2">&quot;training/global_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="p">,</span>
+<a id="__codelineno-0-341" name="__codelineno-0-341"></a>                        <span class="s2">&quot;training/epoch&quot;</span><span class="p">:</span> <span class="n">epoch</span><span class="p">,</span>
+<a id="__codelineno-0-342" name="__codelineno-0-342"></a>                    <span class="p">}</span>
+<a id="__codelineno-0-343" name="__codelineno-0-343"></a>                <span class="p">)</span>
 <a id="__codelineno-0-344" name="__codelineno-0-344"></a>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a>                <span class="k">if</span> <span class="n">is_last_step</span><span class="p">:</span>
-<a id="__codelineno-0-346" name="__codelineno-0-346"></a>                    <span class="n">pprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final validation metrics: </span><span class="si">{</span><span class="n">last_val_metrics</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a>                    <span class="n">progress_bar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-<a id="__codelineno-0-348" name="__codelineno-0-348"></a>
-<a id="__codelineno-0-349" name="__codelineno-0-349"></a>                    <span class="c1"># This exit logic is to ensure a robust CI.</span>
-<a id="__codelineno-0-350" name="__codelineno-0-350"></a>                    <span class="n">pprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Flush the logger...&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-351" name="__codelineno-0-351"></a>                    <span class="k">del</span> <span class="n">logger</span>  <span class="c1"># Make sure the loggers are flushed and closed properly</span>
-<a id="__codelineno-0-352" name="__codelineno-0-352"></a>                    <span class="n">pprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training finished at step </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-353" name="__codelineno-0-353"></a>                    <span class="k">return</span>
-<a id="__codelineno-0-354" name="__codelineno-0-354"></a>
-<a id="__codelineno-0-355" name="__codelineno-0-355"></a>                <span class="n">progress_bar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-0-356" name="__codelineno-0-356"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a>                <span class="c1"># TODO: make a canonical logger that supports various backend</span>
+<a id="__codelineno-0-346" name="__codelineno-0-346"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="p">)</span>
+<a id="__codelineno-0-347" name="__codelineno-0-347"></a>
+<a id="__codelineno-0-348" name="__codelineno-0-348"></a>                <span class="k">if</span> <span class="n">is_last_step</span><span class="p">:</span>
+<a id="__codelineno-0-349" name="__codelineno-0-349"></a>                    <span class="n">pprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final validation metrics: </span><span class="si">{</span><span class="n">last_val_metrics</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-350" name="__codelineno-0-350"></a>                    <span class="n">progress_bar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<a id="__codelineno-0-351" name="__codelineno-0-351"></a>
+<a id="__codelineno-0-352" name="__codelineno-0-352"></a>                    <span class="c1"># This exit logic is to ensure a robust CI.</span>
+<a id="__codelineno-0-353" name="__codelineno-0-353"></a>                    <span class="n">pprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Flush the logger...&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-354" name="__codelineno-0-354"></a>                    <span class="k">del</span> <span class="n">logger</span>  <span class="c1"># Make sure the loggers are flushed and closed properly</span>
+<a id="__codelineno-0-355" name="__codelineno-0-355"></a>                    <span class="n">pprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training finished at step </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-356" name="__codelineno-0-356"></a>                    <span class="k">return</span>
+<a id="__codelineno-0-357" name="__codelineno-0-357"></a>
+<a id="__codelineno-0-358" name="__codelineno-0-358"></a>                <span class="n">progress_bar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-359" name="__codelineno-0-359"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">global_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -2861,6 +2873,7 @@ RayPPOTrainer and focusing on the agent mode workflow.</p>
 <p>This class manages the server lifecycle, task queueing, and results
 retrieval, while also running a proxy server for LLM requests. It maintains
 the original interface for compatibility with the RayPPOTrainer.</p>
+
 
 
 
@@ -3744,6 +3757,7 @@ the original interface for compatibility with the RayPPOTrainer.</p>
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
@@ -4375,6 +4389,7 @@ for model inference, such as temperature, top_p, etc.</p>
 
 
 
+
               <details class="quote">
                 <summary>Source code in <code>agentlightning/types.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
@@ -4423,6 +4438,7 @@ for model inference, such as temperature, top_p, etc.</p>
 
 
 
+
   </div>
 
     </div>
@@ -4446,6 +4462,7 @@ for model inference, such as temperature, top_p, etc.</p>
 
 
         <p>The standard reporting object from client to server.</p>
+
 
 
 
@@ -4504,6 +4521,7 @@ for model inference, such as temperature, top_p, etc.</p>
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -4974,10 +4992,10 @@ and build the corresponding attention mask.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
       
         <script src="../../js/timeago.min.js"></script>
       
