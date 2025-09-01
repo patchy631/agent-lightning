@@ -41,6 +41,11 @@ For detailed evaluation on your own data:
        --max_samples 500
    ```
 
+3. **BIRD benchmark preview**:
+   ```bash
+   python bird_evaluation.py
+   ```
+
 ### Key Results (Llama3.2-3B)
 
 - **Overall Execution Accuracy: 50.3%** (on Spider-dev 500 samples)
@@ -55,6 +60,7 @@ For detailed evaluation on your own data:
 
 - `detailed_evaluation.py`: Runs comprehensive evaluation with detailed metrics
 - `generate_benchmark_results.py`: Generates formatted benchmark reports
+- `bird_evaluation.py`: BIRD benchmark evaluation preview and adapter
 - `spider_eval/evaluation.py`: Core evaluation logic (adapted from Spider official evaluation)
 - `spider_eval/exec_eval.py`: Execution-based evaluation
 

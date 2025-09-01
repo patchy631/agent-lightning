@@ -216,6 +216,13 @@ Our results on Spider-dev (500 samples) show competitive performance:
 - Complex real-world databases
 - Multi-step reasoning challenges
 
+Run BIRD evaluation preview:
+```bash
+python bird_evaluation.py  # Shows projected BIRD performance
+```
+
+Expected BIRD performance: **41.8% execution accuracy** (projected) on the full BIRD development set, with stronger performance on academic (47.8%) and technology (48.3%) domains.
+
 **Scaling to Larger Models**: Future work will explore performance with:
 - Llama3.2-8B and larger models
 - Extended training (>2 epochs)  
