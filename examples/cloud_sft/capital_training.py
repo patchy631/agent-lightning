@@ -6,7 +6,9 @@ import pandas as pd
 from capital_tool_use import run_task
 from cloud_finetune_endpoint import AzureOpenAIFinetuneEndpoint
 
-from agentlightning import LitAgent, LLM, Trainer
+from agentlightning import LitAgent, LLM, Trainer, configure_logger
+
+configure_logger()
 
 
 class LitCapitalAgent(LitAgent):
@@ -33,7 +35,7 @@ if __name__ == "__main__":
         # deployment_name="gpt-4o-mini",
         base_deployment_name="gpt-4o",
         deployment_name="gpt-4o-new",
-        finetune_every_n_tasks=3,
+        finetune_every_n_tasks=10,
     )
-    # trainer.fit(LitCapitalAgent(), endpoint)
-    endpoint._deploy_model("gpt-4o-2024-08-06.ft-9f4f6856285843c992825bb720835c1d", "2")
+    trainer.fit(LitCapitalAgent(), endpoint)
+    # endpoint._deploy_model("gpt-4o-2024-08-06.ft-9f4f6856285843c992825bb720835c1d", "2")
