@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 import tempfile
@@ -8,6 +9,8 @@ from openai import OpenAI
 
 from agentlightning.types import LLM, Rollout, TaskInput, Task, NamedResources, ResourcesUpdate
 from agentlightning.client import DevTaskLoader
+
+logger = logging.getLogger("agentlightning")
 
 
 class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
@@ -100,7 +103,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             )
         else:
             self.openai_client = None
-            print("[Warning] OpenAI client not initialized. Fine-tuning will be skipped.")
+            logger.warning("OpenAI client not initialized. Fine-tuning will be skipped.")
 
     def initial_llm(self) -> LLM:
         """Return the initial LLM configuration."""
@@ -124,7 +127,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
 
         # Check if we should trigger fine-tuning
         if len(self.completed_rollouts) >= self.finetune_every_n_tasks:
-            print(f"\n[Fine-tune] Triggering fine-tuning after {len(self.completed_rollouts)} tasks...")
+            logger.info(f"Triggering fine-tuning after {len(self.completed_rollouts)} tasks...")
             new_llm = self.finetune(self.completed_rollouts)
 
             # Update resources with new model
@@ -132,7 +135,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
                 self.finetune_count += 1
                 new_resources_id = f"finetune_{self.finetune_count}"
                 self._resources_update = ResourcesUpdate(resources_id=new_resources_id, resources={"main_llm": new_llm})
-                print(f"[Fine-tune] Updated resources to use fine-tuned model (resources_id: {new_resources_id})")
+                logger.info(f"Updated resources to use fine-tuned model (resources_id: {new_resources_id})")
 
                 # Clear completed rollouts for next batch
                 self.completed_rollouts = []
@@ -150,9 +153,10 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             Updated LLM configuration with the new fine-tuned model endpoint
         """
         if not self.openai_client:
-            print("[Fine-tune] Skipping - OpenAI client not configured")
+            logger.warning("Skipping fine-tuning - OpenAI client not configured")
             return None
 
+        train_file_path = None
         try:
             # Convert rollouts to JSONL training data
             training_data = self._prepare_training_data(data)
@@ -163,20 +167,20 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
                     f.write(json.dumps(item) + "\n")
                 train_file_path = f.name
 
-            print(f"[Fine-tune] Created training file with {len(training_data)} examples")
+            logger.info(f"Created training file with {len(training_data)} examples")
 
             # Upload training file
-            print("[Fine-tune] Uploading training file...")
+            logger.info("Uploading training file...")
             with open(train_file_path, "rb") as f:
                 training_response = self.openai_client.files.create(file=f, purpose="fine-tune")
             train_file_id = training_response.id
-            print(f"[Fine-tune] Training file uploaded: {train_file_id}")
+            logger.info(f"Training file uploaded: {train_file_id}")
 
             # Wait for file processing
             time.sleep(10)
 
             # Create fine-tuning job
-            print("[Fine-tune] Starting fine-tuning job...")
+            logger.info("Starting fine-tuning job...")
             ft_job = self.openai_client.fine_tuning.jobs.create(
                 training_file=train_file_id,
                 model=self.current_model,
@@ -185,13 +189,13 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
                 suffix=f"auto_{self.finetune_count + 1}",
             )
             job_id = ft_job.id
-            print(f"[Fine-tune] Job created: {job_id}")
+            logger.info(f"Fine-tuning job created: {job_id}")
 
             # Poll for completion
             fine_tuned_model = self._wait_for_finetuning(job_id)
 
             if fine_tuned_model:
-                print(f"[Fine-tune] Fine-tuning completed: {fine_tuned_model}")
+                logger.info(f"Fine-tuning completed: {fine_tuned_model}")
                 self.current_model = fine_tuned_model
 
                 # Deploy the model if Azure parameters are configured
@@ -201,16 +205,16 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
                     # Return updated LLM configuration
                     return LLM(endpoint=self.azure_openai_endpoint or "", model=self.deployment_name)
                 else:
-                    print("[Fine-tune] Deployment skipped - Azure parameters not configured")
+                    logger.info("Deployment skipped - Azure parameters not configured")
                     return LLM(endpoint=self.azure_openai_endpoint or "", model=fine_tuned_model)
 
         except Exception as e:
-            print(f"[Fine-tune] Error during fine-tuning: {e}")
+            logger.error(f"Error during fine-tuning: {e}")
 
         finally:
             # Clean up temporary file
             try:
-                if "train_file_path" in locals() and train_file_path:
+                if train_file_path:
                     os.unlink(train_file_path)
             except:
                 pass
@@ -268,13 +272,13 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             if self.openai_client:
                 job = self.openai_client.fine_tuning.jobs.retrieve(job_id)
                 status = job.status
-                print(f"[Fine-tune] Job status: {status}")
+                logger.debug(f"Fine-tuning job status: {status}")
 
                 if status in terminal_states:
                     if status == "succeeded":
                         return job.fine_tuned_model
                     else:
-                        print(f"[Fine-tune] Job ended with status: {status}")
+                        logger.warning(f"Fine-tuning job ended with status: {status}")
                         return None
 
                 time.sleep(interval)
@@ -292,7 +296,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             # Get Azure token
             token = self._get_azure_token()
             if not token:
-                print("[Deploy] Could not obtain Azure token")
+                logger.error("Could not obtain Azure token for deployment")
                 return
 
             # Prepare deployment request
@@ -319,7 +323,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
                 },
             }
 
-            print(f"[Deploy] Deploying model to {self.deployment_name}...")
+            logger.info(f"Deploying model to {self.deployment_name}...")
 
             import requests
 
@@ -332,12 +336,12 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             )
 
             if response.status_code < 400:
-                print(f"[Deploy] Deployment successful: {self.deployment_name}")
+                logger.info(f"Deployment successful: {self.deployment_name}")
             else:
-                print(f"[Deploy] Deployment failed: {response.status_code} {response.text}")
+                logger.error(f"Deployment failed: {response.status_code} {response.text}")
 
         except Exception as e:
-            print(f"[Deploy] Error during deployment: {e}")
+            logger.error(f"Error during deployment: {e}")
 
     def _get_azure_token(self) -> Optional[str]:
         """
@@ -362,5 +366,5 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             if token:
                 return token
         except Exception as e:
-            print(f"[Auth] Could not fetch token from Azure CLI: {e}")
+            logger.debug(f"Could not fetch token from Azure CLI: {e}")
         return None
