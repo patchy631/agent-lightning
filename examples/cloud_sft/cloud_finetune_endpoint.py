@@ -90,7 +90,7 @@ def convert_to_json_list(prompt_completion_list, tool_requests):
                             "function": {"name": call["name"], "arguments": call["arguments"]},
                         }
                     )
-                messages.append({"role": "assistant", "tool_calls": tool_calls, "weight": 0.0})
+                messages.append({"role": "assistant", "tool_calls": tool_calls})
             else:
                 # Normal user/system/tool/assistant content
                 m = {"role": role}
@@ -98,7 +98,6 @@ def convert_to_json_list(prompt_completion_list, tool_requests):
                     m["content"] = msg["content"]
                 if "tool_call_id" in msg:
                     m["tool_call_id"] = msg["tool_call_id"]
-                m["weight"] = 0.0
                 messages.append(m)
 
         # Extract completions (assistant outputs after tool responses)
@@ -169,6 +168,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
         resource_name: Optional[str] = None,
         seed: int = 42,
         n_epochs: int = 3,
+        data_filter_ratio: float = 0.5,
         **kwargs,
     ):
         """
@@ -186,6 +186,8 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             resource_name: Azure OpenAI resource name
             seed: Random seed for fine-tuning
             n_epochs: Number of epochs for fine-tuning
+            data_filter_ratio: Ratio of data to use for fine-tuning (1.0 = all, 0.5 = half, etc.).
+                The data with the highest rewards will be selected. Others will be dropped.
             **kwargs: Additional arguments for DevTaskLoader
         """
         # Initialize base resources with initial model
@@ -225,6 +227,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
         self.current_model = self.base_model
         self.seed = seed
         self.n_epochs = n_epochs
+        self.data_filter_ratio = data_filter_ratio
 
         # Tracking
         self.completed_rollouts = []
@@ -395,10 +398,39 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
 
             # print(tool_calls, prompt_completions)
             for item in convert_to_json_list(prompt_completions, tool_calls):
+                # TODO: we always use final reward here
+                # ideally this should be replaced with the credit assignment logic
+                training_data.append({**item, "reward": rollout.final_reward})
                 logger.info(f"Fine-tuning data: {item}")
-                training_data.append(item)
 
-        return training_data
+        return self._filter_training_data(training_data)
+
+    def _filter_training_data(self, data: List[dict]) -> List[dict]:
+        """
+        Filter the training data based on rewards.
+
+        Args:
+            data: List of training examples with 'reward' field
+
+        Returns:
+            Filtered list of training examples without 'reward' field
+        """
+        if self.data_filter_ratio >= 1.0:
+            return data
+
+        # Sort by reward descending
+        sorted_data = sorted(data, key=lambda x: x.get("reward", 0), reverse=True)
+        n_keep = max(1, int(len(sorted_data) * self.data_filter_ratio))
+        filtered = sorted_data[:n_keep]
+
+        logger.info(f"Filtered training data: kept {n_keep} out of {len(data)} examples")
+
+        # Remove reward field for fine-tuning
+        for item in filtered:
+            if "reward" in item:
+                del item["reward"]
+
+        return filtered
 
     def _wait_for_finetuning(self, job_id: str, interval: int = 20) -> Optional[str]:
         """
@@ -437,51 +469,49 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
         Args:
             model_name: The fine-tuned model name
         """
-        try:
-            # Get Azure token
-            token = self._get_azure_token()
+        # Get Azure token
+        token = self._get_azure_token()
 
-            # Prepare deployment request
-            request_url = (
-                f"https://management.azure.com/subscriptions/{self.subscription_id}"
-                f"/resourceGroups/{self.resource_group}"
-                f"/providers/Microsoft.CognitiveServices/accounts/{self.resource_name}"
-                f"/deployments/{self.deployment_name}"
-            )
+        # Prepare deployment request
+        request_url = (
+            f"https://management.azure.com/subscriptions/{self.subscription_id}"
+            f"/resourceGroups/{self.resource_group}"
+            f"/providers/Microsoft.CognitiveServices/accounts/{self.resource_name}"
+            f"/deployments/{self.deployment_name}"
+        )
 
-            headers = {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            }
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
 
-            deploy_data = {
-                "sku": {"name": "standard", "capacity": 1},
-                "properties": {
-                    "model": {
-                        "format": "OpenAI",
-                        "name": model_name,
-                        "version": version,
-                    }
-                },
-            }
+        deploy_data = {
+            "sku": {"name": "standard", "capacity": 1},
+            "properties": {
+                "model": {
+                    "format": "OpenAI",
+                    "name": model_name,
+                    "version": version,
+                }
+            },
+        }
 
-            logger.info(f"Deploying model to {self.deployment_name}...")
+        logger.info(f"Deploying model to {self.deployment_name}...")
 
-            response = requests.put(
-                request_url,
-                params={"api-version": "2025-06-01"},
-                headers=headers,
-                data=json.dumps(deploy_data),
-                timeout=180,
-            )
+        response = requests.put(
+            request_url,
+            params={"api-version": "2025-06-01"},
+            headers=headers,
+            data=json.dumps(deploy_data),
+            timeout=180,
+        )
 
-            if response.status_code < 400:
-                logger.info(f"Deployment successful: {self.deployment_name}")
-            else:
-                logger.error(f"Deployment failed: {response.status_code} {response.text}")
+        if response.status_code < 400:
+            logger.info(f"Deployment successful: {self.deployment_name}")
+        else:
+            logger.error(f"Deployment failed: {response.status_code} {response.text}")
 
-        except Exception as e:
-            logger.error(f"Error during deployment: {e}")
+        # TODO: wait for the deployment to be ready
 
     def _get_azure_token(self) -> str:
         """
