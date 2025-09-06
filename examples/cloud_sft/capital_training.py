@@ -31,5 +31,6 @@ if __name__ == "__main__":
         tasks=tasks,
         base_deployment_name="gpt-4o-mini",
         deployment_name="gpt-4o-mini",
+        finetune_every_n_tasks=3,
     )
     trainer.fit(LitCapitalAgent(), endpoint)

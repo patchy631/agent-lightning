@@ -1,3 +1,4 @@
+from collections import defaultdict
 import json
 import logging
 import os
@@ -5,13 +6,144 @@ import time
 import tempfile
 import subprocess
 import requests
-from typing import Union, List, Optional, Any, cast
+from typing import Dict, Union, List, Optional, Any, cast
 from openai import OpenAI
 
 from agentlightning.types import LLM, Rollout, TaskInput, Task, NamedResources, ResourcesUpdate
 from agentlightning.client import DevTaskLoader
 
 logger = logging.getLogger("agentlightning")
+
+
+def convert_genai_dict(data: dict, prefix: str) -> Union[dict, list]:
+    """
+    Convert a flat dict with keys like 'gen_ai.prompt.0.role'
+    into structured nested dicts or lists under the given prefix.
+
+    Args:
+        data: Flat dictionary (keys are dotted paths).
+        prefix: Top-level key to extract (e.g., 'gen_ai.prompt').
+
+    Returns:
+        A nested dict (if no index detected) or list (if indexed).
+    """
+    result: Union[dict, list] = {}
+
+    # Collect keys that match the prefix
+    relevant = {k[len(prefix) + 1 :]: v for k, v in data.items() if k.startswith(prefix + ".")}
+
+    # Detect if we have numeric indices (-> list) or not (-> dict)
+    indexed = any(part.split(".")[0].isdigit() for part in relevant.keys())
+
+    if indexed:
+        # Group by index
+        grouped: Dict[int, dict] = defaultdict(dict)
+        for k, v in relevant.items():
+            parts = k.split(".")
+            if not parts[0].isdigit():
+                continue
+            idx, rest = int(parts[0]), ".".join(parts[1:])
+            grouped[idx][rest] = v
+        # Recursively build
+        result = []
+        for i in sorted(grouped.keys()):
+            result.append(convert_genai_dict({f"{prefix}.{rest}": val for rest, val in grouped[i].items()}, prefix))
+    else:
+        # No indices: build dict
+        nested: Dict[str, Any] = defaultdict(dict)
+        for k, v in relevant.items():
+            if "." in k:
+                head, tail = k.split(".", 1)
+                nested[head][f"{prefix}.{k}"] = v
+            else:
+                result[k] = v
+        # Recurse into nested dicts
+        for head, subdict in nested.items():
+            result[head] = convert_genai_dict(subdict, prefix + "." + head)
+
+    return result
+
+
+def convert_to_json_list(prompt_completion_list, tool_requests):
+    """
+    Convert raw tool call traces + prompt/completion list
+    into OpenAI fine-tuning JSONL format (tool calling style).
+
+    https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/fine-tuning-functions
+    """
+    for pc_entry in prompt_completion_list:
+        messages = []
+        tools = []
+
+        # Extract messages
+        for msg in pc_entry["prompt"]:
+            role = msg["role"]
+
+            if role == "assistant" and "tool_calls" in msg:
+                # Use the tool_calls directly
+                tool_calls = []
+                for call in msg["tool_calls"]:
+                    tool_calls.append(
+                        {
+                            "id": call["id"],
+                            "type": "function",
+                            "function": {"name": call["name"], "arguments": call["arguments"]},
+                        }
+                    )
+                messages.append({"role": "assistant", "tool_calls": tool_calls, "weight": 0.0})
+            else:
+                # Normal user/system/tool/assistant content
+                m = {"role": role}
+                if "content" in msg and msg["content"] != "":
+                    m["content"] = msg["content"]
+                if "tool_call_id" in msg:
+                    m["tool_call_id"] = msg["tool_call_id"]
+                m["weight"] = 0.0
+                messages.append(m)
+
+        # Extract completions (assistant outputs after tool responses)
+        for comp in pc_entry.get("completion", []):
+            if comp.get("role") == "assistant":
+                if comp.get("content"):
+                    message = {"role": "assistant", "content": comp["content"]}
+                    messages.append(message)
+                elif comp.get("finish_reason") == "tool_calls":
+                    if len(tool_requests) == 0:
+                        raise ValueError("No tool requests available for tool_calls completion")
+                    tool_req = tool_requests.pop(0)
+                    # FIXME: this is a hack because agentops did not report the tool call properly
+                    message = {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "id": tool_req["call"]["id"],
+                                "type": tool_req["call"]["type"],
+                                "function": {"name": tool_req["name"], "arguments": tool_req["parameters"]},
+                            }
+                        ],
+                    }
+                    messages.append(message)
+                else:
+                    raise ValueError(f"Unsupported assistant completion: {comp}")
+
+        # Build tools definitions (if available)
+        if "functions" in pc_entry.get("request", {}):
+            for fn in pc_entry["request"]["functions"]:
+                tools.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": fn["name"],
+                            "description": fn.get("description", ""),
+                            "parameters": (
+                                json.loads(fn["parameters"]) if isinstance(fn["parameters"], str) else fn["parameters"]
+                            ),
+                        },
+                    }
+                )
+            yield {"messages": messages, "tools": tools}
+        else:
+            yield {"messages": messages}
 
 
 class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
@@ -207,9 +339,6 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
                     logger.info("Deployment skipped - Azure parameters not configured")
                     return LLM(endpoint=self.azure_openai_endpoint or "", model=fine_tuned_model)
 
-        except Exception as e:
-            logger.error(f"Error during fine-tuning: {e}")
-
         finally:
             # Clean up temporary file
             try:
@@ -233,24 +362,39 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
         training_data = []
 
         for rollout in rollouts:
-            # Create a chat-format training example
-            messages = []
+            tool_calls = []
+            prompt_completions = []
 
-            # The rollout contains input and output from task execution
-            # We'll create training data from the task/response pairs
+            # Ignore rollouts without trace
+            if not rollout.trace:
+                continue
 
-            # Add a generic system message if needed
-            messages.append({"role": "system", "content": "You are a helpful assistant."})
+            for trace in rollout.trace:
+                if "attributes" not in trace:
+                    continue
 
-            # Add user message - use rollout_id as a simple prompt
-            # In practice, you'd extract actual task details from your specific task format
-            messages.append({"role": "user", "content": f"Task {rollout.rollout_id}"})
+                # Otherwise we strip all the tool calls and prompts and responses
+                tool_call = convert_genai_dict(trace["attributes"], "tool")
+                if tool_call:
+                    tool_calls.append(tool_call)
 
-            # Add assistant response - use a simple acknowledgment
-            # In practice, you'd extract actual response from rollout data
-            messages.append({"role": "assistant", "content": f"Completed task {rollout.rollout_id} successfully."})
+                prompt = convert_genai_dict(trace["attributes"], "gen_ai.prompt")
+                completion = convert_genai_dict(trace["attributes"], "gen_ai.completion")
+                request = convert_genai_dict(trace["attributes"], "gen_ai.request")
+                response = convert_genai_dict(trace["attributes"], "gen_ai.response")
+                if prompt or completion or request or response:
+                    prompt_completions.append(
+                        {
+                            "prompt": prompt,
+                            "completion": completion,
+                            "request": request,
+                            "response": response,
+                        }
+                    )
 
-            training_data.append({"messages": messages})
+            # print(tool_calls, prompt_completions)
+            for item in convert_to_json_list(prompt_completions, tool_calls):
+                print(item)
 
         import pdb
 
