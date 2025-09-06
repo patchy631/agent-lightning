@@ -1,0 +1,5 @@
+azure-ai-ml>=1.18.0
+azure-identity>=1.17.0
+mlflow
+azureml-mlflow
+requests
