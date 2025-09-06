@@ -4,6 +4,7 @@ import os
 import time
 import tempfile
 import subprocess
+import requests
 from typing import Union, List, Optional, Any, cast
 from openai import OpenAI
 
@@ -26,7 +27,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
     def __init__(
         self,
         tasks: Union[List[TaskInput], List[Task]],
-        model_name: str,
+        base_deployment_name: str,
         deployment_name: str,
         finetune_every_n_tasks: int = 10,
         azure_openai_endpoint: Optional[str] = None,
@@ -43,32 +44,34 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
 
         Args:
             tasks: List of tasks to process
-            model_name: Name for the model (used in resources)
+            base_deployment_name: Name for the model / deployment to start with
+            deployment_name: Name for the deployment after fine-tuning
+            finetune_every_n_tasks: Number of tasks to complete before triggering fine-tuning
             azure_openai_endpoint: Azure OpenAI endpoint URL (e.g., https://resource.openai.azure.com/openai/v1/)
             azure_openai_api_key: Azure OpenAI API key
-            finetune_every_n_tasks: Number of tasks to complete before triggering fine-tuning
             subscription_id: Azure subscription ID for deployment
             resource_group: Azure resource group for deployment
             resource_name: Azure OpenAI resource name
-            deployment_name: Name for the deployment after fine-tuning
-            base_model: Base model to start fine-tuning from
             seed: Random seed for fine-tuning
             n_epochs: Number of epochs for fine-tuning
             **kwargs: Additional arguments for DevTaskLoader
         """
         # Initialize base resources with initial model
+        self.azure_openai_endpoint = cast(str, azure_openai_endpoint or os.getenv("AZURE_OPENAI_ENDPOINT"))
+        if not self.azure_openai_endpoint:
+            raise ValueError("Azure OpenAI endpoint must be provided via parameter or AZURE_OPENAI_ENDPOINT env var")
+
         initial_resources: NamedResources = {
-            "main_llm": LLM(endpoint=azure_openai_endpoint or os.getenv("AZURE_OPENAI_ENDPOINT", ""), model=model_name)
+            "main_llm": LLM(endpoint=self.azure_openai_endpoint, model=base_deployment_name)
         }
 
         super().__init__(tasks=tasks, resources=initial_resources, **kwargs)
 
-        self.model_name = model_name
+        self.base_deployment_name = base_deployment_name
         self.deployment_name = deployment_name
         self.finetune_every_n_tasks = finetune_every_n_tasks
 
         # Azure deployment parameters
-        self.azure_openai_endpoint = cast(str, azure_openai_endpoint or os.getenv("AZURE_OPENAI_ENDPOINT"))
         self.azure_openai_api_key = cast(str, azure_openai_api_key or os.getenv("AZURE_OPENAI_API_KEY"))
         self.subscription_id = cast(str, subscription_id or os.getenv("AZURE_SUBSCRIPTION_ID"))
         self.resource_group = cast(str, resource_group or os.getenv("AZURE_RESOURCE_GROUP"))
@@ -86,7 +89,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             raise ValueError("Azure resource name must be provided via parameter or AZURE_RESOURCE_NAME env var")
 
         # Fine-tuning parameters
-        self.base_model = model_name
+        self.base_model = base_deployment_name
         self.current_model = self.base_model
         self.seed = seed
         self.n_epochs = n_epochs
@@ -104,10 +107,6 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
         else:
             self.openai_client = None
             logger.warning("OpenAI client not initialized. Fine-tuning will be skipped.")
-
-    def initial_llm(self) -> LLM:
-        """Return the initial LLM configuration."""
-        return LLM(endpoint=self.azure_openai_endpoint or "", model=self.model_name)
 
     def post_rollout(self, rollout: Rollout) -> Optional[dict[str, Any]]:
         """
@@ -253,6 +252,10 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
 
             training_data.append({"messages": messages})
 
+        import pdb
+
+        pdb.set_trace()
+
         return training_data
 
     def _wait_for_finetuning(self, job_id: str, interval: int = 20) -> Optional[str]:
@@ -324,8 +327,6 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             }
 
             logger.info(f"Deploying model to {self.deployment_name}...")
-
-            import requests
 
             response = requests.put(
                 request_url,
