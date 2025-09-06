@@ -21,7 +21,7 @@ class LitCapitalAgent(LitAgent):
         llm: LLM = cast(LLM, resources["main_llm"])
         openai_client = openai.OpenAI(api_key=self.api_key, base_url=llm.endpoint)
 
-        return run_task(openai_client, task)
+        return run_task(openai_client, llm.model, task)
 
 
 if __name__ == "__main__":
@@ -29,8 +29,11 @@ if __name__ == "__main__":
     tasks = pd.read_csv("capital_samples.csv").to_dict(orient="records")
     endpoint = AzureOpenAIFinetuneEndpoint(
         tasks=tasks,
-        base_deployment_name="gpt-4o-mini",
-        deployment_name="gpt-4o-mini",
+        # base_deployment_name="gpt-4o-mini",
+        # deployment_name="gpt-4o-mini",
+        base_deployment_name="gpt-4o",
+        deployment_name="gpt-4o-new",
         finetune_every_n_tasks=3,
     )
-    trainer.fit(LitCapitalAgent(), endpoint)
+    # trainer.fit(LitCapitalAgent(), endpoint)
+    endpoint._deploy_model("gpt-4o-2024-08-06.ft-9f4f6856285843c992825bb720835c1d", "2")

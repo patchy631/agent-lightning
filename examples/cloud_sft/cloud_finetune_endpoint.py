@@ -308,6 +308,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             logger.info(f"Training file uploaded: {train_file_id}")
 
             # Wait for file processing
+            logger.info("Waiting for training file to be processed...")
             time.sleep(10)
 
             # Create fine-tuning job
@@ -331,7 +332,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
 
                 # Deploy the model if Azure parameters are configured
                 if all([self.subscription_id, self.resource_group, self.resource_name]):
-                    self._deploy_model(fine_tuned_model)
+                    self._deploy_model(fine_tuned_model, str(self.finetune_count + 1))
 
                     # Return updated LLM configuration
                     return LLM(endpoint=self.azure_openai_endpoint or "", model=self.deployment_name)
@@ -394,11 +395,8 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
 
             # print(tool_calls, prompt_completions)
             for item in convert_to_json_list(prompt_completions, tool_calls):
-                print(item)
-
-        import pdb
-
-        pdb.set_trace()
+                logger.info(f"Fine-tuning data: {item}")
+                training_data.append(item)
 
         return training_data
 
@@ -432,7 +430,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
             else:
                 return None
 
-    def _deploy_model(self, model_name: str) -> None:
+    def _deploy_model(self, model_name: str, version: str) -> None:
         """
         Deploy the fine-tuned model using Azure control plane.
 
@@ -442,9 +440,6 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
         try:
             # Get Azure token
             token = self._get_azure_token()
-            if not token:
-                logger.error("Could not obtain Azure token for deployment")
-                return
 
             # Prepare deployment request
             request_url = (
@@ -465,7 +460,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
                     "model": {
                         "format": "OpenAI",
                         "name": model_name,
-                        "version": "1",
+                        "version": version,
                     }
                 },
             }
@@ -474,7 +469,7 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
 
             response = requests.put(
                 request_url,
-                params={"api-version": "2024-10-01"},
+                params={"api-version": "2025-06-01"},
                 headers=headers,
                 data=json.dumps(deploy_data),
                 timeout=180,
@@ -488,28 +483,29 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
         except Exception as e:
             logger.error(f"Error during deployment: {e}")
 
-    def _get_azure_token(self) -> Optional[str]:
+    def _get_azure_token(self) -> str:
         """
         Get Azure management token using Azure CLI.
 
         Returns:
             Bearer token for Azure management API
         """
+        cmd = [
+            "az",
+            "account",
+            "get-access-token",
+            "--resource",
+            "https://management.azure.com",
+            "--query",
+            "accessToken",
+            "-o",
+            "tsv",
+        ]
         try:
-            cmd = [
-                "az",
-                "account",
-                "get-access-token",
-                "--resource",
-                "https://management.azure.com",
-                "--query",
-                "accessToken",
-                "-o",
-                "tsv",
-            ]
             token = subprocess.check_output(cmd, text=True).strip()
-            if token:
-                return token
-        except Exception as e:
-            logger.debug(f"Could not fetch token from Azure CLI: {e}")
-        return None
+        except subprocess.CalledProcessError:
+            raise ValueError("Azure CLI command failed. Could not fetch token from Azure CLI.")
+        if token:
+            return token
+        else:
+            raise ValueError("Could not fetch token from Azure CLI.")

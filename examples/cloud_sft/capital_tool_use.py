@@ -43,7 +43,7 @@ SYSTEM = (
 )
 
 
-def run_task(openai_client: openai.OpenAI, task_input: Dict[str, str]) -> float:
+def run_task(openai_client: openai.OpenAI, model: str, task_input: Dict[str, str]) -> float:
     """
     Run one evaluation task.
     Returns 1.0 if output contains expected substring, else 0.0.
@@ -54,7 +54,7 @@ def run_task(openai_client: openai.OpenAI, task_input: Dict[str, str]) -> float:
 
     # --- Call #1 ---
     first = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=model,
         messages=[
             {"role": "system", "content": SYSTEM},
             {"role": "user", "content": prompt},
@@ -95,7 +95,7 @@ def run_task(openai_client: openai.OpenAI, task_input: Dict[str, str]) -> float:
 
     # --- Call #2 ---
     second = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=model,
         messages=messages,
         temperature=0,
     )
@@ -112,4 +112,4 @@ if __name__ == "__main__":
 
     data = pd.read_csv("capital_samples.csv")
     sample = data.iloc[0].to_dict()
-    run_task(client, sample)
+    run_task(client, "gpt-4o-new", sample)
