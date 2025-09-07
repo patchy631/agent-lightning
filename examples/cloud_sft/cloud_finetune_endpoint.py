@@ -331,6 +331,8 @@ class AzureOpenAIFinetuneEndpoint(DevTaskLoader):
 
             if fine_tuned_model:
                 logger.info(f"Fine-tuning completed: {fine_tuned_model}")
+                # Update the current model for next round.
+                # Use continuous fine-tuning feature here.
                 self.current_model = fine_tuned_model
 
                 # Deploy the model if Azure parameters are configured
