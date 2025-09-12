@@ -59,6 +59,8 @@ class Trainer(ParallelWorkerBase):
         self.dev = dev
         self._client: AgentLightningClient | None = None  # Will be initialized in fit method
 
+        self._loggers = loggers or []
+
         self.tracer = self._make_tracer(tracer)
         if isinstance(triplet_exporter, TripletExporter):
             self.triplet_exporter = triplet_exporter
@@ -108,11 +110,17 @@ class Trainer(ParallelWorkerBase):
 
         self.tracer.init()
 
+        for _logger in self.loggers:
+            _logger.init()
+
         logger.info(f"Trainer main initialization complete.")
 
     def teardown(self) -> None:
         logger.info(f"Cleaning up Trainer...")
         self.tracer.teardown()
+
+        for _logger in self.loggers:
+            _logger.teardown()
 
         self._client = None
         logger.info(f"Trainer main cleanup complete.")
@@ -196,11 +204,19 @@ class Trainer(ParallelWorkerBase):
     def _initialize_worker_env(self, worker_id: int):
         logger.info(f"[Worker {worker_id}] Setting up trainer environment...")  # worker_id included in process name
         self.tracer.init_worker(worker_id)
+        for _logger in self.loggers:
+            _logger.init_worker(worker_id)
 
     def _teardown_worker_env(self, worker_id: int):
         logger.info(f"[Worker {worker_id}] Cleaning up trainer environment...")
         self.tracer.teardown_worker(worker_id)
         logger.info(f"[Worker {worker_id}] Environment cleanup complete.")
+        for _logger in self.loggers:
+            _logger.teardown_worker(worker_id)
+
+    @property
+    def loggers(self) -> List[LightningLogger]:
+        return self._loggers
 
     @staticmethod
     def kill_orphaned_processes() -> None:

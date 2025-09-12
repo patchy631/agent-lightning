@@ -1,9 +1,14 @@
 import json
 import logging
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import numpy as np
 
 from .types import Hook
+
+if TYPE_CHECKING:
+    from .types import Task, Rollout
+    from .tracer import BaseTracer
+    from .runner import AgentRunner
 
 
 def configure_logger(level: int = logging.INFO, name: str = "agentlightning") -> logging.Logger:
@@ -38,6 +43,12 @@ class LightningLogger(Hook):
         """
         Log a message at a specific logging level.
         """
+
+    def on_rollout_end(self, task: Task, rollout: Rollout, runner: AgentRunner, tracer: BaseTracer):
+        """
+        By default, each logger automatically logs the rollout event at the end of each rollout.
+        """
+        self.log_event("rollout", {"task": task.model_dump(), "rollout": rollout.model_dump()})
 
 
 class ConsoleLogger(LightningLogger):
