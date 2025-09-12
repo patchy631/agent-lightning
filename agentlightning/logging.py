@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 from typing import Optional, TYPE_CHECKING
@@ -24,6 +26,9 @@ def configure_logger(level: int = logging.INFO, name: str = "agentlightning") ->
     logger.setLevel(level)
     logger.propagate = False  # prevent double logging
     return logger
+
+
+logger = logging.getLogger(__name__)
 
 
 class LightningLogger(Hook):
@@ -109,7 +114,7 @@ class WandbLogger(LightningLogger):
 
         self.project = project
         self.entity = entity
-        self.name = name
+        self.name = name or wandb.util.generate_id()
         self.config = config or {}
 
         self.event_table: Optional[wandb.Table] = None
@@ -118,31 +123,21 @@ class WandbLogger(LightningLogger):
 
         self.metrics_buffer: dict[str, list[float]] = {}
 
-    def init(self):
-        import wandb
-
-        super().init()
-        self.wandb_run = wandb.init(
-            project=self.project,
-            entity=self.entity,
-            name=self.name,
-            config=self.config,
-            reinit=True,  # allow reinitialization
-            settings=wandb.Settings(x_label="worker_0", mode="shared", x_primary=True),
-        )
-        if self.wandb_run is None:
-            raise RuntimeError("Failed to initialize Wandb run.")
-        self.wandb_run_id = self.wandb_run.id
-
     def init_worker(self, worker_id: int):
         import wandb
 
         super().init_worker(worker_id)
-        assert self.wandb_run_id is not None, "Wandb run ID must be set before initializing worker."
         self.wandb_run = wandb.init(
-            id=self.wandb_run_id,
-            settings=wandb.Settings(x_label=f"worker_{worker_id}", mode="shared", x_primary=worker_id == 0),
+            project=self.project,
+            entity=self.entity,
+            group=self.name,
+            job_type=f"worker_{worker_id}",
+            config=self.config,
         )
+        logger.info(f"Wandb run initialized: {self.name} (Worker {worker_id})")
+        if self.wandb_run is None:
+            raise RuntimeError("Failed to initialize Wandb run.")
+        self.wandb_run_id = self.wandb_run.id
 
     def teardown_worker(self, worker_id: int):
         import wandb
@@ -152,6 +147,11 @@ class WandbLogger(LightningLogger):
         for metric in self.metrics_buffer:
             if len(self.metrics_buffer[metric]) > 0:
                 self._log_aggregated_metrics(metric)
+
+        if len(self.event_table.data) > 0:
+            logger.info(f"Flushing {len(self.event_table.data)} events to Wandb before finishing...")
+            wandb.log({"client/events": self.event_table})
+            self.event_table = None
 
         wandb.finish(exit_code=0)
 
@@ -177,6 +177,7 @@ class WandbLogger(LightningLogger):
         self.event_table.add_data(event, data_str)
 
         if len(self.event_table.data) % self.flush_every_n_events == 0:
+            logger.info(f"Flushing {len(self.event_table.data)} events to Wandb...")
             wandb.log({"client/events": self.event_table})
 
     def log_metric(self, metric: str, value: float, step: Optional[int] = None):

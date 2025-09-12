@@ -194,6 +194,8 @@ class Trainer(ParallelWorkerBase):
                 num_processed = asyncio.run(loop.iter_async())
             else:
                 num_processed = loop.iter()
+        except KeyboardInterrupt:
+            logger.info(f"[Worker {worker_id}] KeyboardInterrupt received. Exiting worker loop...")
         except Exception:
             logger.exception(f"[Worker {worker_id}] Unhandled exception in worker loop.")
         finally:
@@ -206,6 +208,7 @@ class Trainer(ParallelWorkerBase):
         self.tracer.init_worker(worker_id)
         for _logger in self.loggers:
             _logger.init_worker(worker_id)
+        logger.info(f"[Worker {worker_id}] Worker environment setup complete.")
 
     def _teardown_worker_env(self, worker_id: int):
         logger.info(f"[Worker {worker_id}] Cleaning up trainer environment...")
@@ -213,6 +216,7 @@ class Trainer(ParallelWorkerBase):
         logger.info(f"[Worker {worker_id}] Environment cleanup complete.")
         for _logger in self.loggers:
             _logger.teardown_worker(worker_id)
+        logger.info(f"[Worker {worker_id}] Worker environments torn down.")
 
     @property
     def loggers(self) -> List[LightningLogger]:
