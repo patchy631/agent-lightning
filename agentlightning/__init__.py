@@ -2,7 +2,6 @@ __version__ = "0.1.2"
 
 from .client import AgentLightningClient, DevTaskLoader
 from .config import lightning_cli
-from .hook import Hook
 from .litagent import LitAgent
 from .logging import configure_logger
 from .reward import reward

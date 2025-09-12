@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 import numpy as np
 
-from .types import ParallelWorkerBase
+from .types import Hook
 
 
 def configure_logger(level: int = logging.INFO, name: str = "agentlightning") -> logging.Logger:
@@ -21,7 +21,7 @@ def configure_logger(level: int = logging.INFO, name: str = "agentlightning") ->
     return logger
 
 
-class LightningLogger(ParallelWorkerBase):
+class LightningLogger(Hook):
     """Agent-lightning logger that supports tracing events and metrics throughout the training."""
 
     def log_event(self, event: str, data: dict):

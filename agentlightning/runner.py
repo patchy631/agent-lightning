@@ -10,10 +10,8 @@ import agentops
 from opentelemetry.sdk.trace import ReadableSpan
 
 from .client import AgentLightningClient
-from .hook import Hook
 from .litagent import LitAgent
-from .types import Rollout, Task, Triplet, RolloutRawResult
-from .types import ParallelWorkerBase
+from .types import Rollout, Task, Triplet, RolloutRawResult, ParallelWorkerBase, Hook
 from .tracer.base import BaseTracer
 from .tracer import TripletExporter
 
