@@ -4450,25 +4450,25 @@ You don't have to inherit from this class; you can use a simple list if you want
 
               <details class="quote">
                 <summary>Source code in <code>agentlightning/types.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-217">217</a></span>
-<span class="normal"><a href="#__codelineno-0-218">218</a></span>
-<span class="normal"><a href="#__codelineno-0-219">219</a></span>
-<span class="normal"><a href="#__codelineno-0-220">220</a></span>
-<span class="normal"><a href="#__codelineno-0-221">221</a></span>
-<span class="normal"><a href="#__codelineno-0-222">222</a></span>
-<span class="normal"><a href="#__codelineno-0-223">223</a></span>
-<span class="normal"><a href="#__codelineno-0-224">224</a></span>
-<span class="normal"><a href="#__codelineno-0-225">225</a></span>
-<span class="normal"><a href="#__codelineno-0-226">226</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="k">class</span><span class="w"> </span><span class="nc">Dataset</span><span class="p">(</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T_co</span><span class="p">]):</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;The general interface for a dataset.</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="sd">    It&#39;s currently implemented as a protocol, having a similar interface to torch.utils.data.Dataset.</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="sd">    You don&#39;t have to inherit from this class; you can use a simple list if you want to.</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T_co</span><span class="p">:</span> <span class="o">...</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-310">310</a></span>
+<span class="normal"><a href="#__codelineno-0-311">311</a></span>
+<span class="normal"><a href="#__codelineno-0-312">312</a></span>
+<span class="normal"><a href="#__codelineno-0-313">313</a></span>
+<span class="normal"><a href="#__codelineno-0-314">314</a></span>
+<span class="normal"><a href="#__codelineno-0-315">315</a></span>
+<span class="normal"><a href="#__codelineno-0-316">316</a></span>
+<span class="normal"><a href="#__codelineno-0-317">317</a></span>
+<span class="normal"><a href="#__codelineno-0-318">318</a></span>
+<span class="normal"><a href="#__codelineno-0-319">319</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="k">class</span><span class="w"> </span><span class="nc">Dataset</span><span class="p">(</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T_co</span><span class="p">]):</span>
+<a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;The general interface for a dataset.</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a>
+<a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">    It&#39;s currently implemented as a protocol, having a similar interface to torch.utils.data.Dataset.</span>
+<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">    You don&#39;t have to inherit from this class; you can use a simple list if you want to.</span>
+<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-316" name="__codelineno-0-316"></a>
+<a id="__codelineno-0-317" name="__codelineno-0-317"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T_co</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-0-318" name="__codelineno-0-318"></a>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4568,35 +4568,37 @@ for model inference, such as temperature, top_p, etc.</p>
 
               <details class="quote">
                 <summary>Source code in <code>agentlightning/types.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-104">104</a></span>
-<span class="normal"><a href="#__codelineno-0-105">105</a></span>
-<span class="normal"><a href="#__codelineno-0-106">106</a></span>
-<span class="normal"><a href="#__codelineno-0-107">107</a></span>
-<span class="normal"><a href="#__codelineno-0-108">108</a></span>
-<span class="normal"><a href="#__codelineno-0-109">109</a></span>
-<span class="normal"><a href="#__codelineno-0-110">110</a></span>
-<span class="normal"><a href="#__codelineno-0-111">111</a></span>
-<span class="normal"><a href="#__codelineno-0-112">112</a></span>
-<span class="normal"><a href="#__codelineno-0-113">113</a></span>
-<span class="normal"><a href="#__codelineno-0-114">114</a></span>
-<span class="normal"><a href="#__codelineno-0-115">115</a></span>
-<span class="normal"><a href="#__codelineno-0-116">116</a></span>
-<span class="normal"><a href="#__codelineno-0-117">117</a></span>
-<span class="normal"><a href="#__codelineno-0-118">118</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="k">class</span><span class="w"> </span><span class="nc">LLM</span><span class="p">(</span><span class="n">Resource</span><span class="p">):</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">    Provide an LLM endpoint and model name as a resource.</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">    Attributes:</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">        endpoint (str): The URL of the LLM API endpoint.</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">        model (str): The identifier for the model to be used (e.g., &#39;gpt-4o&#39;).</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">        sampling_parameters (SamplingParameters): A dictionary of hyperparameters</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">            for model inference, such as temperature, top_p, etc.</span>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a>    <span class="n">resource_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;llm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;llm&quot;</span>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a>    <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="n">sampling_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-196">196</a></span>
+<span class="normal"><a href="#__codelineno-0-197">197</a></span>
+<span class="normal"><a href="#__codelineno-0-198">198</a></span>
+<span class="normal"><a href="#__codelineno-0-199">199</a></span>
+<span class="normal"><a href="#__codelineno-0-200">200</a></span>
+<span class="normal"><a href="#__codelineno-0-201">201</a></span>
+<span class="normal"><a href="#__codelineno-0-202">202</a></span>
+<span class="normal"><a href="#__codelineno-0-203">203</a></span>
+<span class="normal"><a href="#__codelineno-0-204">204</a></span>
+<span class="normal"><a href="#__codelineno-0-205">205</a></span>
+<span class="normal"><a href="#__codelineno-0-206">206</a></span>
+<span class="normal"><a href="#__codelineno-0-207">207</a></span>
+<span class="normal"><a href="#__codelineno-0-208">208</a></span>
+<span class="normal"><a href="#__codelineno-0-209">209</a></span>
+<span class="normal"><a href="#__codelineno-0-210">210</a></span>
+<span class="normal"><a href="#__codelineno-0-211">211</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="k">class</span><span class="w"> </span><span class="nc">LLM</span><span class="p">(</span><span class="n">Resource</span><span class="p">):</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">    Provide an LLM endpoint and model name as a resource.</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">    Attributes:</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">        endpoint (str): The URL of the LLM API endpoint.</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">        model (str): The identifier for the model to be used (e.g., &#39;gpt-4o&#39;).</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">        sampling_parameters (SamplingParameters): A dictionary of hyperparameters</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">            for model inference, such as temperature, top_p, etc.</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="n">resource_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;llm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;llm&quot;</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>    <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a>    <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>    <span class="n">sampling_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4648,13 +4650,7 @@ for model inference, such as temperature, top_p, etc.</p>
 
               <details class="quote">
                 <summary>Source code in <code>agentlightning/types.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-40">40</a></span>
-<span class="normal"><a href="#__codelineno-0-41">41</a></span>
-<span class="normal"><a href="#__codelineno-0-42">42</a></span>
-<span class="normal"><a href="#__codelineno-0-43">43</a></span>
-<span class="normal"><a href="#__codelineno-0-44">44</a></span>
-<span class="normal"><a href="#__codelineno-0-45">45</a></span>
-<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-46">46</a></span>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
 <span class="normal"><a href="#__codelineno-0-49">49</a></span>
@@ -4672,31 +4668,37 @@ for model inference, such as temperature, top_p, etc.</p>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
 <span class="normal"><a href="#__codelineno-0-62">62</a></span>
 <span class="normal"><a href="#__codelineno-0-63">63</a></span>
-<span class="normal"><a href="#__codelineno-0-64">64</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="k">class</span><span class="w"> </span><span class="nc">Rollout</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;The standard reporting object from client to server.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="n">rollout_id</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="c1"># Echoing the input task</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="n">task</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="c1"># Primary, high-level feedback</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">final_reward</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span>
+<span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="k">class</span><span class="w"> </span><span class="nc">Rollout</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;The standard reporting object from client to server.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="n">rollout_id</span><span class="p">:</span> <span class="nb">str</span>
 <a id="__codelineno-0-50" name="__codelineno-0-50"></a>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="c1"># Structured, sequential feedback for RL-style optimization</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="n">triplets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>    <span class="c1"># Echoing the input task</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="n">task</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <a id="__codelineno-0-53" name="__codelineno-0-53"></a>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="c1"># Optional, rich-context data for deep analysis</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">trace</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;A list of spans that conform to the OpenTelemetry JSON format. &quot;</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="s2">&quot;Users of the opentelemetry-sdk can generate this by calling &quot;</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="s2">&quot;json.loads(readable_span.to_json()).&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="p">)</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="n">logs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>    <span class="c1"># A bucket for any other relevant information</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="c1"># Primary, high-level feedback</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">final_reward</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="c1"># Structured, sequential feedback for RL-style optimization</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="n">triplets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="c1"># Optional, rich-context data for deep analysis</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="n">trace</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;A list of spans that conform to the OpenTelemetry JSON format. &quot;</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="s2">&quot;Users of the opentelemetry-sdk can generate this by calling &quot;</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="s2">&quot;json.loads(readable_span.to_json()).&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="p">)</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="n">logs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="c1"># A bucket for any other relevant information</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
