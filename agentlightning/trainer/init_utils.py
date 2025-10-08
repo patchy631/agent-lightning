@@ -87,11 +87,8 @@ def build_component(
     optional_defaults: Optional[OptionalDefaults] = ...,
     dict_requires_type: bool = ...,
     dict_default_cls: type[T] | None = ...,
-    allow_class: bool = ...,
-    allow_factory: bool = ...,
-    allow_str: bool = ...,
     type_error_fmt: str | None = ...,
-    invalid_type_error_fmt: str | None = ...,
+    invalid_spec_error_fmt: str | None = ...,
 ) -> T: ...
 
 
@@ -106,11 +103,8 @@ def build_component(
     optional_defaults: Optional[OptionalDefaults] = ...,
     dict_requires_type: bool = ...,
     dict_default_cls: type[T] | None = ...,
-    allow_class: bool = ...,
-    allow_factory: bool = ...,
-    allow_str: bool = ...,
     type_error_fmt: str | None = ...,
-    invalid_type_error_fmt: str | None = ...,
+    invalid_spec_error_fmt: str | None = ...,
 ) -> T | None: ...
 
 
@@ -125,11 +119,8 @@ def build_component(
     optional_defaults: Optional[OptionalDefaults] = ...,
     dict_requires_type: bool = ...,
     dict_default_cls: type[T] | None = ...,
-    allow_class: bool = ...,
-    allow_factory: bool = ...,
-    allow_str: bool = ...,
     type_error_fmt: str | None = ...,
-    invalid_type_error_fmt: str | None = ...,
+    invalid_spec_error_fmt: str | None = ...,
 ) -> T | None: ...
 
 
@@ -143,13 +134,65 @@ def build_component(
     optional_defaults: Optional[OptionalDefaults] = None,
     dict_requires_type: bool = True,
     dict_default_cls: type[T] | None = None,
-    allow_class: bool = False,
-    allow_factory: bool = False,
-    allow_str: bool = True,
     type_error_fmt: str | None = None,
-    invalid_type_error_fmt: str | None = None,
+    invalid_spec_error_fmt: str | None = None,
 ) -> T | None:
-    """Return a component instance created from ``spec``."""
+    """Build and return a component instance from a flexible specification.
+
+    This function provides a flexible way to create component instances from various
+    input formats including direct instances, class types, factory functions, import
+    paths, or configuration dictionaries.
+
+    Args:
+        spec: The component specification. Can be:
+            - An instance of expected_type (returned as-is)
+            - A string import path (e.g., 'module.Class')
+            - A dict with 'type' key and constructor kwargs
+            - A class type (will be instantiated)
+            - A factory function (will be called)
+            - None (uses default_factory or returns None if allow_none=True)
+        expected_type: The type that the resulting instance must be or inherit from.
+        spec_name: Descriptive name for the spec, used in error messages.
+        default_factory: Optional factory function called when spec is None.
+        allow_none: If True, allows None to be returned when spec is None and
+            no default_factory is provided.
+        optional_defaults: Dict mapping parameter names to default values or factory
+            functions that will be injected if the constructor accepts them.
+        dict_requires_type: If True, dict specs must include a 'type' key.
+        dict_default_cls: Default class to use for dict specs without a 'type' key
+            (only used when dict_requires_type=False).
+        type_error_fmt: Custom format string for type validation errors. Should include
+            {type_name} and {expected_type} placeholders.
+        invalid_spec_error_fmt: Custom format string for invalid spec type errors.
+            Should include {actual_type} and {expected_type} placeholders.
+
+    Returns:
+        An instance of expected_type, or None if allow_none=True and spec is None
+        without a default_factory.
+
+    Raises:
+        TypeError: If the instantiated object is not an instance of expected_type.
+        ValueError: If spec is None and neither default_factory nor allow_none is set,
+            or if spec type is invalid, or if dict spec is invalid.
+
+    Examples:
+        >>> # Direct instance
+        >>> optimizer = build_component(AdamW(), expected_type=Optimizer, spec_name='optimizer')
+        >>>
+        >>> # String import path
+        >>> optimizer = build_component('torch.optim.AdamW', expected_type=Optimizer, spec_name='optimizer')
+        >>>
+        >>> # Dict with type and kwargs
+        >>> spec = {'type': 'torch.optim.AdamW', 'lr': 0.001}
+        >>> optimizer = build_component(spec, expected_type=Optimizer, spec_name='optimizer')
+        >>>
+        >>> # Class type
+        >>> optimizer = build_component(AdamW, expected_type=Optimizer, spec_name='optimizer')
+        >>>
+        >>> # Factory function
+        >>> optimizer = build_component(lambda: AdamW(lr=0.001), expected_type=Optimizer,
+        ...                            spec_name='optimizer')
+    """
     if isinstance(spec, expected_type):
         return cast(T, spec)
 
@@ -160,20 +203,20 @@ def build_component(
         if allow_none:
             return None
         raise ValueError(
-            invalid_type_error_fmt.format(actual_type=type(spec), expected_type=expected_type.__name__)
-            if invalid_type_error_fmt
+            invalid_spec_error_fmt.format(actual_type=type(spec), expected_type=expected_type.__name__)
+            if invalid_spec_error_fmt
             else f"{spec_name} cannot be None."
         )
 
-    if allow_class and isinstance(spec, type) and issubclass(spec, expected_type):
+    if isinstance(spec, type) and issubclass(spec, expected_type):
         instance = instantiate_component(spec, optional_defaults=optional_defaults)
         return _ensure_expected_type(instance, expected_type, spec_name, type_error_fmt)
 
-    if allow_factory and callable(spec) and not isinstance(spec, type):  # type: ignore
+    if callable(spec) and not isinstance(spec, type):  # type: ignore
         instance = spec()
         return _ensure_expected_type(instance, expected_type, spec_name, type_error_fmt)
 
-    if allow_str and isinstance(spec, str):
+    if isinstance(spec, str):
         instance = instantiate_from_spec(
             spec,
             spec_name=spec_name,
@@ -193,8 +236,8 @@ def build_component(
         )
         return _ensure_expected_type(instance, expected_type, spec_name, type_error_fmt)
 
-    if invalid_type_error_fmt:
-        raise ValueError(invalid_type_error_fmt.format(actual_type=type(spec), expected_type=expected_type.__name__))  # type: ignore[arg-type]
+    if invalid_spec_error_fmt:
+        raise ValueError(invalid_spec_error_fmt.format(actual_type=type(spec), expected_type=expected_type.__name__))  # type: ignore
 
     type_name = str(type(spec))  # type: ignore
     raise ValueError(f"Invalid {spec_name} type: {type_name}. Expected {expected_type.__name__}, str, dict, or None.")

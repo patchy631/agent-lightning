@@ -1,18 +1,20 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import asyncio
+import functools
 import inspect
 import logging
 import multiprocessing
 import signal
 import time
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Sequence, TypeVar, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, TypeVar, Union
 
 from agentlightning.adapter import TraceTripletAdapter
 from agentlightning.algorithm.base import BaseAlgorithm
 from agentlightning.client import AgentLightningClient
 from agentlightning.execution.base import ExecutionStrategy
+from agentlightning.execution.events import Event
 from agentlightning.execution.shared_memory import SharedMemoryExecutionStrategy
 from agentlightning.litagent import LitAgent
 from agentlightning.llm_proxy import LLMProxy
@@ -27,6 +29,9 @@ from agentlightning.types import Dataset, Hook, ParallelWorkerBase
 logger = logging.getLogger(__name__)
 
 T_co = TypeVar("T_co", covariant=True)
+T = TypeVar("T")
+
+ComponentSpec = Union[T, type[T], Callable[[], T], str, Dict[str, Any], None]
 
 
 class Trainer(ParallelWorkerBase):
@@ -70,24 +75,17 @@ class Trainer(ParallelWorkerBase):
         dev: bool = False,
         n_runners: Optional[int] = None,
         max_rollouts: Optional[int] = None,
-        tracer: Union[BaseTracer, str, Dict[str, Any], None] = None,
-        adapter: Union[TraceTripletAdapter, Dict[str, Any], None] = None,
-        store: Union[LightningStore, str, Dict[str, Any], None] = None,
-        runner: Union[
-            BaseRunner[Any],
-            type[BaseRunner[Any]],
-            Callable[[], BaseRunner[Any]],
-            str,
-            Dict[str, Any],
-            None,
-        ] = None,
-        strategy: Union[ExecutionStrategy, str, Dict[str, Any], None] = None,
-        algorithm: Union[BaseAlgorithm, str, Dict[str, Any], None] = None,
-        llm_proxy: Union[LLMProxy, Dict[str, Any], None] = None,
+        tracer: ComponentSpec[BaseTracer] = None,
+        adapter: ComponentSpec[TraceTripletAdapter] = None,
+        store: ComponentSpec[LightningStore] = None,
+        runner: ComponentSpec[BaseRunner[Any]] = None,
+        strategy: ComponentSpec[ExecutionStrategy] = None,
+        algorithm: ComponentSpec[BaseAlgorithm] = None,
+        llm_proxy: ComponentSpec[LLMProxy] = None,
         n_workers: Optional[int] = None,
         max_tasks: Optional[int] = None,
         daemon: bool = True,
-        triplet_exporter: Union[TraceTripletAdapter, Dict[str, Any], None] = None,
+        triplet_exporter: ComponentSpec[TraceTripletAdapter] = None,
         hooks: Optional[Union[Hook, Sequence[Hook]]] = None,
     ):
         super().__init__()
@@ -151,7 +149,7 @@ class Trainer(ParallelWorkerBase):
 
         # The active store for the current execution context
         self.store = self._make_store(store)
-        self._runner_spec = runner
+        self.runner = self._make_runner(runner)
 
         self.strategy = self._make_strategy(strategy, n_runners=self.n_runners)
         if hasattr(self.strategy, "n_runners"):
@@ -171,7 +169,7 @@ class Trainer(ParallelWorkerBase):
                 "The cleanup must be handled manually."
             )
 
-    def _make_tracer(self, tracer: Union[BaseTracer, str, Dict[str, Any], None]) -> BaseTracer:
+    def _make_tracer(self, tracer: ComponentSpec[BaseTracer]) -> BaseTracer:
         """Creates a tracer instance based on the provided configuration."""
         default_factory = lambda: AgentOpsTracer(
             agentops_managed=True,
@@ -184,22 +182,22 @@ class Trainer(ParallelWorkerBase):
             spec_name="tracer",
             default_factory=default_factory,
             dict_requires_type=True,
-            invalid_type_error_fmt="Invalid tracer type: {actual_type}. Expected BaseTracer, str, dict, or None.",
+            invalid_spec_error_fmt="Invalid tracer type: {actual_type}. Expected BaseTracer, str, dict, or None.",
             type_error_fmt="Tracer factory returned {type_name}, which is not a BaseTracer subclass.",
         )
 
-    def _make_algorithm(self, algorithm: Union[BaseAlgorithm, str, Dict[str, Any], None]) -> Optional[BaseAlgorithm]:
+    def _make_algorithm(self, algorithm: ComponentSpec[BaseAlgorithm]) -> Optional[BaseAlgorithm]:
         """Creates an algorithm instance based on the provided configuration."""
         return build_component(
             algorithm,
             expected_type=BaseAlgorithm,
             spec_name="algorithm",
             allow_none=True,
-            invalid_type_error_fmt="Invalid algorithm type: {actual_type}. Expected BaseAlgorithm, str, dict, or None.",
+            invalid_spec_error_fmt="Invalid algorithm type: {actual_type}. Expected BaseAlgorithm, str, dict, or None.",
             type_error_fmt="Algorithm factory returned {type_name}, which is not a BaseAlgorithm subclass.",
         )
 
-    def _make_adapter(self, adapter: Union[TraceTripletAdapter, Dict[str, Any], None]) -> TraceTripletAdapter:
+    def _make_adapter(self, adapter: ComponentSpec[TraceTripletAdapter]) -> TraceTripletAdapter:
         return build_component(
             adapter,
             expected_type=TraceTripletAdapter,
@@ -207,24 +205,23 @@ class Trainer(ParallelWorkerBase):
             default_factory=TraceTripletAdapter,
             dict_requires_type=False,
             dict_default_cls=TraceTripletAdapter,
-            allow_str=False,
-            invalid_type_error_fmt="Invalid adapter type: {actual_type}. Expected TraceTripletAdapter, dict, or None.",
+            invalid_spec_error_fmt="Invalid adapter type: {actual_type}. Expected TraceTripletAdapter, dict, or None.",
             type_error_fmt="Adapter factory returned {type_name}, which is not a TraceTripletAdapter subclass.",
         )
 
-    def _make_store(self, store: Union[LightningStore, str, Dict[str, Any], None]) -> LightningStore:
+    def _make_store(self, store: ComponentSpec[LightningStore]) -> LightningStore:
         return build_component(
             store,
             expected_type=LightningStore,
             spec_name="store",
             default_factory=InMemoryLightningStore,
-            invalid_type_error_fmt="Invalid store type: {actual_type}. Expected LightningStore, str, dict, or None.",
+            invalid_spec_error_fmt="Invalid store type: {actual_type}. Expected LightningStore, str, dict, or None.",
             type_error_fmt="Store factory returned {type_name}, which is not a LightningStore subclass.",
         )
 
     def _make_strategy(
         self,
-        strategy: Union[ExecutionStrategy, str, Dict[str, Any], None],
+        strategy: ComponentSpec[ExecutionStrategy],
         *,
         n_runners: int,
     ) -> ExecutionStrategy:
@@ -237,13 +234,13 @@ class Trainer(ParallelWorkerBase):
             spec_name="strategy",
             default_factory=lambda: SharedMemoryExecutionStrategy(n_runners=n_runners),
             optional_defaults=optional_defaults,
-            invalid_type_error_fmt="Invalid strategy type: {actual_type}. Expected ExecutionStrategy, str, dict, or None.",
+            invalid_spec_error_fmt="Invalid strategy type: {actual_type}. Expected ExecutionStrategy, str, dict, or None.",
             type_error_fmt="Strategy factory returned {type_name}, which is not an ExecutionStrategy subclass.",
         )
 
     def _make_llm_proxy(
         self,
-        llm_proxy: Union[LLMProxy, Dict[str, Any], str, None],
+        llm_proxy: ComponentSpec[LLMProxy],
         *,
         store: LightningStore,
     ) -> Optional[LLMProxy]:
@@ -261,12 +258,11 @@ class Trainer(ParallelWorkerBase):
             spec_name="llm_proxy",
             allow_none=True,
             optional_defaults=optional_defaults,
-            invalid_type_error_fmt="Invalid llm_proxy type: {actual_type}. Expected LLMProxy, dict, str, or None.",
+            invalid_spec_error_fmt="Invalid llm_proxy type: {actual_type}. Expected LLMProxy, dict, str, or None.",
             type_error_fmt="llm_proxy factory returned {type_name}, which is not an LLMProxy subclass.",
         )
 
-    def _make_runner(self) -> BaseRunner[Any]:
-        spec = self._runner_spec
+    def _make_runner(self, runner: ComponentSpec[BaseRunner[Any]]) -> BaseRunner[Any]:
         optional_defaults: Dict[str, Callable[[], Any]] = {"tracer": lambda: self.tracer}
         if self.max_rollouts is not None:
             optional_defaults["max_rollouts"] = lambda: self.max_rollouts
@@ -274,24 +270,13 @@ class Trainer(ParallelWorkerBase):
         def default_runner_factory() -> BaseRunner[Any]:
             return instantiate_component(AgentRunnerV2, optional_defaults=optional_defaults)
 
-        if spec is None:
-            return default_runner_factory()
-        if isinstance(spec, BaseRunner):
-            if self.n_runners > 1:
-                logger.warning(
-                    "A single runner instance was provided; it will be shared across %d workers.",
-                    self.n_runners,
-                )
-            return cast(BaseRunner[Any], spec)
         return build_component(
-            spec,
+            runner,
             expected_type=BaseRunner,
             spec_name="runner",
             default_factory=default_runner_factory,
             optional_defaults=optional_defaults,
-            allow_class=True,
-            allow_factory=True,
-            invalid_type_error_fmt="Invalid runner type: {actual_type}. Expected BaseRunner, callable, str, dict, or None.",
+            invalid_spec_error_fmt="Invalid runner type: {actual_type}. Expected BaseRunner, callable, str, dict, or None.",
             type_error_fmt="Runner factory returned {type_name}, which is not a BaseRunner subclass.",
         )
 
@@ -302,77 +287,92 @@ class Trainer(ParallelWorkerBase):
             return (hooks,)
         return tuple(hooks)
 
-    def fit(
+    def fit_v2(
         self,
         agent: LitAgent[T_co],
         *,
-        train_dataset: Optional[Dataset[Any]] = None,
-        validation_dataset: Optional[Dataset[Any]] = None,
-        dev_dataset: Optional[Dataset[Any]] = None,
+        train_dataset: Optional[Dataset[T_co]] = None,
+        validation_dataset: Optional[Dataset[T_co]] = None,
+        dev_dataset: Optional[Dataset[T_co]] = None,
     ) -> None:
         """Run the training loop using the configured strategy, store, and runner."""
         agent.set_trainer(self)
 
-        algorithm = self.algorithm
-        if algorithm is not None:
-            algorithm.set_trainer(self)
-            algorithm.set_llm_proxy(self.llm_proxy)
-
-        async def algorithm_bundle(store: LightningStore, event: Any) -> None:
-            if self.llm_proxy is not None:
-                self.llm_proxy.set_store(store)
-
-            if algorithm is None:
-                while not event.is_set():
-                    await asyncio.sleep(0.1)
-                return
-            try:
-                if inspect.iscoroutinefunction(algorithm.run):
-                    await algorithm.run(
-                        train_dataset=train_dataset,
-                        validation_dataset=validation_dataset,
-                        dev_dataset=dev_dataset,
-                    )
-                else:
-                    # This will block the event loop to maximize the debugging experience
-                    # It's the responsibility of the execution strategy to enable async execution
-                    algorithm.run(
-                        train_dataset=train_dataset,
-                        validation_dataset=validation_dataset,
-                        dev_dataset=dev_dataset,
-                    )
-            except Exception:
-                logger.exception("Algorithm bundle encountered an error.")
-                raise
-
-        async def runner_bundle(store: LightningStore, worker_id: int, event: Any) -> None:
-            runner_instance: BaseRunner[Any] | None = None
-            runner_initialized = False
-            worker_initialized = False
-            try:
-                runner_instance = self._make_runner()
-                runner_instance.init(agent=agent, hooks=self.hooks)
-                runner_initialized = True
-                runner_instance.init_worker(worker_id, store)
-                worker_initialized = True
-                await runner_instance.iter(event=event)
-            except Exception:
-                logger.exception("Runner bundle encountered an error (worker_id=%s).", worker_id)
-                raise
-            finally:
-                if runner_instance is not None:
-                    if worker_initialized:
-                        try:
-                            runner_instance.teardown_worker(worker_id)
-                        except Exception:
-                            logger.exception("Error during runner worker teardown (worker_id=%s).", worker_id)
-                    if runner_initialized:
-                        try:
-                            runner_instance.teardown()
-                        except Exception:
-                            logger.exception("Error during runner teardown (worker_id=%s).", worker_id)
+        algorithm_bundle = functools.partial(
+            self._algorithm_bundle,
+            train_dataset=train_dataset,
+            validation_dataset=validation_dataset,
+            dev_dataset=dev_dataset,
+        )
+        runner_bundle = functools.partial(self._runner_bundle, agent=agent)
 
         self.strategy.execute(algorithm_bundle, runner_bundle, self.store)
+
+    async def _algorithm_bundle(
+        self,
+        store: LightningStore,
+        event: Event,
+        train_dataset: Optional[Dataset[T_co]],
+        validation_dataset: Optional[Dataset[T_co]],
+        dev_dataset: Optional[Dataset[T_co]],
+    ) -> None:
+        if self.algorithm is not None:
+            self.algorithm.set_trainer(self)
+            self.algorithm.set_llm_proxy(self.llm_proxy)
+
+        if self.llm_proxy is not None:
+            self.llm_proxy.set_store(store)
+
+        if self.algorithm is None:
+            while not event.is_set():
+                await asyncio.sleep(0.1)
+            return
+        try:
+            if inspect.iscoroutinefunction(self.algorithm.run):
+                await self.algorithm.run(
+                    train_dataset=train_dataset,
+                    validation_dataset=validation_dataset,
+                    dev_dataset=dev_dataset,
+                )
+            else:
+                # This will block the event loop to maximize the debugging experience
+                # It's the responsibility of the execution strategy to enable async execution
+                self.algorithm.run(
+                    train_dataset=train_dataset,
+                    validation_dataset=validation_dataset,
+                    dev_dataset=dev_dataset,
+                )
+        except Exception:
+            logger.exception("Algorithm bundle encountered an error.")
+            raise
+
+    async def _runner_bundle(self, store: LightningStore, worker_id: int, event: Event, agent: LitAgent[T_co]) -> None:
+        runner_instance: BaseRunner[Any] | None = None
+        runner_initialized = False
+        worker_initialized = False
+        try:
+            # If not using shm execution strategy, we are already in the forked process
+            runner_instance = self.runner
+            runner_instance.init(agent=agent, hooks=self.hooks)
+            runner_initialized = True
+            runner_instance.init_worker(worker_id, store)
+            worker_initialized = True
+            await runner_instance.iter(event=event)
+        except Exception:
+            logger.exception("Runner bundle encountered an error (worker_id=%s).", worker_id)
+            raise
+        finally:
+            if runner_instance is not None:
+                if worker_initialized:
+                    try:
+                        runner_instance.teardown_worker(worker_id)
+                    except Exception:
+                        logger.exception("Error during runner worker teardown (worker_id=%s).", worker_id)
+                if runner_initialized:
+                    try:
+                        runner_instance.teardown()
+                    except Exception:
+                        logger.exception("Error during runner teardown (worker_id=%s).", worker_id)
 
     def _extract_client_from_data(
         self, data: Union[str, AgentLightningClient, Dataset[Any]]
@@ -556,7 +556,7 @@ class Trainer(ParallelWorkerBase):
                     p.kill()
                     p.join(timeout=10)  # Ensure it's reaped
 
-    def fit_v0(
+    def fit(
         self,
         agent: LitAgent[T_co],
         train_data: Union[str, AgentLightningClient, Dataset[T_co]],

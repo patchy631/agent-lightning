@@ -142,7 +142,6 @@ def test_build_component_from_type_spec() -> None:
         SimpleComponent,
         expected_type=SampleBase,
         spec_name="component",
-        allow_class=True,
     )
 
     assert isinstance(result, SimpleComponent)
@@ -153,7 +152,6 @@ def test_build_component_from_callable_spec() -> None:
         lambda: SampleComponent(required=12),
         expected_type=SampleComponent,
         spec_name="component",
-        allow_factory=True,
     )
 
     assert isinstance(result, SampleComponent)
@@ -168,7 +166,7 @@ def test_build_component_invalid_type_error() -> None:
             1,
             expected_type=SampleComponent,
             spec_name="component",
-            invalid_type_error_fmt="Invalid component type: {actual_type}. Expected SampleComponent, str, dict, or None.",
+            invalid_spec_error_fmt="Invalid component type: {actual_type}. Expected SampleComponent, str, dict, or None.",
         )
 
 
@@ -193,17 +191,16 @@ def test_instantiate_from_spec_invalid_type_error_message() -> None:
         instantiate_from_spec(42, spec_name="component")  # type: ignore[arg-type]
 
 
-def test_build_component_disallows_string_when_configured() -> None:
+def test_build_component_from_string_type_mismatch() -> None:
     with pytest.raises(
-        ValueError,
-        match="Invalid component type: <class 'str'>. Expected SampleComponent, str, dict, or None.",
+        TypeError,
+        match="component factory returned <class 'tests.trainer.sample_components.SimpleComponent'>, which is not a SampleComponent subclass.",
     ):
         build_component(
             "tests.trainer.sample_components.SimpleComponent",
             expected_type=SampleComponent,
             spec_name="component",
-            allow_str=False,
-            invalid_type_error_fmt="Invalid component type: {actual_type}. Expected SampleComponent, str, dict, or None.",
+            invalid_spec_error_fmt="Invalid component type: {actual_type}. Expected SampleComponent, str, dict, or None.",
         )
 
 
@@ -225,8 +222,7 @@ def test_build_component_with_type_not_subclass_raises() -> None:
             Unrelated,
             expected_type=SampleComponent,
             spec_name="component",
-            allow_class=True,
-            invalid_type_error_fmt="Unsupported component type {actual_type} for component",
+            invalid_spec_error_fmt="Unsupported component type {actual_type} for component",
         )
 
 
@@ -239,7 +235,6 @@ def test_build_component_callable_returning_wrong_type_raises() -> None:
             lambda: Unrelated(),
             expected_type=SampleComponent,
             spec_name="component",
-            allow_factory=True,
         )
 
 
