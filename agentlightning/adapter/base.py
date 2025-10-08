@@ -4,6 +4,8 @@ from typing import Generic, List, TypeVar
 
 from opentelemetry.sdk.trace import ReadableSpan
 
+from agentlightning.types import Span
+
 T_from = TypeVar("T_from")
 T_to = TypeVar("T_to")
 
@@ -62,7 +64,7 @@ class Adapter(Generic[T_from, T_to]):
         raise NotImplementedError("Adapter.adapt() is not implemented")
 
 
-class TraceAdapter(Adapter[List[ReadableSpan], T_to], Generic[T_to]):
+class OtelTraceAdapter(Adapter[List[ReadableSpan], T_to], Generic[T_to]):
     """Base class for adapters that convert OpenTelemetry trace spans into other formats.
 
     This class specializes `Adapter` for working with OpenTelemetry `ReadableSpan`
@@ -82,4 +84,13 @@ class TraceAdapter(Adapter[List[ReadableSpan], T_to], Generic[T_to]):
         >>> adapter = TraceToDictAdapter()
         >>> adapter([span1, span2])
         {'count': 2}
+    """
+
+
+class TraceAdapter(Adapter[List[Span], T_to], Generic[T_to]):
+    """Base class for adapters that convert trace spans into other formats.
+
+    This class specializes `Adapter` for working with trace spans. It expects a list of
+    Agent-lightning spans as input and produces a custom target format
+    (e.g., reinforcement learning training data, SFT datasets, logs, metrics).
     """

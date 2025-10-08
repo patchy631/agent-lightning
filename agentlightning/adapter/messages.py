@@ -11,7 +11,7 @@ from openai.types.shared_params import FunctionDefinition
 from opentelemetry.sdk.trace import ReadableSpan
 from pydantic import BaseModel
 
-from .base import TraceAdapter
+from .base import OtelTraceAdapter
 
 
 class OpenAIMessages(BaseModel):
@@ -161,7 +161,7 @@ def convert_to_openai_messages(
             yield OpenAIMessages(messages=messages, tools=tools)
 
 
-class TraceMessagesAdapter(TraceAdapter[List[OpenAIMessages]]):
+class TraceMessagesAdapter(OtelTraceAdapter[List[OpenAIMessages]]):
     """
     Adapter that converts OpenTelemetry trace spans into OpenAI-compatible message format.
 

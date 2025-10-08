@@ -18,8 +18,10 @@ from tensordict import TensorDict
 from verl import DataProto
 
 from agentlightning import LLM, AgentLightningServer, NamedResources, Rollout, configure_logger
+from agentlightning.adapter.triplet import TraceTripletAdapter
 from agentlightning.llm_proxy import LLMProxy
 from agentlightning.store.base import LightningStore
+from agentlightning.types import RolloutV2, Span, Task, Triplet
 
 configure_logger()
 
@@ -136,6 +138,7 @@ class AgentModeDaemon:
         mode: Literal["v0", "v1"] = "v1",
         llm_proxy: LLMProxy | None = None,
         store: LightningStore | None = None,
+        adapater: TraceTripletAdapter | None = None,
     ):
         self.mode = mode
         self.llm_proxy = llm_proxy
@@ -152,6 +155,7 @@ class AgentModeDaemon:
         else:
             assert store is not None
             self.store = store
+            self.adapater = adapater
             self._internal_loop: Optional[asyncio.AbstractEventLoop] = None
             self._internal_loop_thread = threading.Thread(target=self._internal_loop_runner, daemon=True)
             self._internal_loop_thread.start()
@@ -167,7 +171,7 @@ class AgentModeDaemon:
         # Internal State
         self.backend_llm_server_addresses: List[str] = []
         self._total_tasks_queued = 0
-        self._completed_rollouts: Dict[str, Rollout] = {}
+        self._completed_rollouts_v0: Dict[str, Rollout] = {}
         self._task_id_to_original_sample: Dict[str, Dict[str, Any]] = {}
         self._server_thread: Optional[threading.Thread] = None
         self._proxy_thread: Optional[threading.Thread] = None
@@ -177,6 +181,7 @@ class AgentModeDaemon:
         """Run the internal loop."""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        self._internal_loop = loop
         loop.run_forever()
         loop.close()
 
@@ -388,22 +393,86 @@ class AgentModeDaemon:
         elif any(not r.prompt.get("token_ids", []) for r in rollout.triplets):
             print(f"Warning: Rollout {rollout.rollout_id} contains empty prompt: {rollout.triplets}")
 
+    def _validate_data_v1(self, rollout: RolloutV2) -> Rollout:
+        """Convert RolloutV2 to Rollout and validate.
+
+        1. Task: construct from RolloutV2
+        2. Triplets: obtained by querying spans and feeding into the adapter
+        3. Final reward: extracted from last triplet's reward, searching backwards if not found
+        """
+        # Get the event loop
+        loop = self._internal_loop
+        assert loop is not None
+
+        # Query spans for this rollout (latest attempt)
+        spans_future = asyncio.run_coroutine_threadsafe(
+            self.store.query_spans(rollout.rollout_id, attempt_id="latest"), loop
+        )
+        try:
+            spans = spans_future.result(timeout=10)
+        except Exception as e:
+            print(f"Error querying spans for rollout {rollout.rollout_id}: {e}")
+            spans = []
+
+        # Convert spans to triplets using the adapter
+        triplets: Optional[List[Triplet]] = None
+        if self.adapater is not None and spans:
+            triplets = self.adapater.adapt(spans)
+
+        # Extract final reward from triplets
+        final_reward: Optional[float] = None
+        if triplets:
+            # Search backwards through triplets for the first non-None reward
+            for triplet in reversed(triplets):
+                if triplet.reward is not None:
+                    final_reward = triplet.reward
+                    break
+
+        # Construct the Task object from RolloutV2
+        task = Task(
+            rollout_id=rollout.rollout_id,
+            input=rollout.input,
+            mode=rollout.mode,
+            resources_id=rollout.resources_id,
+            metadata=rollout.metadata or {},
+        )
+
+        # Create the Rollout object (without trace and logs as per user's note)
+        result_rollout = Rollout(
+            rollout_id=rollout.rollout_id,
+            task=task,
+            final_reward=final_reward,
+            triplets=triplets,
+            metadata=rollout.metadata or {},
+        )
+
+        # Run the same validation as v0
+        self._validate_data(result_rollout)
+
+        return result_rollout
+
     async def _async_run_until_finished(self, verbose: bool = True):
         """Async helper to wait for all tasks to complete."""
-        while len(self._completed_rollouts) < self._total_tasks_queued:
+        while len(self._completed_rollouts_v0) < self._total_tasks_queued:
             if self.mode == "v0":
                 completed_batch = await self.server.retrieve_completed_rollouts()
             else:
-                completed_batch = await self.store.retrieve_completed_rollouts()
+                completed_batch = await self.store.wait_for_rollouts(
+                    rollout_ids=list(self._task_id_to_original_sample.keys()), timeout=0
+                )
             for rollout in completed_batch:
-                self._validate_data(rollout)
+                if isinstance(rollout, RolloutV2):
+                    rollout = self._validate_data_v1(rollout)
+                else:
+                    self._validate_data(rollout)
                 if rollout.rollout_id not in self._task_id_to_original_sample:
                     print(f"Warning: Received unknown rollout ID {rollout.rollout_id}, skipping.")
                 else:
-                    self._completed_rollouts[rollout.rollout_id] = rollout
+                    self._completed_rollouts_v0[rollout.rollout_id] = rollout
             if verbose:
-                print(f"Completed {len(self._completed_rollouts)}/{self._total_tasks_queued} tasks...")
+                print(f"Completed {len(self._completed_rollouts_v0)}/{self._total_tasks_queued} tasks...")
             await asyncio.sleep(5)
+
         print("All tasks finished.")
 
     def run_until_all_finished(self, verbose: bool = True):
@@ -412,11 +481,16 @@ class AgentModeDaemon:
             print("Warning: No tasks were queued.")
             return
 
-        if not self.server.loop or not self.server.startup_event.is_set():
-            raise RuntimeError("Server is not running or ready.")
+        if self.mode == "v0":
+            if not self.server.loop or not self.server.startup_event.is_set():
+                raise RuntimeError("Server is not running or ready.")
+            loop = self.server.loop
+        else:
+            loop = self._internal_loop
+            assert loop is not None
 
         coro = self._async_run_until_finished(verbose)
-        future = asyncio.run_coroutine_threadsafe(coro, self.server.loop)
+        future = asyncio.run_coroutine_threadsafe(coro, loop)
         try:
             future.result()  # Wait indefinitely for all tasks to complete
         except Exception as e:
@@ -426,10 +500,10 @@ class AgentModeDaemon:
     def get_test_metrics(self):
         """Calculates and returns metrics for a validation run."""
         assert not self.is_train, "This method should only be called during validation."
-        assert len(self._completed_rollouts) == self._total_tasks_queued
+        assert len(self._completed_rollouts_v0) == self._total_tasks_queued
 
         sample_stat_list: List[Dict[str, Any]] = []
-        for _, rollout in self._completed_rollouts.items():
+        for _, rollout in self._completed_rollouts_v0.items():
             final_reward = self._fillna_reward(rollout)
             if not rollout.triplets:
                 print(f"Warning: No triplets found for test rollout {rollout.rollout_id}.")
@@ -466,12 +540,12 @@ class AgentModeDaemon:
         truncation, and tensor creation for the PPO training loop.
         """
         assert self.is_train, "This method should only be called during training."
-        assert len(self._completed_rollouts) == self._total_tasks_queued
+        assert len(self._completed_rollouts_v0) == self._total_tasks_queued
 
         # 1. Reconstruct the `finished_id_to_sample_info` structure from completed rollouts
         finished_id_to_sample_info: Dict[str, Dict[str, Any]] = {}
         finished_id_to_final_reward: Dict[str, float] = {}
-        for rollout_id, rollout in self._completed_rollouts.items():
+        for rollout_id, rollout in self._completed_rollouts_v0.items():
             original_sample = self._task_id_to_original_sample[rollout_id]
 
             final_reward = self._fillna_reward(rollout)
@@ -606,7 +680,7 @@ class AgentModeDaemon:
     def clear_data_and_server(self):
         """Resets the internal state of the daemon for the next run."""
         self.backend_llm_server_addresses = []
-        self._completed_rollouts.clear()
+        self._completed_rollouts_v0.clear()
         self._task_id_to_original_sample.clear()
         self._total_tasks_queued = 0
         # For a true reset, the server's internal queues would also need clearing.

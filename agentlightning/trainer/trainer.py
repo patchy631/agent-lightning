@@ -1,7 +1,6 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import asyncio
-import importlib
 import inspect
 import logging
 import multiprocessing
@@ -50,6 +49,8 @@ class Trainer(ParallelWorkerBase):
         tracer: A tracer instance, or a string pointing to the class full name or a dictionary with a 'type' key
                 that specifies the class full name and other initialization parameters.
                 If None, a default `AgentOpsTracer` will be created with the current settings.
+        hooks: A sequence of `Hook` instances to be called at various lifecycle stages (e.g., on_trace_start,
+               on_trace_end, on_rollout_start, on_rollout_end).
         adapter: An instance of `TraceTripletAdapter` to export data consumble by algorithms from traces.
         llm_proxy: An instance of `LLMProxy` to use for intercepting the LLM calls.
                    If not provided, algorithm will create one on its own.
@@ -87,6 +88,7 @@ class Trainer(ParallelWorkerBase):
         max_tasks: Optional[int] = None,
         daemon: bool = True,
         triplet_exporter: Union[TraceTripletAdapter, Dict[str, Any], None] = None,
+        hooks: Optional[Union[Hook, Sequence[Hook]]] = None,
     ):
         super().__init__()
         self.dev = dev
@@ -132,9 +134,7 @@ class Trainer(ParallelWorkerBase):
         self.max_rollouts = max_rollouts
         self.max_tasks = max_tasks if max_tasks is not None else max_rollouts
 
-        self._tracer_spec: Union[BaseTracer, str, Dict[str, Any], None] = tracer
-        self._tracer_factory: Callable[[], BaseTracer] = self._build_tracer_factory(tracer)
-        self.tracer = self._tracer_factory()
+        self.tracer = self._make_tracer(tracer)
 
         if adapter is not None and triplet_exporter is not None:
             warnings.warn(
@@ -162,6 +162,8 @@ class Trainer(ParallelWorkerBase):
 
         self.llm_proxy = self._make_llm_proxy(llm_proxy, store=self.store)
 
+        self.hooks = self._normalize_hooks(hooks)
+
         if not self.daemon:
             logger.warning(
                 "daemon=False. Worker processes are non-daemonic. "
@@ -171,35 +173,20 @@ class Trainer(ParallelWorkerBase):
 
     def _make_tracer(self, tracer: Union[BaseTracer, str, Dict[str, Any], None]) -> BaseTracer:
         """Creates a tracer instance based on the provided configuration."""
-        if isinstance(tracer, BaseTracer):
-            return tracer
-        if isinstance(tracer, str):
-            module_name, class_name = tracer.rsplit(".", 1)
-            module = importlib.import_module(module_name)
-            tracer_cls = getattr(module, class_name)
-            return tracer_cls()
-        if isinstance(tracer, dict):
-            tracer_type = tracer.get("type")
-            if tracer_type is None:
-                raise ValueError("tracer dict must have a 'type' key with the class full name")
-            module_name, class_name = tracer_type.rsplit(".", 1)
-            module = importlib.import_module(module_name)
-            tracer_cls = getattr(module, class_name)
-            # Remove 'type' key and pass remaining keys as kwargs
-            tracer_kwargs = {k: v for k, v in tracer.items() if k != "type"}
-            return tracer_cls(**tracer_kwargs)
-        if tracer is None:
-            return AgentOpsTracer(agentops_managed=True, instrument_managed=True, daemon=self.daemon)
-        raise ValueError(f"Invalid tracer type: {type(tracer)}. Expected BaseTracer, str, dict, or None.")
-
-    def _build_tracer_factory(self, tracer: Union[BaseTracer, str, Dict[str, Any], None]) -> Callable[[], BaseTracer]:
-        if isinstance(tracer, BaseTracer):
-            return lambda: tracer
-
-        def _factory() -> BaseTracer:
-            return self._make_tracer(tracer)
-
-        return _factory
+        default_factory = lambda: AgentOpsTracer(
+            agentops_managed=True,
+            instrument_managed=True,
+            daemon=self.daemon,
+        )
+        return build_component(
+            tracer,
+            expected_type=BaseTracer,
+            spec_name="tracer",
+            default_factory=default_factory,
+            dict_requires_type=True,
+            invalid_type_error_fmt="Invalid tracer type: {actual_type}. Expected BaseTracer, str, dict, or None.",
+            type_error_fmt="Tracer factory returned {type_name}, which is not a BaseTracer subclass.",
+        )
 
     def _make_algorithm(self, algorithm: Union[BaseAlgorithm, str, Dict[str, Any], None]) -> Optional[BaseAlgorithm]:
         """Creates an algorithm instance based on the provided configuration."""
@@ -278,14 +265,17 @@ class Trainer(ParallelWorkerBase):
             type_error_fmt="llm_proxy factory returned {type_name}, which is not an LLMProxy subclass.",
         )
 
-    def _create_runner_instance(self) -> BaseRunner[Any]:
+    def _make_runner(self) -> BaseRunner[Any]:
         spec = self._runner_spec
-        optional_defaults: Dict[str, Callable[[], Any]] = {"tracer": self._tracer_factory}
+        optional_defaults: Dict[str, Callable[[], Any]] = {"tracer": lambda: self.tracer}
         if self.max_rollouts is not None:
             optional_defaults["max_rollouts"] = lambda: self.max_rollouts
 
-        if spec is None:
+        def default_runner_factory() -> BaseRunner[Any]:
             return instantiate_component(AgentRunnerV2, optional_defaults=optional_defaults)
+
+        if spec is None:
+            return default_runner_factory()
         if isinstance(spec, BaseRunner):
             if self.n_runners > 1:
                 logger.warning(
@@ -293,19 +283,14 @@ class Trainer(ParallelWorkerBase):
                     self.n_runners,
                 )
             return cast(BaseRunner[Any], spec)
-        if isinstance(spec, type) and issubclass(spec, BaseRunner):
-            return instantiate_component(cast(type[BaseRunner[Any]], spec), optional_defaults=optional_defaults)
-        if callable(spec) and not isinstance(spec, type):  # type: ignore
-            runner_instance = spec()  # type: ignore
-            if not isinstance(runner_instance, BaseRunner):  # type: ignore
-                raise TypeError("Runner factory callable must return an instance of BaseRunner.")
-            return runner_instance
         return build_component(
             spec,
             expected_type=BaseRunner,
             spec_name="runner",
+            default_factory=default_runner_factory,
             optional_defaults=optional_defaults,
             allow_class=True,
+            allow_factory=True,
             invalid_type_error_fmt="Invalid runner type: {actual_type}. Expected BaseRunner, callable, str, dict, or None.",
             type_error_fmt="Runner factory returned {type_name}, which is not a BaseRunner subclass.",
         )
@@ -324,11 +309,9 @@ class Trainer(ParallelWorkerBase):
         train_dataset: Optional[Dataset[Any]] = None,
         validation_dataset: Optional[Dataset[Any]] = None,
         dev_dataset: Optional[Dataset[Any]] = None,
-        hooks: Optional[Union[Hook, Sequence[Hook]]] = None,
     ) -> None:
         """Run the training loop using the configured strategy, store, and runner."""
         agent.set_trainer(self)
-        hook_sequence = self._normalize_hooks(hooks)
 
         algorithm = self.algorithm
         if algorithm is not None:
@@ -367,8 +350,8 @@ class Trainer(ParallelWorkerBase):
             runner_initialized = False
             worker_initialized = False
             try:
-                runner_instance = self._create_runner_instance()
-                runner_instance.init(agent=agent, hooks=hook_sequence)
+                runner_instance = self._make_runner()
+                runner_instance.init(agent=agent, hooks=self.hooks)
                 runner_initialized = True
                 runner_instance.init_worker(worker_id, store)
                 worker_initialized = True

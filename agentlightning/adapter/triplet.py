@@ -5,13 +5,14 @@ from __future__ import annotations
 import json
 import re
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from opentelemetry import trace as trace_api
 from opentelemetry.sdk.trace import ReadableSpan
 from pydantic import BaseModel
 
 from agentlightning.types import SpanNames, Triplet
+from agentlightning.types.tracer import Resource, Span, TraceStatus
 
 from .base import TraceAdapter
 
@@ -52,7 +53,7 @@ class TraceTree:
     def __init__(
         self,
         id: str,
-        span: ReadableSpan,
+        span: Span,
         children: Optional[List["TraceTree"]] = None,
     ):
         self.id = id
@@ -149,14 +150,18 @@ class TraceTree:
         return spans
 
     def to_json(self) -> dict[str, Any]:
+        if isinstance(self.span, ReadableSpan):
+            span_data = json.loads(self.span.to_json())
+        else:
+            span_data = self.span.model_dump()
         return {
             "id": self.id,
-            "span": self.span.to_json(),
+            "span": span_data,
             "children": [child.to_json() for child in self.children],
         }
 
     @classmethod
-    def from_spans(cls, spans: List[ReadableSpan]) -> "TraceTree":
+    def from_spans(cls, spans: List[Span]) -> "TraceTree":
         """
         Create a TraceTree from a list of spans.
         All spans without parents found will be considered as candidate root spans.
@@ -167,18 +172,18 @@ class TraceTree:
             raise ValueError("No spans provided to create TraceTree.")
 
         # Process trace items in topological order
-        id_to_span = {span.get_span_context().span_id: span for span in spans}  # type: ignore
+        id_to_span = {span.span_id: span for span in spans}
 
-        forward_graph: dict[int, list[int]] = {}
-        root_ids: list[int] = []
+        forward_graph: dict[str, list[str]] = {}
+        root_ids: list[str] = []
         for span in spans:
-            span_id: int = span.get_span_context().span_id  # type: ignore
-            if span.parent is None:
-                root_ids.append(span_id)
+            span_id = span.span_id
+            if span.parent_id is None:
+                root_ids.append(span.span_id)
             else:
-                if span.parent.span_id not in forward_graph:
-                    forward_graph[span.parent.span_id] = []
-                forward_graph[span.parent.span_id].append(span_id)
+                if span.parent_id not in forward_graph:
+                    forward_graph[span.parent_id] = []
+                forward_graph[span.parent_id].append(span_id)
 
         # Diff between span with data and forward_graph keys
         # Sometimes the top-level session span is lost.
@@ -186,7 +191,7 @@ class TraceTree:
         for unfound_root in unfound_roots:
             root_ids.append(unfound_root)
 
-        def visit(node_id: int) -> "TraceTree":
+        def visit(node_id: str) -> "TraceTree":
             children: list[TraceTree] = []
             if node_id in forward_graph:
                 for child_id in forward_graph[node_id]:
@@ -194,22 +199,21 @@ class TraceTree:
 
             if node_id not in id_to_span:
                 assert len(children) > 0
-                virtual_span = ReadableSpan(
-                    context=trace_api.SpanContext(
-                        trace_id=children[0].span.get_span_context().trace_id,  # type: ignore
-                        span_id=node_id,
-                        is_remote=False,
-                    ),
-                    name="virtual-node",
-                    kind=trace_api.SpanKind.INTERNAL,
+                virtual_span = Span.from_attributes(
+                    rollout_id=children[0].span.rollout_id,
+                    attempt_id=children[0].span.attempt_id,
+                    sequence_id=children[0].span.sequence_id,
+                    trace_id=children[0].span.trace_id,
+                    span_id=node_id,
+                    parent_id=None,
                     attributes={},
-                    start_time=min(child.start_time for child in children),  # type: ignore
-                    end_time=max(child.end_time for child in children),  # type: ignore
+                    start_time=min(child.start_time for child in children if child.start_time is not None),
+                    end_time=max(child.end_time for child in children if child.end_time is not None),
                 )
-                return cls(trace_api.format_span_id(node_id), virtual_span, children=children)
+                return cls(node_id, virtual_span, children=children)
             else:
                 return cls(
-                    trace_api.format_span_id(node_id),
+                    node_id,
                     id_to_span[node_id],
                     children=children,
                 )
@@ -219,14 +223,14 @@ class TraceTree:
             root_spans = [visit(root_id) for root_id in root_ids]
             virtual_root = TraceTree(
                 id="virtual-root",
-                span=ReadableSpan(
-                    context=trace_api.SpanContext(
-                        trace_id=root_spans[0].span.get_span_context().trace_id,  # type: ignore
-                        span_id=0,
-                        is_remote=False,
-                    ),
+                span=Span.from_attributes(
+                    rollout_id=root_spans[0].span.rollout_id,
+                    attempt_id=root_spans[0].span.attempt_id,
+                    sequence_id=root_spans[0].span.sequence_id,
+                    trace_id=root_spans[0].span.trace_id,
+                    span_id=None,  # Generate one
+                    parent_id=None,
                     name="virtual-root",
-                    kind=trace_api.SpanKind.INTERNAL,
                     attributes={},
                     start_time=root_spans[0].start_time,
                     end_time=root_spans[-1].end_time,
@@ -245,7 +249,7 @@ class TraceTree:
         """Return the name of agent span. Return the agent or None (not an agent at all).
         Extend this function to support more agent frameworks."""
         attributes = self.span.attributes
-        if attributes is None:
+        if attributes is None:  # type: ignore
             return None
 
         # Case 1: OpenAI Agent SDK
@@ -546,28 +550,40 @@ class TraceTripletAdapter(TraceAdapter[List[Triplet]]):
         self.reward_match = reward_match
 
     def visualize(
-        self, source: List[ReadableSpan], /, filename: str = "trace_tree", interested_span_match: str | None = None
+        self,
+        source: Union[List[Span], List[ReadableSpan]],
+        /,
+        filename: str = "trace_tree",
+        interested_span_match: str | None = None,
     ) -> TraceTree:
         """
         Visualize the trace tree.
 
         Args:
-            source (List[ReadableSpan]): The list of OpenTelemetry spans to visualize.
+            source (List[Span]): The list of OpenTelemetry spans to visualize.
             filename (str): The base filename for the output visualization (default: "trace_tree").
             interested_span_match (str | None): Optional regular expression pattern to highlight or focus on specific spans in the visualization.
 
         Returns:
             TraceTree: The constructed trace tree object.
         """
-        trace_tree = TraceTree.from_spans(source)
+        source_normalized = [
+            Span.from_opentelemetry(span, "dummy", "dummy", 0) if isinstance(span, ReadableSpan) else span
+            for span in source
+        ]
+        trace_tree = TraceTree.from_spans(source_normalized)
         if self.repair_hierarchy:
             trace_tree.repair_hierarchy()
         trace_tree.visualize(filename, interested_span_match=interested_span_match)
         return trace_tree
 
-    def adapt(self, source: List[ReadableSpan], /) -> List[Triplet]:
+    def adapt(self, source: Union[List[Span], List[ReadableSpan]], /) -> List[Triplet]:  # type: ignore
         """Convert OpenTelemetry spans to a list of Triplet objects."""
-        trace_tree = TraceTree.from_spans(source)
+        source_normalized = [
+            Span.from_opentelemetry(span, "dummy", "dummy", 0) if isinstance(span, ReadableSpan) else span
+            for span in source
+        ]
+        trace_tree = TraceTree.from_spans(source_normalized)
         if self.repair_hierarchy:
             trace_tree.repair_hierarchy()
         trajectory = trace_tree.to_trajectory(

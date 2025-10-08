@@ -10,6 +10,7 @@ from opentelemetry import trace as trace_api
 from opentelemetry.sdk.resources import Resource as OtelResource
 from opentelemetry.sdk.trace import Event as OtelEvent
 from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.sdk.trace.id_generator import RandomIdGenerator
 from opentelemetry.trace.status import Status as OtelStatus
 from pydantic import BaseModel
 
@@ -244,6 +245,60 @@ class Span(BaseModel):
             ),
         )
 
+    @classmethod
+    def from_attributes(
+        cls,
+        *,
+        attributes: Attributes,
+        rollout_id: Optional[str] = None,
+        attempt_id: Optional[str] = None,
+        sequence_id: Optional[int] = None,
+        name: Optional[str] = None,
+        trace_id: Optional[str] = None,
+        span_id: Optional[str] = None,
+        parent_id: Optional[str] = None,
+        start_time: Optional[float] = None,
+        end_time: Optional[float] = None,
+        resource: Optional[Resource] = None,
+    ) -> "Span":
+
+        id_generator = RandomIdGenerator()
+        trace_id = trace_id or trace_api.format_trace_id(id_generator.generate_trace_id())
+        span_id = span_id or trace_api.format_span_id(id_generator.generate_span_id())
+
+        return cls(
+            rollout_id=rollout_id or "",
+            attempt_id=attempt_id or "",
+            sequence_id=sequence_id or 0,
+            trace_id=trace_id,
+            span_id=span_id,
+            parent_id=parent_id,
+            start_time=start_time,
+            end_time=end_time,
+            context=SpanContext(
+                trace_id=trace_id,
+                span_id=span_id,
+                is_remote=False,
+                trace_state={},
+            ),
+            name=name or SpanNames.VIRTUAL.value,
+            resource=resource or Resource(attributes={}, schema_url=""),
+            attributes=attributes,
+            status=TraceStatus(status_code="OK"),
+            events=[],
+            links=[],
+            parent=(
+                SpanContext(
+                    trace_id=trace_id,
+                    span_id=parent_id,
+                    is_remote=False,
+                    trace_state={},
+                )
+                if parent_id
+                else None
+            ),
+        )
+
 
 class SpanNames(str, Enum):
     """Standard span name values for AgentLightning.
@@ -253,3 +308,4 @@ class SpanNames(str, Enum):
     """
 
     REWARD = "agentlightning.reward"
+    VIRTUAL = "agentlightning.virtual"
