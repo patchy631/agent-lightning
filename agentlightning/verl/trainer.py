@@ -291,7 +291,7 @@ class AgentLightningTrainer(RayPPOTrainer):
         self._load_checkpoint()
 
         assert self.async_rollout_mode, "If agent mode is enabled, async server must be enabled"
-        if not isinstance(self.adapter, TraceTripletAdapter):
+        if self.adapter is not None and not isinstance(self.adapter, TraceTripletAdapter):
             raise ValueError("Adapter must be a TraceTripletAdapter for currently VERL implementation.")
         self.agent_mode_daemon = AgentModeDaemon(
             self.config.agentlightning.port,
