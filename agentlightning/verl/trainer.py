@@ -59,6 +59,11 @@ class AgentLightningTrainer(RayPPOTrainer):
     4. Streamlined validation using agent_mode validation
     """
 
+    def __init__(self, store: LightningStore | None, llm_proxy: LLMProxy | None, **kwargs):
+        super().__init__(**kwargs)
+        self.store = store
+        self.llm_proxy = llm_proxy
+
     def _validate(self):
         assert len(self.val_dataloader) == 1, "Please set val_batch_size to None for better throughput."
 
@@ -290,6 +295,9 @@ class AgentLightningTrainer(RayPPOTrainer):
             tokenizer=self.tokenizer,
             mini_batch_size=self.config.actor_rollout_ref.actor.ppo_mini_batch_size,
             pad_token_id=self.tokenizer.pad_token_id,
+            mode="v1" if self.store is not None else "v0",
+            store=self.store,
+            llm_proxy=self.llm_proxy,
         )
         self.agent_mode_daemon.start()
 

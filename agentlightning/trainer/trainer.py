@@ -318,10 +318,10 @@ class Trainer(ParallelWorkerBase):
     ) -> None:
         if self.algorithm is not None:
             self.algorithm.set_trainer(self)
-            self.algorithm.set_llm_proxy(self.llm_proxy)
-
-        if self.llm_proxy is not None:
-            self.llm_proxy.set_store(store)
+            self.algorithm.set_store(store)
+            if self.llm_proxy is not None:
+                self.llm_proxy.set_store(store)
+                self.algorithm.set_llm_proxy(self.llm_proxy)
 
         if self.algorithm is None:
             while not event.is_set():

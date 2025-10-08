@@ -6,6 +6,7 @@ import weakref
 from typing import TYPE_CHECKING, Any, Optional
 
 from agentlightning.client import AgentLightningClient
+from agentlightning.store.base import LightningStore
 from agentlightning.types import Dataset
 
 if TYPE_CHECKING:
@@ -18,6 +19,7 @@ class BaseAlgorithm:
 
     _trainer_ref: weakref.ReferenceType[Trainer] | None = None
     _llm_proxy_ref: weakref.ReferenceType["LLMProxy"] | None = None
+    _store_ref: weakref.ReferenceType[LightningStore] | None = None
 
     def set_trainer(self, trainer: Trainer) -> None:
         """
@@ -43,16 +45,17 @@ class BaseAlgorithm:
             raise ValueError("Trainer reference is no longer valid (object has been garbage collected).")
         return trainer
 
-    def set_llm_proxy(self, llm_proxy: "LLMProxy | None") -> None:
+    def set_llm_proxy(self, llm_proxy: LLMProxy | None) -> None:
         """
         Set the LLM proxy for this algorithm to reuse when available.
 
         Args:
             llm_proxy: The LLMProxy instance configured by the trainer, if any.
         """
-        self._llm_proxy_ref = weakref.ref(llm_proxy) if llm_proxy is not None else None
+        self._llm_proxy = llm_proxy
 
-    def get_llm_proxy(self) -> Optional["LLMProxy"]:
+    @property
+    def llm_proxy(self) -> Optional[LLMProxy]:
         """
         Retrieve the configured LLM proxy instance, if one has been set.
 
@@ -61,7 +64,30 @@ class BaseAlgorithm:
         """
         if self._llm_proxy_ref is None:
             return None
-        return self._llm_proxy_ref()
+
+        llm_proxy = self._llm_proxy_ref()
+        if llm_proxy is None:
+            raise ValueError("LLM proxy reference is no longer valid (object has been garbage collected).")
+
+        return llm_proxy
+
+    def set_store(self, store: LightningStore) -> None:
+        """
+        Set the store for this algorithm to communicate with the runners.
+        """
+        self._store = store
+
+    @property
+    def store(self) -> LightningStore:
+        """
+        Retrieve the store for this algorithm to communicate with the runners.
+        """
+        if self._store_ref is None:
+            raise ValueError("Store has not been set for this algorithm.")
+        store = self._store_ref()
+        if store is None:
+            raise ValueError("Store reference is no longer valid (object has been garbage collected).")
+        return store
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self.run(*args, **kwargs)
@@ -89,33 +115,9 @@ class BaseAlgorithm:
         If the algorithm does not require a server-client communication, it can also create a mock client
         that never communicates with itself.
 
+        Deprecated and will be removed in a future version.
+
         Returns:
             The AgentLightningClient instance associated with this algorithm.
         """
         raise NotImplementedError("Subclasses must implement get_client().")
-
-    def fit(
-        self,
-        agent: Any,
-        train_data: Optional[Dataset[Any]] = None,
-        test_data: Optional[Dataset[Any]] = None,
-        dev_data: Optional[Dataset[Any]] = None,
-        trainer: Optional[Trainer] = None,
-    ) -> None:
-        """Fit the algorithm with the provided agent and datasets.
-
-        Args:
-            agent: The agent to train.
-            train_data: The training dataset.
-            test_data: The test dataset.
-            dev_data: The development dataset.
-            trainer: The trainer instance.
-        """
-        if trainer is not None:
-            self.set_trainer(trainer)
-
-        self.run(
-            train_dataset=train_data,
-            validation_dataset=test_data,
-            dev_dataset=dev_data,
-        )

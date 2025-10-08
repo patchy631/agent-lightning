@@ -17,10 +17,16 @@ from .trainer import AgentLightningTrainer
 
 @hydra.main(config_path="pkg://agentlightning/verl", config_name="config", version_base=None)
 def main(config):
-    run_ppo(config, None, None)
+    run_ppo(config, None, None, None, None)
 
 
-def run_ppo(config: Any, train_dataset: Dataset[Any] | None, val_dataset: Dataset[Any] | None) -> None:
+def run_ppo(
+    config: Any,
+    train_dataset: Dataset[Any] | None,
+    val_dataset: Dataset[Any] | None,
+    store: LightningStore | None,
+    llm_proxy: LLMProxy | None,
+) -> None:
     if not ray.is_initialized():
         # this is for local ray cluster
         ray.init(
@@ -31,7 +37,7 @@ def run_ppo(config: Any, train_dataset: Dataset[Any] | None, val_dataset: Datase
         )
 
     runner = TaskRunner.remote()
-    ray.get(runner.run.remote(config, train_dataset, val_dataset))
+    ray.get(runner.run.remote(config, train_dataset, val_dataset, store, llm_proxy))
 
 
 @ray.remote(num_cpus=1)  # please make sure main_task is not scheduled on head
@@ -162,6 +168,8 @@ class TaskRunner:
             val_dataset=val_dataset,
             collate_fn=collate_fn,
             train_sampler=train_sampler,
+            store=store,
+            llm_proxy=llm_proxy,
         )
         trainer.init_workers()
         trainer.fit()

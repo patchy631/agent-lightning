@@ -19,9 +19,9 @@ from verl import DataProto
 
 from agentlightning import LLM, AgentLightningServer, NamedResources, Rollout, configure_logger
 from agentlightning.adapter.triplet import TraceTripletAdapter
-from agentlightning.llm_proxy import LLMProxy
+from agentlightning.llm_proxy import LLMProxy, ModelConfig
 from agentlightning.store.base import LightningStore
-from agentlightning.types import RolloutV2, Span, Task, Triplet
+from agentlightning.types import RolloutV2, Task, Triplet
 
 configure_logger()
 
@@ -278,6 +278,25 @@ class AgentModeDaemon:
     def _start_proxy_server_v1(self):
         if self.llm_proxy is None:
             raise ValueError("LLM proxy is not set.")
+
+        model_name = self.train_information.get("model")
+        if not model_name:
+            raise ValueError("Model name is not set.")
+        self.llm_proxy.update_model_list(
+            [
+                ModelConfig(
+                    {
+                        "model_name": model_name,
+                        "litellm_params": {
+                            "model": model_name,
+                            "api_base": f"http://{address}/v1/",
+                        },
+                    }
+                )
+                for address in self.backend_llm_server_addresses
+            ],
+            restart=False,
+        )
         self.llm_proxy.start()
 
     def start(self):

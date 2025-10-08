@@ -31,7 +31,16 @@ class VERL(BaseAlgorithm):
     ) -> None:
         if dev_dataset is not None:
             raise ValueError("dev_dataset is not supported for VERL.")
-        run_ppo(self.config, train_dataset, validation_dataset)
+
+        try:
+            store = self.store
+        except Exception:
+            print("Store is not set. Assuming v0 execution mode.")
+            run_ppo(self.config, train_dataset, validation_dataset, None, None)
+        else:
+            print("Store is set. Assuming v1 execution mode.")
+            llm_proxy = self.llm_proxy
+            run_ppo(self.config, train_dataset, validation_dataset, store, llm_proxy)
 
     def get_client(self) -> AgentLightningClient:
         port = self.config.agentlightning.port

@@ -535,7 +535,7 @@ class LLMProxy:
         """
         self.store = store
 
-    def update_model_list(self, model_list: List[ModelConfig]) -> None:
+    def update_model_list(self, model_list: List[ModelConfig], restart: bool = True) -> None:
         """Replace the in-memory model list and hot-restart if running.
 
         Args:
@@ -575,6 +575,10 @@ class LLMProxy:
         * Writes a temporary YAML config consumed by LiteLLM worker.
         * Launches uvicorn in a daemon thread and waits for readiness.
         """
+        if self.is_running():
+            # Trigger restart
+            self.stop()
+
         global _global_store
 
         _global_store = self.store
