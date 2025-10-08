@@ -20,7 +20,7 @@ from .trainer import AgentLightningTrainer
 
 @hydra.main(config_path="pkg://agentlightning/verl", config_name="config", version_base=None)
 def main(config):
-    run_ppo(config, None, None, None, None)
+    run_ppo(config, train_dataset=None, val_dataset=None, store=None, llm_proxy=None, adapter=None)
 
 
 def run_ppo(
@@ -29,7 +29,7 @@ def run_ppo(
     val_dataset: Dataset[Any] | None,
     store: LightningStore | None,
     llm_proxy: LLMProxy | None,
-    adapter: TraceAdapter | None,
+    adapter: TraceAdapter[Any] | None,
 ) -> None:
     if not ray.is_initialized():
         # this is for local ray cluster
