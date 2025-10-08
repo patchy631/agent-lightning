@@ -52,7 +52,7 @@ class BaseAlgorithm:
         Args:
             llm_proxy: The LLMProxy instance configured by the trainer, if any.
         """
-        self._llm_proxy = llm_proxy
+        self._llm_proxy_ref = weakref.ref(llm_proxy) if llm_proxy is not None else None
 
     @property
     def llm_proxy(self) -> Optional[LLMProxy]:
@@ -74,6 +74,9 @@ class BaseAlgorithm:
     def set_store(self, store: LightningStore) -> None:
         """
         Set the store for this algorithm to communicate with the runners.
+
+        Store is set directly instead of using weakref because its copy is meant to be
+        maintained throughout the algorithm's lifecycle.
         """
         self._store = store
 

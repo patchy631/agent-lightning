@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft. All rights reserved.
+
 """Utility helpers for dynamic component initialization within the trainer."""
 
 from __future__ import annotations

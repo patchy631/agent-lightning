@@ -138,7 +138,7 @@ class AgentModeDaemon:
         mode: Literal["v0", "v1"] = "v1",
         llm_proxy: LLMProxy | None = None,
         store: LightningStore | None = None,
-        adapater: TraceTripletAdapter | None = None,
+        adapter: TraceTripletAdapter | None = None,
     ):
         self.mode = mode
         self.llm_proxy = llm_proxy
@@ -155,7 +155,7 @@ class AgentModeDaemon:
         else:
             assert store is not None
             self.store = store
-            self.adapater = adapater
+            self.adapter = adapter
             self._internal_loop: Optional[asyncio.AbstractEventLoop] = None
             self._internal_loop_thread = threading.Thread(target=self._internal_loop_runner, daemon=True)
             self._internal_loop_thread.start()
@@ -435,8 +435,8 @@ class AgentModeDaemon:
 
         # Convert spans to triplets using the adapter
         triplets: Optional[List[Triplet]] = None
-        if self.adapater is not None and spans:
-            triplets = self.adapater.adapt(spans)
+        if self.adapter is not None and spans:
+            triplets = self.adapter.adapt(spans)
 
         # Extract final reward from triplets
         final_reward: Optional[float] = None

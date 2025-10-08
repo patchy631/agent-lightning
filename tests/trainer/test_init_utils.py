@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft. All rights reserved.
+
 import pytest
 
 from agentlightning.trainer.init_utils import build_component, instantiate_component, instantiate_from_spec, load_class
