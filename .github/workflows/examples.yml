@@ -88,7 +88,7 @@ jobs:
       # And it has to be run before Spider training.
       # The client side used to hang in many of my attempts.
       # Don't ask why. Don't touch this.
-      - name: Calc-X training
+      - name: Calc-X training v0.1
         run: |
           set -ex
           source .venv/bin/activate
@@ -116,6 +116,20 @@ jobs:
           python scripts/validate_example_wandb.py ${{ steps.calc_x_train.outputs.project_name }} ${{ steps.calc_x_train.outputs.run_name }}
         env:
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+
+      - name: Calc-X training v0.2
+        run: |
+          set -ex
+          source .venv/bin/activate
+          cd examples/calc_x
+          ../../scripts/restart_ray.sh
+          sleep 5
+          PYTHONUNBUFFERED=1 python calc_agent_v0_2.py
+          sleep 10
+        shell: bash
+        env:
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        id: calc_x_train_v0_2
 
       - name: Spider training
         run: |
