@@ -527,6 +527,14 @@ class LLMProxy:
         self._uvicorn_server = None
         self._ready_event = threading.Event()
 
+    def set_store(self, store: LightningStore) -> None:
+        """Set the store for the proxy.
+
+        Args:
+            store: The store to use for the proxy.
+        """
+        self.store = store
+
     def update_model_list(self, model_list: List[ModelConfig]) -> None:
         """Replace the in-memory model list and hot-restart if running.
 

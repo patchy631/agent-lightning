@@ -8,7 +8,7 @@ import threading
 import time
 import uuid
 from collections.abc import Mapping
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import requests
@@ -18,6 +18,7 @@ from tensordict import TensorDict
 from verl import DataProto
 
 from agentlightning import LLM, AgentLightningServer, NamedResources, Rollout, configure_logger
+from agentlightning.llm_proxy import LLMProxy
 
 configure_logger()
 
@@ -131,6 +132,8 @@ class AgentModeDaemon:
         pad_token_id: int,
         reward_fillna_value: float = 0.0,
         llm_timeout_seconds: float = 1200.0,
+        mode: Literal["v0", "v1"] = "v1",
+        llm_proxy: LLMProxy | None = None,
     ):
         # Server and Task Configuration
         self.server_port = port

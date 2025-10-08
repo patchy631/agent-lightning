@@ -9,6 +9,7 @@ from agentlightning.client import AgentLightningClient
 from agentlightning.types import Dataset
 
 if TYPE_CHECKING:
+    from agentlightning.llm_proxy import LLMProxy
     from agentlightning.trainer import Trainer
 
 
@@ -16,6 +17,7 @@ class BaseAlgorithm:
     """Algorithm is the strategy, or tuner to train the agent."""
 
     _trainer_ref: weakref.ReferenceType[Trainer] | None = None
+    _llm_proxy_ref: weakref.ReferenceType["LLMProxy"] | None = None
 
     def set_trainer(self, trainer: Trainer) -> None:
         """
@@ -40,6 +42,26 @@ class BaseAlgorithm:
         if trainer is None:
             raise ValueError("Trainer reference is no longer valid (object has been garbage collected).")
         return trainer
+
+    def set_llm_proxy(self, llm_proxy: "LLMProxy | None") -> None:
+        """
+        Set the LLM proxy for this algorithm to reuse when available.
+
+        Args:
+            llm_proxy: The LLMProxy instance configured by the trainer, if any.
+        """
+        self._llm_proxy_ref = weakref.ref(llm_proxy) if llm_proxy is not None else None
+
+    def get_llm_proxy(self) -> Optional["LLMProxy"]:
+        """
+        Retrieve the configured LLM proxy instance, if one has been set.
+
+        Returns:
+            The active LLMProxy instance or None when not configured.
+        """
+        if self._llm_proxy_ref is None:
+            return None
+        return self._llm_proxy_ref()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self.run(*args, **kwargs)
