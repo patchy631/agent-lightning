@@ -26,7 +26,7 @@ class VERL(BaseAlgorithm):
     def run(
         self,
         train_dataset: Optional[Dataset[Any]] = None,
-        validation_dataset: Optional[Dataset[Any]] = None,
+        val_dataset: Optional[Dataset[Any]] = None,
         dev_dataset: Optional[Dataset[Any]] = None,
     ) -> None:
         if dev_dataset is not None:
@@ -36,11 +36,11 @@ class VERL(BaseAlgorithm):
             store = self.store
         except Exception:
             print("Store is not set. Assuming v0 execution mode.")
-            run_ppo(self.config, train_dataset, validation_dataset, None, None)
+            run_ppo(self.config, train_dataset, val_dataset, None, None)
         else:
             print("Store is set. Assuming v1 execution mode.")
             llm_proxy = self.llm_proxy
-            run_ppo(self.config, train_dataset, validation_dataset, store, llm_proxy)
+            run_ppo(self.config, train_dataset, val_dataset, store, llm_proxy)
 
     def get_client(self) -> AgentLightningClient:
         port = self.config.agentlightning.port

@@ -125,6 +125,17 @@ def test_build_component_from_string_spec() -> None:
     assert isinstance(result, SimpleComponent)
 
 
+def test_build_component_from_registry_key_string_spec() -> None:
+    result = build_component(
+        "simple",
+        expected_type=SampleBase,
+        spec_name="component",
+        registry={"simple": "tests.trainer.sample_components.SimpleComponent"},
+    )
+
+    assert isinstance(result, SimpleComponent)
+
+
 def test_build_component_from_dict_spec_with_optional_defaults() -> None:
     result = build_component(
         {"type": "tests.trainer.sample_components.SampleComponent", "required": 10},
@@ -248,3 +259,26 @@ def test_build_component_optional_defaults_skipped_when_not_supported() -> None:
 
     assert isinstance(component, ComponentWithKwargs)
     assert component.kwargs == {}
+
+
+def test_build_component_dict_spec_uses_registry_type_lookup() -> None:
+    component = build_component(
+        {"type": "simple"},
+        expected_type=SampleBase,
+        spec_name="component",
+        registry={"simple": "tests.trainer.sample_components.SimpleComponent"},
+    )
+
+    assert isinstance(component, SimpleComponent)
+
+
+def test_build_component_dict_spec_supports_name_registry_lookup() -> None:
+    component = build_component(
+        {"name": "simple"},
+        expected_type=SampleBase,
+        spec_name="component",
+        dict_requires_type=False,
+        registry={"simple": "tests.trainer.sample_components.SimpleComponent"},
+    )
+
+    assert isinstance(component, SimpleComponent)

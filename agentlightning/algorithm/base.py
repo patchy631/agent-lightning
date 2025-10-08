@@ -95,7 +95,7 @@ class BaseAlgorithm:
     def run(
         self,
         train_dataset: Optional[Dataset[Any]] = None,
-        validation_dataset: Optional[Dataset[Any]] = None,
+        val_dataset: Optional[Dataset[Any]] = None,
         dev_dataset: Optional[Dataset[Any]] = None,
     ) -> None:
         """Subclasses should implement this method to implement the algorithm.

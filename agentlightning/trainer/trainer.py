@@ -14,8 +14,8 @@ from agentlightning.adapter import TraceTripletAdapter
 from agentlightning.algorithm.base import BaseAlgorithm
 from agentlightning.client import AgentLightningClient
 from agentlightning.execution.base import ExecutionStrategy
+from agentlightning.execution.client_server import ClientServerExecutionStrategy
 from agentlightning.execution.events import Event
-from agentlightning.execution.shared_memory import SharedMemoryExecutionStrategy
 from agentlightning.litagent import LitAgent
 from agentlightning.llm_proxy import LLMProxy
 from agentlightning.runner import AgentRunner, AgentRunnerV2, BaseRunner
@@ -23,8 +23,10 @@ from agentlightning.store.base import LightningStore
 from agentlightning.store.memory import InMemoryLightningStore
 from agentlightning.tracer.agentops import AgentOpsTracer
 from agentlightning.tracer.base import BaseTracer
-from agentlightning.trainer.init_utils import build_component, instantiate_component
 from agentlightning.types import Dataset, Hook, ParallelWorkerBase
+
+from .init_utils import build_component, instantiate_component
+from .registry import ExecutionStrategyRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -228,14 +230,19 @@ class Trainer(ParallelWorkerBase):
         if isinstance(strategy, ExecutionStrategy):
             return strategy
         optional_defaults: Dict[str, Callable[[], Any]] = {"n_runners": lambda: n_runners}
+
+        def default_factory() -> ExecutionStrategy:
+            return ClientServerExecutionStrategy(n_runners=n_runners, role="both")
+
         return build_component(
             strategy,
             expected_type=ExecutionStrategy,
             spec_name="strategy",
-            default_factory=lambda: SharedMemoryExecutionStrategy(n_runners=n_runners),
+            default_factory=default_factory,
             optional_defaults=optional_defaults,
             invalid_spec_error_fmt="Invalid strategy type: {actual_type}. Expected ExecutionStrategy, str, dict, or None.",
             type_error_fmt="Strategy factory returned {type_name}, which is not an ExecutionStrategy subclass.",
+            registry=ExecutionStrategyRegistry,
         )
 
     def _make_llm_proxy(
@@ -290,9 +297,9 @@ class Trainer(ParallelWorkerBase):
     def fit_v2(
         self,
         agent: LitAgent[T_co],
-        *,
         train_dataset: Optional[Dataset[T_co]] = None,
-        validation_dataset: Optional[Dataset[T_co]] = None,
+        *,
+        val_dataset: Optional[Dataset[T_co]] = None,
         dev_dataset: Optional[Dataset[T_co]] = None,
     ) -> None:
         """Run the training loop using the configured strategy, store, and runner."""
@@ -301,7 +308,7 @@ class Trainer(ParallelWorkerBase):
         algorithm_bundle = functools.partial(
             self._algorithm_bundle,
             train_dataset=train_dataset,
-            validation_dataset=validation_dataset,
+            val_dataset=val_dataset,
             dev_dataset=dev_dataset,
         )
         runner_bundle = functools.partial(self._runner_bundle, agent=agent)
@@ -313,7 +320,7 @@ class Trainer(ParallelWorkerBase):
         store: LightningStore,
         event: Event,
         train_dataset: Optional[Dataset[T_co]],
-        validation_dataset: Optional[Dataset[T_co]],
+        val_dataset: Optional[Dataset[T_co]],
         dev_dataset: Optional[Dataset[T_co]],
     ) -> None:
         if self.algorithm is not None:
@@ -331,7 +338,7 @@ class Trainer(ParallelWorkerBase):
             if inspect.iscoroutinefunction(self.algorithm.run):
                 await self.algorithm.run(
                     train_dataset=train_dataset,
-                    validation_dataset=validation_dataset,
+                    val_dataset=val_dataset,
                     dev_dataset=dev_dataset,
                 )
             else:
@@ -339,7 +346,7 @@ class Trainer(ParallelWorkerBase):
                 # It's the responsibility of the execution strategy to enable async execution
                 self.algorithm.run(
                     train_dataset=train_dataset,
-                    validation_dataset=validation_dataset,
+                    val_dataset=val_dataset,
                     dev_dataset=dev_dataset,
                 )
         except Exception:
@@ -629,7 +636,7 @@ class Trainer(ParallelWorkerBase):
                     logger.info("Running algorithm training after worker completion.")
                     self.algorithm.run(
                         train_dataset=train_dataset,
-                        validation_dataset=val_dataset,
+                        val_dataset=val_dataset,
                         dev_dataset=dev_dataset,
                     )
             else:
@@ -652,7 +659,7 @@ class Trainer(ParallelWorkerBase):
                         logger.info("All workers have been spawned. Running algorithm training with provided datasets.")
                         self.algorithm.run(
                             train_dataset=train_dataset,
-                            validation_dataset=val_dataset,
+                            val_dataset=val_dataset,
                             dev_dataset=dev_dataset,
                         )
                         logger.info("Algorithm exits. Killing the workers.")

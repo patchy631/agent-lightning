@@ -84,7 +84,7 @@ def main():
                 "fsdp_config": {"param_offload": True},
             },
             "model": {
-                "path": "Qwen/Qwen2.5-0.5B-Instruct",
+                "path": "Qwen/Qwen2.5-1.5B-Instruct",
                 "use_remove_padding": True,
                 "enable_gradient_checkpointing": True,
             },
@@ -98,9 +98,9 @@ def main():
             "experiment_name": "train_verl",
             "nnodes": 1,
             "save_freq": 256,
-            "test_freq": 6,
+            "test_freq": 3,
             "total_epochs": 1,
-            "total_training_steps": 6,
+            "total_training_steps": 3,
         },
     }
 
@@ -113,7 +113,7 @@ def main():
     print(val_dataset[:5])  # type: ignore
 
     trainer = Trainer(algorithm=VERL(rl_training_config), n_workers=2)
-    trainer.fit(calc_agent, train_dataset, val_data=val_dataset)  # type: ignore
+    trainer.fit_v2(calc_agent, train_dataset, val_dataset=val_dataset)
 
 
 if __name__ == "__main__":

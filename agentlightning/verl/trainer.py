@@ -2,6 +2,8 @@
 
 # type: ignore
 
+from __future__ import annotations
+
 import random
 from contextlib import contextmanager
 from copy import deepcopy
@@ -30,6 +32,9 @@ from verl.trainer.ppo.ray_trainer import (
 )
 from verl.utils.metric import reduce_metrics
 from verl.utils.tracking import Tracking
+
+from agentlightning.llm_proxy import LLMProxy
+from agentlightning.store.base import LightningStore
 
 from .daemon import AgentModeDaemon
 

@@ -9,6 +9,8 @@ import ray
 from verl.trainer.main_ppo import create_rl_sampler
 from verl.trainer.ppo.reward import load_reward_manager
 
+from agentlightning.llm_proxy import LLMProxy
+from agentlightning.store.base import LightningStore
 from agentlightning.types import Dataset
 
 from .dataset import AgentDataset, LoadedDataset
@@ -37,12 +39,23 @@ def run_ppo(
         )
 
     runner = TaskRunner.remote()
-    ray.get(runner.run.remote(config, train_dataset, val_dataset, store, llm_proxy))
+    ray.get(
+        runner.run.remote(
+            config=config, train_dataset=train_dataset, val_dataset=val_dataset, store=store, llm_proxy=llm_proxy
+        )
+    )
 
 
 @ray.remote(num_cpus=1)  # please make sure main_task is not scheduled on head
 class TaskRunner:
-    def run(self, config: Any, train_dataset: Dataset | None, val_dataset: Dataset | None):
+    def run(
+        self,
+        config: Any,
+        train_dataset: Dataset | None,
+        val_dataset: Dataset | None,
+        store: LightningStore | None,
+        llm_proxy: LLMProxy | None,
+    ):
         # print initial config
         from pprint import pprint
 

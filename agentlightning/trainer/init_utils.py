@@ -40,15 +40,21 @@ def instantiate_from_spec(
     optional_defaults: Optional[OptionalDefaults] = None,
     dict_requires_type: bool = True,
     dict_default_cls: type[Any] | None = None,
+    registry: Optional[Dict[str, str]] = None,
 ) -> Any:
     """Instantiate a component from a string or dict spec."""
     if isinstance(spec, str):
-        cls = load_class(spec)
+        type_path = registry.get(spec, spec) if registry else spec
+        cls = load_class(type_path)
         return instantiate_component(cls, optional_defaults=optional_defaults)
 
     if isinstance(spec, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
         spec_conf = dict(spec)
         type_path = spec_conf.pop("type", None)
+        if type_path is None and registry and "name" in spec_conf:
+            type_path = registry.get(spec_conf.pop("name"))
+        elif registry and type_path is not None:
+            type_path = registry.get(type_path, type_path)
         if type_path is None:
             if dict_requires_type:
                 raise ValueError(f"{spec_name} dict must have a 'type' key with the class full name")
@@ -89,6 +95,7 @@ def build_component(
     dict_default_cls: type[T] | None = ...,
     type_error_fmt: str | None = ...,
     invalid_spec_error_fmt: str | None = ...,
+    registry: Optional[Dict[str, str]] = ...,
 ) -> T: ...
 
 
@@ -105,6 +112,7 @@ def build_component(
     dict_default_cls: type[T] | None = ...,
     type_error_fmt: str | None = ...,
     invalid_spec_error_fmt: str | None = ...,
+    registry: Optional[Dict[str, str]] = ...,
 ) -> T | None: ...
 
 
@@ -121,6 +129,7 @@ def build_component(
     dict_default_cls: type[T] | None = ...,
     type_error_fmt: str | None = ...,
     invalid_spec_error_fmt: str | None = ...,
+    registry: Optional[Dict[str, str]] = ...,
 ) -> T | None: ...
 
 
@@ -136,6 +145,7 @@ def build_component(
     dict_default_cls: type[T] | None = None,
     type_error_fmt: str | None = None,
     invalid_spec_error_fmt: str | None = None,
+    registry: Optional[Dict[str, str]] = None,
 ) -> T | None:
     """Build and return a component instance from a flexible specification.
 
@@ -146,8 +156,8 @@ def build_component(
     Args:
         spec: The component specification. Can be:
             - An instance of expected_type (returned as-is)
-            - A string import path (e.g., 'module.Class')
-            - A dict with 'type' key and constructor kwargs
+            - A string import path (e.g., 'module.Class') or registry key
+            - A dict with 'type' key (import path or registry key) and constructor kwargs
             - A class type (will be instantiated)
             - A factory function (will be called)
             - None (uses default_factory or returns None if allow_none=True)
@@ -165,6 +175,9 @@ def build_component(
             {type_name} and {expected_type} placeholders.
         invalid_spec_error_fmt: Custom format string for invalid spec type errors.
             Should include {actual_type} and {expected_type} placeholders.
+        registry: Optional mapping of short names to fully qualified import paths.
+            When provided, string specs or dict 'type'/'name' entries are first
+            resolved through this registry before attempting to import.
 
     Returns:
         An instance of expected_type, or None if allow_none=True and spec is None
@@ -223,6 +236,7 @@ def build_component(
             optional_defaults=optional_defaults,
             dict_requires_type=dict_requires_type,
             dict_default_cls=dict_default_cls,
+            registry=registry,
         )
         return _ensure_expected_type(instance, expected_type, spec_name, type_error_fmt)
 
@@ -233,6 +247,7 @@ def build_component(
             optional_defaults=optional_defaults,
             dict_requires_type=dict_requires_type,
             dict_default_cls=dict_default_cls,
+            registry=registry,
         )
         return _ensure_expected_type(instance, expected_type, spec_name, type_error_fmt)
 

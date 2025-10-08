@@ -7,12 +7,11 @@ import re
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-from opentelemetry import trace as trace_api
 from opentelemetry.sdk.trace import ReadableSpan
 from pydantic import BaseModel
 
 from agentlightning.types import SpanNames, Triplet
-from agentlightning.types.tracer import Resource, Span, TraceStatus
+from agentlightning.types.tracer import Span
 
 from .base import TraceAdapter
 
