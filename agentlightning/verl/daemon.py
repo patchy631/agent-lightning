@@ -140,7 +140,6 @@ class AgentModeDaemon:
         store: LightningStore | None = None,
         adapter: TraceTripletAdapter | None = None,
     ):
-        print("!!!!!", store, llm_proxy, adapter)
         self.mode = mode
 
         # Server and Task Configuration
@@ -298,7 +297,7 @@ class AgentModeDaemon:
                     {
                         "model_name": model_name,
                         "litellm_params": {
-                            "model": model_name,
+                            "model": "hosted_vllm/" + model_name,
                             "api_base": f"http://{address}/v1/",
                         },
                     }
@@ -463,8 +462,12 @@ class AgentModeDaemon:
             spans = []
 
         # Convert spans to triplets using the adapter
-        triplets = self.adapter.adapt(spans)
         print("??? Spans:", spans)
+        if not spans:
+            # No triplets found, will emit a warning later.
+            triplets = []
+        else:
+            triplets = self.adapter.adapt(spans)
         print("??? Triplets:", triplets)
 
         # Extract final reward from triplets

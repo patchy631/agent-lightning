@@ -2,11 +2,13 @@
 
 import asyncio
 import inspect
+import json
 import logging
 import warnings
 from typing import (
     Any,
     Callable,
+    Dict,
     List,
     Literal,
     Optional,
@@ -119,6 +121,53 @@ def emit_reward(reward: float) -> ReadableSpan:
 SpanLike = Union[ReadableSpan, Span]
 
 
+def get_reward_value(span: SpanLike) -> Optional[float]:
+    """
+    Get the reward value from a span.
+    """
+    for key in [
+        "agentops.task.output",  # newer versions of agentops
+        "agentops.entity.output",
+    ]:
+        reward_dict: Dict[str, Any] | None = None
+        if span.attributes:
+            output = span.attributes.get(key)
+            if output:
+                if isinstance(output, dict):
+                    reward_dict = cast(Dict[str, Any], output)
+                elif isinstance(output, str):
+                    try:
+                        reward_dict = cast(Dict[str, Any], json.loads(output))
+                    except json.JSONDecodeError:
+                        reward_dict = None
+
+        if reward_dict and reward_dict.get("type") == "reward":
+            reward_value = reward_dict.get("value", None)
+            if reward_value is None:
+                return None
+            if not isinstance(reward_value, float):
+                logger.error(f"Reward is not a number, got: {type(reward_value)}. This may cause undefined behaviors.")
+            return cast(float, reward_value)
+
+    # Latest emit reward format
+    if span.name == SpanNames.REWARD.value and span.attributes:
+        reward_value = span.attributes.get("reward", None)
+        if reward_value is None:
+            return None
+        if not isinstance(reward_value, float):
+            logger.error(f"Reward is not a number, got: {type(reward_value)}. This may cause undefined behaviors.")
+        return cast(float, reward_value)
+    return None
+
+
+def is_reward_span(span: SpanLike) -> bool:
+    """
+    Check if a span is a reward span.
+    """
+    maybe_reward = get_reward_value(span)
+    return maybe_reward is not None
+
+
 def find_reward_spans(spans: Sequence[SpanLike]) -> List[SpanLike]:
     """
     Find all reward spans in the given list of spans.
@@ -129,7 +178,7 @@ def find_reward_spans(spans: Sequence[SpanLike]) -> List[SpanLike]:
     Returns:
         A list of spans whose name matches the reward span name.
     """
-    return [span for span in spans if span.name == SpanNames.REWARD.value]
+    return [span for span in spans if is_reward_span(span)]
 
 
 def get_last_reward(spans: Sequence[SpanLike]) -> Optional[float]:
@@ -142,14 +191,8 @@ def get_last_reward(spans: Sequence[SpanLike]) -> Optional[float]:
     Returns:
         The reward value from the last reward span, or None if not found.
     """
-    reward_spans = find_reward_spans(spans)
-    if len(reward_spans) == 0:
-        return None
-    attributes = reward_spans[-1].attributes
-    if attributes:
-        reward = attributes.get("reward", None)
-        if not isinstance(reward, float):
-            logger.error(f"Reward is not a number, got: {type(reward)}. This may cause undefined behaviors.")
-            return cast(float, reward)
-        return reward
+    for span in reversed(spans):
+        reward = get_reward_value(span)
+        if reward is not None:
+            return reward
     return None
