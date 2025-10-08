@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import ast
 import asyncio
+import contextlib
 import logging
+import multiprocessing
 import os
 import re
 import socket
 import tempfile
 import threading
 import time
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Sequence, TypedDict, Union, cast
+from multiprocessing.context import BaseContext
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Literal, Optional, Sequence, TypedDict, Union, cast
 
 import litellm
 import opentelemetry.trace as trace_api
@@ -24,6 +27,8 @@ from litellm.proxy.proxy_server import app, save_worker_config  # pyright: ignor
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 
+from agentlightning.execution.events import Event as LightningEvent
+from agentlightning.execution.events import MultiprocessingEvent, ThreadingEvent
 from agentlightning.types import LLM, ProxyLLM
 
 from .store.base import LightningStore
@@ -494,6 +499,10 @@ class LLMProxy:
     As the LLM Proxy sets up an OpenTelemetry tracer, it's recommended to run it in a different
     process from the main runner (i.e., tracer from agents).
 
+    When ``server_mode="mp"`` the uvicorn server is isolated inside a forked process.
+    This prevents the listening sockets from being inherited by later forks in the parent, which
+    otherwise keeps the port open and blocks clean restarts after worker churn.
+
     Args:
         port: TCP port to bind.
         model_list: LiteLLM ``model_list`` entries.
@@ -501,6 +510,9 @@ class LLMProxy:
         host: Publicly reachable host used in resource endpoints. Defaults to best-guess IPv4.
         litellm_config: Extra LiteLLM proxy config merged with ``model_list``.
         num_retries: Default LiteLLM retry count injected into ``litellm_settings``.
+        server_mode: ``"thread"`` (default) starts uvicorn on a background thread. ``"mp"`` forks a
+            dedicated process so the proxy port is not inherited by later forks in the parent. The
+            latter is safer when the caller manages worker processes.
     """
 
     def __init__(
@@ -511,6 +523,7 @@ class LLMProxy:
         host: str | None = None,
         litellm_config: Dict[str, Any] | None = None,
         num_retries: int = 0,
+        server_mode: Literal["thread", "mp"] = "thread",
     ):
         self.store = store
         self.host = host or _get_default_ipv4_address()
@@ -522,10 +535,17 @@ class LLMProxy:
         self.litellm_config.setdefault("litellm_settings", {})
         self.litellm_config["litellm_settings"].setdefault("num_retries", num_retries)
 
+        if server_mode not in {"thread", "mp"}:
+            raise ValueError(f"Unsupported server_mode '{server_mode}'. Expected 'thread' or 'mp'.")
+
+        self._server_mode: Literal["thread", "mp"] = server_mode
         self._server_thread = None
+        self._server_process: multiprocessing.Process | None = None
         self._config_file = None
         self._uvicorn_server = None
-        self._ready_event = threading.Event()
+        self._ready_event: LightningEvent | None = None
+        self._stop_event: LightningEvent | None = None
+        self._mp_context: BaseContext | None = None
 
     def set_store(self, store: LightningStore) -> None:
         """Set the store for the proxy.
@@ -553,17 +573,28 @@ class LLMProxy:
         Args:
             startup_timeout: Maximum seconds to wait.
         """
-        start = time.time()
-        while True:
-            if self._uvicorn_server is None:
-                break
-            if self._uvicorn_server.started:
-                self._ready_event.set()
-                break
-            if self._uvicorn_server.should_exit:
-                break
-            if time.time() - start > startup_timeout:
-                break
+        deadline = time.time() + startup_timeout
+        if self._ready_event is not None and self._ready_event.wait(startup_timeout):
+            return
+
+        while time.time() <= deadline:
+            if self._server_mode == "mp":
+                if self._server_process is not None and not self._server_process.is_alive():
+                    break
+            else:
+                if self._uvicorn_server is None:
+                    break
+                if self._uvicorn_server.started:
+                    if self._ready_event is not None:
+                        self._ready_event.set()
+                    return
+                if self._uvicorn_server.should_exit:
+                    break
+
+            if not _check_port(self.host, self.port):
+                if self._ready_event is not None:
+                    self._ready_event.set()
+                return
             time.sleep(0.01)
 
     def start(self):
@@ -600,18 +631,49 @@ class LLMProxy:
 
         save_worker_config(config=self._config_file)
 
-        # Bind to all interfaces to allow other hosts to reach it if needed.
-        self._uvicorn_server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=self.port))
+        if self._server_mode == "mp":
+            try:
+                self._mp_context = multiprocessing.get_context("fork")
+            except ValueError as exc:
+                raise RuntimeError(
+                    "LLMProxy requires a fork-based multiprocessing backend when server_mode='mp'."
+                ) from exc
 
-        def run_server():
-            # Serve uvicorn in this background thread with its own event loop.
-            assert self._uvicorn_server is not None
-            asyncio.run(self._uvicorn_server.serve())
+            self._ready_event = MultiprocessingEvent(ctx=self._mp_context)
+            self._stop_event = MultiprocessingEvent(ctx=self._mp_context)
+            # Running uvicorn in a forked process prevents new workers spawned by the caller
+            # from inheriting the listening socket. That keeps restarts reliable even after forks.
+            logger.info("Starting LLMProxy server process...")
+            self._server_process = self._mp_context.Process(
+                target=_run_proxy_server_process,
+                args=(
+                    self.port,
+                    self._config_file,
+                    self._stop_event,
+                    self._ready_event,
+                ),
+                daemon=True,
+            )
+            self._server_process.start()
+            self._uvicorn_server = None
+            self._server_thread = None
+        else:
+            self._ready_event = ThreadingEvent()
+            self._stop_event = ThreadingEvent()
+            # Bind to all interfaces to allow other hosts to reach it if needed.
+            self._uvicorn_server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=self.port))
 
-        logger.info("Starting LLMProxy server thread...")
-        self._ready_event.clear()
-        self._server_thread = threading.Thread(target=run_server, daemon=True)
-        self._server_thread.start()
+            def run_server():
+                # Serve uvicorn in this background thread with its own event loop.
+                assert self._uvicorn_server is not None
+                asyncio.run(_serve_uvicorn_background(self._uvicorn_server, self._stop_event, self._ready_event))
+
+            logger.info("Starting LLMProxy server thread...")
+            self._server_thread = threading.Thread(target=run_server, daemon=True)
+            self._server_thread.start()
+            self._server_process = None
+            self._mp_context = None
+
         self._wait_until_started()
 
     def stop(self):
@@ -627,25 +689,57 @@ class LLMProxy:
         if self._config_file and os.path.exists(self._config_file):
             os.unlink(self._config_file)
 
-        logger.info("Stopping LLMProxy server thread...")
+        if self._server_mode == "mp":
+            logger.info("Stopping LLMProxy server process...")
+        else:
+            logger.info("Stopping LLMProxy server thread...")
         stop_success = True
-        if self._server_thread is not None and self._uvicorn_server is not None and self._uvicorn_server.started:
-            self._uvicorn_server.should_exit = True
-            self._server_thread.join(timeout=10.0)  # Allow time for graceful shutdown.
-            if self._server_thread.is_alive():
-                logger.error(
-                    "LLMProxy server thread is still alive after 10 seconds. Cannot kill it because it's a thread."
-                )
-                stop_success = False
-            self._server_thread = None
+        if self._server_mode == "mp":
+            if self._server_process is not None:
+                if self._stop_event is not None:
+                    self._stop_event.set()
+                self._server_process.join(timeout=10.0)
+                if self._server_process.is_alive():
+                    logger.error("LLMProxy server process is still alive after 10 seconds. Sending terminate signal.")
+                    self._server_process.terminate()
+                    self._server_process.join(timeout=5.0)
+                if self._server_process.is_alive():
+                    logger.error("LLMProxy server process could not be terminated cleanly.")
+                    stop_success = False
+                self._server_process = None
             self._uvicorn_server = None
-            self._config_file = None
+        else:
+            if self._server_thread is not None:
+                if self._stop_event is not None:
+                    self._stop_event.set()
+                if self._uvicorn_server is not None:
+                    self._uvicorn_server.should_exit = True
+                self._server_thread.join(timeout=10.0)  # Allow time for graceful shutdown.
+                if self._server_thread.is_alive():
+                    logger.error(
+                        "LLMProxy server thread is still alive after 10 seconds. Cannot kill it because it's a thread."
+                    )
+                    stop_success = False
+                self._server_thread = None
+                self._uvicorn_server = None
+
+        self._server_thread = None
+        self._uvicorn_server = None
+        self._config_file = None
+        if self._ready_event is not None:
             self._ready_event.clear()
-            if not _check_port(self.host, self.port):
-                logger.error(f"Port {self.port} is still in use. Stopping LLMProxy is not successful.")
-                stop_success = False
+        self._ready_event = None
+        if self._stop_event is not None:
+            self._stop_event.clear()
+        self._stop_event = None
+        self._mp_context = None
+
+        if not _check_port(self.host, self.port):
+            logger.error(f"Port {self.port} is still in use. Stopping LLMProxy is not successful.")
+            stop_success = False
+
         if stop_success:
-            logger.info("LLMProxy server thread stopped.")
+            logger.info("LLMProxy server stopped.")
         else:
             logger.error("LLMProxy server is not stopped successfully.")
 
@@ -665,7 +759,14 @@ class LLMProxy:
         Returns:
             bool: True if server was started and did not signal exit.
         """
-        return self._uvicorn_server is not None and self._uvicorn_server.started
+        if self._server_mode == "mp":
+            return self._server_process is not None and self._server_process.is_alive()
+        return (
+            self._server_thread is not None
+            and self._server_thread.is_alive()
+            and self._uvicorn_server is not None
+            and self._uvicorn_server.started
+        )
 
     def as_resource(
         self,
@@ -714,6 +815,75 @@ class LLMProxy:
             )
         else:
             raise ValueError("Either rollout_id and attempt_id must be provided, or neither.")
+
+
+def _run_proxy_server_process(
+    port: int,
+    config_path: str,
+    stop_event: LightningEvent | None,
+    ready_event: LightningEvent | None,
+) -> None:
+    """Child-process entrypoint that serves uvicorn until a stop event is signaled."""
+    try:
+        if _global_store is None:
+            logger.error(
+                "Global store is not initialized in the LLMProxy child process. "
+                "Ensure start() was called with server_mode='mp' on a fork-capable platform."
+            )
+            if ready_event is not None:
+                ready_event.set()
+            return
+
+        # The initialize/save_worker_config calls are idempotent. Replaying them here ensures
+        # the forked server retains middleware and LiteLLM state even when the platform uses spawn.
+        initialize()
+        save_worker_config(config=config_path)
+
+        server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=port))
+        asyncio.run(_serve_uvicorn_background(server, stop_event, ready_event))
+    except KeyboardInterrupt:
+        pass
+    except Exception:
+        logger.exception("LLMProxy server process crashed.")
+        if ready_event is not None:
+            ready_event.set()
+
+
+async def _serve_uvicorn_background(
+    server: uvicorn.Server, stop_event: LightningEvent | None, ready_event: LightningEvent | None
+) -> None:
+    """Serve uvicorn in a background worker and react to external stop events."""
+
+    async def _watch_for_stop_signal() -> None:
+        assert stop_event is not None
+        while not stop_event.is_set():
+            await asyncio.sleep(0.1)
+        server.should_exit = True
+
+    stop_task: asyncio.Task[None] | None = None
+    try:
+        if stop_event is not None:
+            stop_task = asyncio.create_task(_watch_for_stop_signal())
+
+        await server.startup()
+        if ready_event is not None:
+            ready_event.set()
+
+        if server.should_exit:
+            return
+
+        await server.main_loop()
+    finally:
+        if stop_task is not None:
+            stop_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await stop_task
+        try:
+            await server.shutdown()
+        except Exception:
+            logger.exception("Error while shutting down LLMProxy server process.")
+        if ready_event is not None and not ready_event.is_set():
+            ready_event.set()
 
 
 def _get_default_ipv4_address() -> str:

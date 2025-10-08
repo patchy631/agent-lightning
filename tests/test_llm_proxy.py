@@ -16,6 +16,7 @@ There are some specific TODOs for each test function.
 import ast
 import asyncio
 import json
+import multiprocessing
 import random
 from typing import Any, List, cast
 
@@ -75,7 +76,8 @@ def setup_module():
 
 
 @pytest.mark.asyncio
-async def test_basic_integration(qwen25_model: RemoteOpenAIServer):
+@pytest.mark.parametrize("server_mode", ["thread", "mp"])
+async def test_basic_integration(qwen25_model: RemoteOpenAIServer, server_mode: str):
     store = InMemoryLightningStore()
     proxy = LLMProxy(
         port=get_free_port(),
@@ -89,26 +91,40 @@ async def test_basic_integration(qwen25_model: RemoteOpenAIServer):
             }
         ],
         store=store,
+        server_mode=server_mode,
     )
+
+    if server_mode == "mp":
+        try:
+            multiprocessing.get_context("fork")
+        except ValueError:
+            pytest.skip("Fork-based multiprocessing is not available on this platform.")
 
     rollout = await store.start_rollout(None)
 
-    proxy.start()
+    started = False
+    try:
+        proxy.start()
+        started = True
+    except RuntimeError as exc:
+        if server_mode == "mp" and "server_mode" in str(exc):
+            pytest.skip("Fork-based multiprocessing is not available on this platform.")
+        raise
 
-    resource = proxy.as_resource(rollout.rollout_id, rollout.attempt.attempt_id)
+    try:
+        resource = proxy.as_resource(rollout.rollout_id, rollout.attempt.attempt_id)
 
-    import openai
-
-    client = openai.OpenAI(base_url=resource.endpoint, api_key="token-abc123")
-    response = client.chat.completions.create(
-        model="gpt-4o-arbitrary",
-        messages=[{"role": "user", "content": "Repeat after me: Hello, world!"}],
-        stream=False,
-    )
-    assert response.choices[0].message.content is not None
-    assert "hello, world" in response.choices[0].message.content.lower()
-
-    proxy.stop()
+        client = openai.OpenAI(base_url=resource.endpoint, api_key="token-abc123")
+        response = client.chat.completions.create(
+            model="gpt-4o-arbitrary",
+            messages=[{"role": "user", "content": "Repeat after me: Hello, world!"}],
+            stream=False,
+        )
+        assert response.choices[0].message.content is not None
+        assert "hello, world" in response.choices[0].message.content.lower()
+    finally:
+        if started:
+            proxy.stop()
 
     spans = await store.query_spans(rollout.rollout_id, rollout.attempt.attempt_id)
 
