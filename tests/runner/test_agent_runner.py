@@ -116,7 +116,7 @@ async def setup_runner(
     agent: LitAgent[Any],
     *,
     tracer: Optional[DummyTracer] = None,
-    max_tasks: Optional[int] = None,
+    max_rollouts: Optional[int] = None,
     poll_interval: float = 0.01,
     hooks: Sequence[Hook] = (),
 ) -> tuple[AgentRunnerV2[Any], InMemoryLightningStore, DummyTracer]:
@@ -124,7 +124,7 @@ async def setup_runner(
     store = InMemoryLightningStore()
     await store.update_resources("default", {"llm": LLM(endpoint="http://localhost", model="dummy")})
 
-    runner = AgentRunnerV2[Any](tracer=tracer, max_tasks=max_tasks, poll_interval=poll_interval)
+    runner = AgentRunnerV2[Any](tracer=tracer, max_rollouts=max_rollouts, poll_interval=poll_interval)
     runner.init(agent=agent, hooks=hooks)
     runner.init_worker(worker_id=0, store=store)
     return runner, store, tracer
@@ -287,7 +287,7 @@ async def test_step_accepts_agent_span_list() -> None:
 
 
 @pytest.mark.asyncio
-async def test_iter_respects_max_tasks() -> None:
+async def test_iter_respects_max_rollouts() -> None:
     class CountingAgent(LitAgent[Dict[str, Any]]):
         def __init__(self) -> None:
             super().__init__()
@@ -298,7 +298,7 @@ async def test_iter_respects_max_tasks() -> None:
             return 0.0
 
     agent = CountingAgent()
-    runner, store, _ = await setup_runner(agent, max_tasks=2)
+    runner, store, _ = await setup_runner(agent, max_rollouts=2)
 
     for idx in range(3):
         await store.enqueue_rollout({"idx": idx}, mode="train")
@@ -397,7 +397,7 @@ async def test_async_validation_rollout_used() -> None:
             return 0.0
 
     agent = AsyncValidationAgent()
-    runner, store, _ = await setup_runner(agent, max_tasks=1)
+    runner, store, _ = await setup_runner(agent, max_rollouts=1)
     await store.enqueue_rollout({"idx": 1}, mode="val")
 
     try:
@@ -421,7 +421,7 @@ async def test_training_rollout_sync_used() -> None:
             return None
 
     agent = SyncTrainingAgent()
-    runner, store, _ = await setup_runner(agent, max_tasks=1)
+    runner, store, _ = await setup_runner(agent, max_rollouts=1)
     await store.enqueue_rollout({"idx": 99}, mode="train")
 
     try:

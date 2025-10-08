@@ -32,18 +32,28 @@ class Trainer(ParallelWorkerBase):
     running a client-side agent fleet.
 
     Attributes:
+        algorithm: An instance of `BaseAlgorithm` to use for training.
+        store: An instance of `LightningStore` to use for storing tasks and traces.
+        runner: An instance of `BaseRunner` to use for running the agent.
         dev: If True, rollouts are run against the dev endpoint provided in `fit`.
-        n_workers: Number of agent workers (processes) to run in parallel.
-        max_tasks: Maximum number of tasks to process per worker. If None,
-                   workers run until no more tasks are available.
-        daemon: Whether worker processes should be daemons. Daemon processes
-                are terminated automatically when the main process exits.
+        n_runners: Number of agent runners to run in parallel.
+        max_rollouts: Maximum number of rollouts to process per runner. If None,
+                      workers run until no more rollouts are available.
+        strategy: An instance of `ExecutionStrategy` to use for spawning the algorithm and runners.
         tracer: A tracer instance, or a string pointing to the class full name or a dictionary with a 'type' key
                 that specifies the class full name and other initialization parameters.
                 If None, a default `AgentOpsTracer` will be created with the current settings.
+        adapter: An instance of `TraceTripletAdapter` to export data consumble by algorithms from traces.
+        llm_proxy: An instance of `LLMProxy` to use for intercepting the LLM calls.
+                   If not provided, algorithm will create one on its own.
+        n_workers: Number of agent workers to run in parallel. Deprecated in favor of `n_runners`.
+        max_tasks: Maximum number of tasks to process per runner. Deprecated in favor of `max_rollouts`.
+        daemon: Whether worker processes should be daemons. Daemon processes
+                are terminated automatically when the main process exits. Deprecated.
+                Only have effect with `fit_v0`.
         triplet_exporter: An instance of `TraceTripletAdapter` to export triplets from traces,
                           or a dictionary with the initialization parameters for the exporter.
-        algorithm: An instance of `BaseAlgorithm` to use for training.
+                          Deprecated. Use `adapter` instead.
     """
 
     def __init__(

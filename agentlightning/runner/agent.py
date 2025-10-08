@@ -53,19 +53,19 @@ class AgentRunnerV2(BaseRunner[T_task]):
         worker_id: The unique identifier for this worker process.
     """
 
-    def __init__(self, tracer: BaseTracer, max_tasks: Optional[int] = None, poll_interval: float = 5.0) -> None:
+    def __init__(self, tracer: BaseTracer, max_rollouts: Optional[int] = None, poll_interval: float = 5.0) -> None:
         """Initialize the agent runner.
 
         Args:
             tracer: The tracer instance for recording execution traces and spans.
-            max_tasks: Maximum number of tasks to process in iter() mode. If None,
+            max_rollouts: Maximum number of tasks to process in iter() mode. If None,
                 the runner will continue indefinitely until interrupted.
             poll_interval: Time in seconds to wait between polling attempts when
                 no tasks are available in the store.
         """
         super().__init__()
         self._tracer = tracer
-        self._max_tasks = max_tasks
+        self._max_rollouts = max_rollouts
         self._poll_interval = poll_interval
 
         # Set later
@@ -420,7 +420,7 @@ class AgentRunnerV2(BaseRunner[T_task]):
 
         This method polls the store for new rollouts and executes them until:
         - The event is set (if provided)
-        - The max_tasks limit is reached (if configured)
+        - The max_rollouts limit is reached (if configured)
         - No more tasks are available
 
         All exceptions during rollout execution are caught and logged but not
@@ -431,11 +431,11 @@ class AgentRunnerV2(BaseRunner[T_task]):
                 will check this event periodically and stop gracefully when set.
         """
         num_tasks_processed = 0
-        logger.info(f"{self._log_prefix()} Started async rollouts (max: {self._max_tasks or 'unlimited'}).")
+        logger.info(f"{self._log_prefix()} Started async rollouts (max: {self._max_rollouts or 'unlimited'}).")
         store = self.get_store()
 
         while not (event is not None and event.is_set()) and (
-            self._max_tasks is None or num_tasks_processed < self._max_tasks
+            self._max_rollouts is None or num_tasks_processed < self._max_rollouts
         ):
             # Retrieve the next rollout
             next_rollout: Optional[RolloutV2] = None
@@ -461,7 +461,7 @@ class AgentRunnerV2(BaseRunner[T_task]):
 
             num_tasks_processed += 1
             if num_tasks_processed % 10 == 0 or num_tasks_processed == 1:
-                logger.info(f"{self._log_prefix()} Progress: {num_tasks_processed}/{self._max_tasks or 'unlimited'}")
+                logger.info(f"{self._log_prefix()} Progress: {num_tasks_processed}/{self._max_rollouts or 'unlimited'}")
 
         logger.info(f"{self._log_prefix()} Finished async rollouts. Processed {num_tasks_processed} tasks.")
 
