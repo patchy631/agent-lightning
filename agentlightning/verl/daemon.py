@@ -19,6 +19,7 @@ from verl import DataProto
 
 from agentlightning import LLM, AgentLightningServer, NamedResources, Rollout, configure_logger
 from agentlightning.llm_proxy import LLMProxy
+from agentlightning.store.base import LightningStore
 
 configure_logger()
 
@@ -124,7 +125,7 @@ class AgentModeDaemon:
 
     def __init__(
         self,
-        port: int,
+        port: Optional[int],
         train_rollout_n: int,
         train_information: Dict[str, Any],
         tokenizer: Any,
@@ -134,14 +135,26 @@ class AgentModeDaemon:
         llm_timeout_seconds: float = 1200.0,
         mode: Literal["v0", "v1"] = "v1",
         llm_proxy: LLMProxy | None = None,
+        store: LightningStore | None = None,
     ):
+        self.mode = mode
+        self.llm_proxy = llm_proxy
+
         # Server and Task Configuration
-        self.server_port = port
-        self.llm_timeout_seconds = llm_timeout_seconds
-        self.server = AgentLightningServer(
-            host="0.0.0.0", port=self.server_port, task_timeout_seconds=self.llm_timeout_seconds
-        )
-        self.proxy_port = _find_available_port()  # Run proxy on a different port
+        if mode == "v0":
+            assert port is not None
+            self.server_port = port
+            self.llm_timeout_seconds = llm_timeout_seconds
+            self.server = AgentLightningServer(
+                host="0.0.0.0", port=self.server_port, task_timeout_seconds=self.llm_timeout_seconds
+            )
+            self.proxy_port = _find_available_port()  # Run proxy on a different port
+        else:
+            assert store is not None
+            self.store = store
+            self._internal_loop: Optional[asyncio.AbstractEventLoop] = None
+            self._internal_loop_thread = threading.Thread(target=self._internal_loop_runner, daemon=True)
+            self._internal_loop_thread.start()
 
         # Training and Data Configuration
         self.train_rollout_n = train_rollout_n
@@ -160,7 +173,14 @@ class AgentModeDaemon:
         self._proxy_thread: Optional[threading.Thread] = None
         self.is_train = True
 
-    def _start_proxy_server(self):
+    def _internal_loop_runner(self):
+        """Run the internal loop."""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_forever()
+        loop.close()
+
+    def _start_proxy_server_v0(self):
         """
         Initializes and runs a Flask-based proxy server in a separate thread.
         This proxy load-balances requests to the actual backend LLM servers.
@@ -250,25 +270,35 @@ class AgentModeDaemon:
         self._proxy_thread.start()
         print(f"Proxy server running on port {self.proxy_port}")
 
+    def _start_proxy_server_v1(self):
+        if self.llm_proxy is None:
+            raise ValueError("LLM proxy is not set.")
+        self.llm_proxy.start()
+
     def start(self):
         """Starts the main AgentLightningServer and the proxy server."""
 
-        def run_server():
-            """Run the AgentLightningServer in a separate thread."""
-            asyncio.run(self.server.run_forever())
+        if self.mode == "v0":
 
-        self._server_thread = threading.Thread(target=run_server, daemon=True)
-        self._server_thread.start()
+            def run_server():
+                """Run the AgentLightningServer in a separate thread."""
+                asyncio.run(self.server.run_forever())
 
-        # Wait for the server's internal startup event to be set.
-        print("Waiting for AgentLightningServer to start...")
-        is_ready = self.server.startup_event.wait(timeout=20.0)  # Wait up to 20s
-        if not is_ready:
-            raise RuntimeError("AgentLightningServer failed to start within the timeout period.")
+            self._server_thread = threading.Thread(target=run_server, daemon=True)
+            self._server_thread.start()
 
-        print(f"AgentLightningServer control plane running on port {self.server_port}")
+            # Wait for the server's internal startup event to be set.
+            print("Waiting for AgentLightningServer to start...")
+            is_ready = self.server.startup_event.wait(timeout=20.0)  # Wait up to 20s
+            if not is_ready:
+                raise RuntimeError("AgentLightningServer failed to start within the timeout period.")
 
-        self._start_proxy_server()
+            print(f"AgentLightningServer control plane running on port {self.server_port}")
+
+            self._start_proxy_server_v0()
+        else:
+            # agent lightning server is no longer needed
+            self._start_proxy_server_v1()
 
     async def _async_set_up(self, data: Dict[str, Any], server_addresses: List[str], is_train: bool = True):
         """Async helper to set up data and resources on the server."""
@@ -283,7 +313,11 @@ class AgentModeDaemon:
             sampling_parameters={"temperature": self.train_information.get("temperature", 0.7 if is_train else 0.0)},
         )
         resources: NamedResources = {"main_llm": llm_resource}
-        resources_id = await self.server.update_resources(resources)
+        if self.mode == "v0":
+            resources_id = await self.server.update_resources(resources)
+        else:
+            resources_id = "resource-" + str(uuid.uuid4())
+            await self.store.update_resources(resources_id=resources_id, resources=resources)
 
         # 2. Queue tasks for agents to process
         keys = list(data.keys())
@@ -300,23 +334,40 @@ class AgentModeDaemon:
                 task_metadata = {"data_id": data_id, "is_train": is_train}
 
                 # Data ID is different from Rollout ID, as one data can have multiple rollouts.
-                rollout_id = await self.server.queue_task(
-                    sample=_to_native(original_sample),
-                    mode="train" if is_train else "val",
-                    resources_id=resources_id,
-                    metadata=task_metadata,
-                )
+                if self.mode == "v0":
+                    rollout_id = await self.server.queue_task(
+                        sample=_to_native(original_sample),
+                        mode="train" if is_train else "val",
+                        resources_id=resources_id,
+                        metadata=task_metadata,
+                    )
+                else:
+                    rollout = await self.store.enqueue_rollout(
+                        input=_to_native(original_sample),
+                        mode="train" if is_train else "val",
+                        resources_id=resources_id,
+                        metadata=task_metadata,
+                    )
+                    rollout_id = rollout.rollout_id
+
                 # Store original sample data to reconstruct batch information later
                 self._task_id_to_original_sample[rollout_id] = original_sample
                 self._total_tasks_queued += 1
 
     def set_up_data_and_server(self, data: Dict[str, Any], server_addresses: List[str], is_train: bool = True):
         """Synchronous wrapper for setting up data and server resources."""
-        if not self.server.loop or not self.server.startup_event.is_set():
-            raise RuntimeError("Server is not running or ready.")
-
         coro = self._async_set_up(data, server_addresses, is_train)
-        future = asyncio.run_coroutine_threadsafe(coro, self.server.loop)
+
+        if self.mode == "v0":
+            if not self.server.loop or not self.server.startup_event.is_set():
+                raise RuntimeError("Server is not running or ready.")
+
+            future = asyncio.run_coroutine_threadsafe(coro, self.server.loop)
+
+        else:
+            if self._internal_loop is None:
+                raise RuntimeError("Internal loop is not running.")
+            future = asyncio.run_coroutine_threadsafe(coro, self._internal_loop)
         try:
             future.result(timeout=60)  # Wait for completion with a timeout
         except Exception as e:
@@ -340,7 +391,10 @@ class AgentModeDaemon:
     async def _async_run_until_finished(self, verbose: bool = True):
         """Async helper to wait for all tasks to complete."""
         while len(self._completed_rollouts) < self._total_tasks_queued:
-            completed_batch = await self.server.retrieve_completed_rollouts()
+            if self.mode == "v0":
+                completed_batch = await self.server.retrieve_completed_rollouts()
+            else:
+                completed_batch = await self.store.retrieve_completed_rollouts()
             for rollout in completed_batch:
                 self._validate_data(rollout)
                 if rollout.rollout_id not in self._task_id_to_original_sample:

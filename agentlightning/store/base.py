@@ -197,9 +197,16 @@ class LightningStore:
         """
         raise NotImplementedError()
 
-    async def update_resources(self, resources_id: str, resources: NamedResources) -> ResourcesUpdate:
+    async def add_resources(self, resources: NamedResources) -> ResourcesUpdate:
         """
         Safely stores a new version of named resources and sets it as the latest.
+        Not implemented by many stores yet.
+        """
+        raise NotImplementedError()
+
+    async def update_resources(self, resources_id: str, resources: NamedResources) -> ResourcesUpdate:
+        """
+        Safely stores a new version or updates an existing version of named resources and sets it as the latest.
         """
         raise NotImplementedError()
 
