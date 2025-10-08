@@ -542,6 +542,7 @@ class LLMProxy:
             model_list: New list of model entries.
         """
         self.model_list = model_list
+        logger.info(f"Updating LLMProxy model list to: {model_list}")
         if self.is_running():
             self.restart()
         # Do nothing if the server is not running.
@@ -607,6 +608,7 @@ class LLMProxy:
             assert self._uvicorn_server is not None
             asyncio.run(self._uvicorn_server.serve())
 
+        logger.info("Starting LLMProxy server thread...")
         self._ready_event.clear()
         self._server_thread = threading.Thread(target=run_server, daemon=True)
         self._server_thread.start()
@@ -625,19 +627,34 @@ class LLMProxy:
         if self._config_file and os.path.exists(self._config_file):
             os.unlink(self._config_file)
 
+        logger.info("Stopping LLMProxy server thread...")
+        stop_success = True
         if self._server_thread is not None and self._uvicorn_server is not None and self._uvicorn_server.started:
             self._uvicorn_server.should_exit = True
             self._server_thread.join(timeout=10.0)  # Allow time for graceful shutdown.
+            if self._server_thread.is_alive():
+                logger.error(
+                    "LLMProxy server thread is still alive after 10 seconds. Cannot kill it because it's a thread."
+                )
+                stop_success = False
             self._server_thread = None
             self._uvicorn_server = None
             self._config_file = None
             self._ready_event.clear()
+            if not _check_port(self.host, self.port):
+                logger.error(f"Port {self.port} is still in use. Stopping LLMProxy is not successful.")
+                stop_success = False
+        if stop_success:
+            logger.info("LLMProxy server thread stopped.")
+        else:
+            logger.error("LLMProxy server is not stopped successfully.")
 
     def restart(self) -> None:
         """Restart the proxy if running, else start it.
 
         Convenience wrapper calling ``stop()`` followed by ``start()``.
         """
+        logger.info("Restarting LLMProxy server...")
         if self.is_running():
             self.stop()
         self.start()
@@ -718,3 +735,11 @@ def _get_default_ipv4_address() -> str:
         return "127.0.0.1"
     finally:
         s.close()
+
+
+def _check_port(host: str, port: int) -> bool:
+    """Check if a port is available."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(1)
+        result = s.connect_ex((host, port))
+        return result != 0  # True if unavailable
