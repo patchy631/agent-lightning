@@ -5,6 +5,7 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING, Any, Optional
 
+from agentlightning.adapter import TraceAdapter
 from agentlightning.client import AgentLightningClient
 from agentlightning.store.base import LightningStore
 from agentlightning.types import Dataset
@@ -19,7 +20,8 @@ class BaseAlgorithm:
 
     _trainer_ref: weakref.ReferenceType[Trainer] | None = None
     _llm_proxy_ref: weakref.ReferenceType["LLMProxy"] | None = None
-    _store_ref: weakref.ReferenceType[LightningStore] | None = None
+    _store: LightningStore | None = None
+    _adapter_ref: weakref.ReferenceType[TraceAdapter[Any]] | None = None
 
     def set_trainer(self, trainer: Trainer) -> None:
         """
@@ -71,6 +73,24 @@ class BaseAlgorithm:
 
         return llm_proxy
 
+    def set_adapter(self, adapter: TraceAdapter[Any]) -> None:
+        """
+        Set the adapter for this algorithm to collect and convert traces.
+        """
+        self._adapter_ref = weakref.ref(adapter)
+
+    @property
+    def adapter(self) -> TraceAdapter[Any]:
+        """
+        Retrieve the adapter for this algorithm to communicate with the runners.
+        """
+        if self._adapter_ref is None:
+            raise ValueError("Adapter has not been set for this algorithm.")
+        adapter = self._adapter_ref()
+        if adapter is None:
+            raise ValueError("Adapter reference is no longer valid (object has been garbage collected).")
+        return adapter
+
     def set_store(self, store: LightningStore) -> None:
         """
         Set the store for this algorithm to communicate with the runners.
@@ -85,12 +105,9 @@ class BaseAlgorithm:
         """
         Retrieve the store for this algorithm to communicate with the runners.
         """
-        if self._store_ref is None:
+        if self._store is None:
             raise ValueError("Store has not been set for this algorithm.")
-        store = self._store_ref()
-        if store is None:
-            raise ValueError("Store reference is no longer valid (object has been garbage collected).")
-        return store
+        return self._store
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self.run(*args, **kwargs)

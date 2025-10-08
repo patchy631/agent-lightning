@@ -9,6 +9,7 @@ import ray
 from verl.trainer.main_ppo import create_rl_sampler
 from verl.trainer.ppo.reward import load_reward_manager
 
+from agentlightning.adapter import TraceAdapter
 from agentlightning.llm_proxy import LLMProxy
 from agentlightning.store.base import LightningStore
 from agentlightning.types import Dataset
@@ -28,6 +29,7 @@ def run_ppo(
     val_dataset: Dataset[Any] | None,
     store: LightningStore | None,
     llm_proxy: LLMProxy | None,
+    adapter: TraceAdapter | None,
 ) -> None:
     if not ray.is_initialized():
         # this is for local ray cluster
@@ -41,7 +43,12 @@ def run_ppo(
     runner = TaskRunner.remote()
     ray.get(
         runner.run.remote(
-            config=config, train_dataset=train_dataset, val_dataset=val_dataset, store=store, llm_proxy=llm_proxy
+            config=config,
+            train_dataset=train_dataset,
+            val_dataset=val_dataset,
+            store=store,
+            llm_proxy=llm_proxy,
+            adapter=adapter,
         )
     )
 
@@ -55,6 +62,7 @@ class TaskRunner:
         val_dataset: Dataset | None,
         store: LightningStore | None,
         llm_proxy: LLMProxy | None,
+        adapter: TraceAdapter | None,
     ):
         # print initial config
         from pprint import pprint
@@ -183,6 +191,7 @@ class TaskRunner:
             train_sampler=train_sampler,
             store=store,
             llm_proxy=llm_proxy,
+            adapter=adapter,
         )
         trainer.init_workers()
         trainer.fit()

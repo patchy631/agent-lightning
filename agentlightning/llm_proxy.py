@@ -535,7 +535,7 @@ class LLMProxy:
         """
         self.store = store
 
-    def update_model_list(self, model_list: List[ModelConfig], restart: bool = True) -> None:
+    def update_model_list(self, model_list: List[ModelConfig]) -> None:
         """Replace the in-memory model list and hot-restart if running.
 
         Args:

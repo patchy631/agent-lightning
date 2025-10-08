@@ -139,6 +139,7 @@ class LightningStoreServer(LightningStore):
         self.host = state["host"]
         self.port = state["port"]
         self._owner_pid = state["_owner_pid"]
+        self._client = None
         # Do NOT reconstruct app, _uvicorn_config, _uvicorn_server
         # to avoid transferring server state to subprocess
 

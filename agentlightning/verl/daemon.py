@@ -21,7 +21,7 @@ from agentlightning import LLM, AgentLightningServer, NamedResources, Rollout, c
 from agentlightning.adapter.triplet import TraceTripletAdapter
 from agentlightning.llm_proxy import LLMProxy, ModelConfig
 from agentlightning.store.base import LightningStore
-from agentlightning.types import RolloutV2, Task, Triplet
+from agentlightning.types import RolloutV2, Task
 
 configure_logger()
 
@@ -140,8 +140,8 @@ class AgentModeDaemon:
         store: LightningStore | None = None,
         adapter: TraceTripletAdapter | None = None,
     ):
+        print("!!!!!", store, llm_proxy, adapter)
         self.mode = mode
-        self.llm_proxy = llm_proxy
 
         # Server and Task Configuration
         if mode == "v0":
@@ -155,7 +155,20 @@ class AgentModeDaemon:
         else:
             assert store is not None
             self.store = store
-            self.adapter = adapter
+            if llm_proxy is None:
+                self.llm_proxy = LLMProxy(
+                    port=_find_available_port(),
+                    model_list=[],
+                    store=store,
+                )
+            else:
+                # Reuse the existing LLM proxy (probably configured by user)
+                self.llm_proxy = llm_proxy
+            if adapter is None:
+                self.adapter = TraceTripletAdapter()
+            else:
+                # Reuse the one from trainer
+                self.adapter = adapter
             self._internal_loop: Optional[asyncio.AbstractEventLoop] = None
             self._internal_loop_thread = threading.Thread(target=self._internal_loop_runner, daemon=True)
             self._internal_loop_thread.start()
@@ -275,10 +288,7 @@ class AgentModeDaemon:
         self._proxy_thread.start()
         print(f"Proxy server running on port {self.proxy_port}")
 
-    def _start_proxy_server_v1(self):
-        if self.llm_proxy is None:
-            raise ValueError("LLM proxy is not set.")
-
+    def _update_proxy_server_v1(self):
         model_name = self.train_information.get("model")
         if not model_name:
             raise ValueError("Model name is not set.")
@@ -295,9 +305,12 @@ class AgentModeDaemon:
                 )
                 for address in self.backend_llm_server_addresses
             ],
-            restart=False,
         )
-        self.llm_proxy.start()
+
+        if self.llm_proxy.is_running():
+            self.llm_proxy.restart()
+        else:
+            self.llm_proxy.start()
 
     def start(self):
         """Starts the main AgentLightningServer and the proxy server."""
@@ -321,25 +334,41 @@ class AgentModeDaemon:
 
             self._start_proxy_server_v0()
         else:
-            # agent lightning server is no longer needed
-            self._start_proxy_server_v1()
+            # Agent lightning server is no longer needed;
+            # Start proxy server in _async_set_up
+            pass
 
     async def _async_set_up(self, data: Dict[str, Any], server_addresses: List[str], is_train: bool = True):
         """Async helper to set up data and resources on the server."""
         self.clear_data_and_server()
-        self.backend_llm_server_addresses = server_addresses
+        if server_addresses != self.backend_llm_server_addresses:
+            self.backend_llm_server_addresses = server_addresses
+            if self.mode == "v1" or not self.llm_proxy.is_running():
+                self._update_proxy_server_v1()
         self.is_train = is_train
 
         # 1. Update resources on the server for clients to use
-        llm_resource = LLM(
-            endpoint=f"http://127.0.0.1:{self.proxy_port}/v1",
-            model=self.train_information.get("model", "default-model"),
-            sampling_parameters={"temperature": self.train_information.get("temperature", 0.7 if is_train else 0.0)},
-        )
+        if self.mode == "v0":
+            llm_resource = LLM(
+                endpoint=f"http://127.0.0.1:{self.proxy_port}/v1",
+                model=self.train_information.get("model", "default-model"),
+                sampling_parameters={
+                    "temperature": self.train_information.get("temperature", 0.7 if is_train else 0.0)
+                },
+            )
+        else:
+            llm_resource = self.llm_proxy.as_resource(
+                sampling_parameters={
+                    "temperature": self.train_information.get("temperature", 0.7 if is_train else 0.0)
+                },
+            )
+
         resources: NamedResources = {"main_llm": llm_resource}
+
         if self.mode == "v0":
             resources_id = await self.server.update_resources(resources)
         else:
+            # This should be replaced with store.add_resources()
             resources_id = "resource-" + str(uuid.uuid4())
             await self.store.update_resources(resources_id=resources_id, resources=resources)
 
@@ -434,9 +463,9 @@ class AgentModeDaemon:
             spans = []
 
         # Convert spans to triplets using the adapter
-        triplets: Optional[List[Triplet]] = None
-        if self.adapter is not None and spans:
-            triplets = self.adapter.adapt(spans)
+        triplets = self.adapter.adapt(spans)
+        print("??? Spans:", spans)
+        print("??? Triplets:", triplets)
 
         # Extract final reward from triplets
         final_reward: Optional[float] = None

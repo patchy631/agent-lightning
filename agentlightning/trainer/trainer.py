@@ -326,6 +326,7 @@ class Trainer(ParallelWorkerBase):
         if self.algorithm is not None:
             self.algorithm.set_trainer(self)
             self.algorithm.set_store(store)
+            self.algorithm.set_adapter(self.adapter)
             if self.llm_proxy is not None:
                 self.llm_proxy.set_store(store)
                 self.algorithm.set_llm_proxy(self.llm_proxy)
@@ -689,7 +690,7 @@ class Trainer(ParallelWorkerBase):
                         logger.info("Main process continues to run algorithm.")
                         self.algorithm.run(
                             train_dataset=train_dataset,
-                            validation_dataset=val_dataset,
+                            val_dataset=val_dataset,
                             dev_dataset=dev_dataset,
                         )
                         logger.info("Algorithm exits. Killing the workers.")

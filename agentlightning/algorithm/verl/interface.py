@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 from agentlightning.algorithm.base import BaseAlgorithm
 from agentlightning.client import AgentLightningClient
 from agentlightning.types import Dataset
-from agentlightning.verl.entrypoint import run_ppo
+from agentlightning.verl.entrypoint import run_ppo  # type: ignore
 
 
 class VERL(BaseAlgorithm):
@@ -36,11 +36,26 @@ class VERL(BaseAlgorithm):
             store = self.store
         except Exception:
             print("Store is not set. Assuming v0 execution mode.")
-            run_ppo(self.config, train_dataset, val_dataset, None, None)
+            run_ppo(
+                self.config,
+                train_dataset=train_dataset,
+                val_dataset=val_dataset,
+                store=None,
+                llm_proxy=None,
+                adapter=None,
+            )
         else:
             print("Store is set. Assuming v1 execution mode.")
             llm_proxy = self.llm_proxy
-            run_ppo(self.config, train_dataset, val_dataset, store, llm_proxy)
+            adapter = self.adapter
+            run_ppo(
+                self.config,
+                train_dataset=train_dataset,
+                val_dataset=val_dataset,
+                store=store,
+                llm_proxy=llm_proxy,
+                adapter=adapter,
+            )
 
     def get_client(self) -> AgentLightningClient:
         port = self.config.agentlightning.port
