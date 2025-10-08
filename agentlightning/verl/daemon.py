@@ -440,26 +440,15 @@ class AgentModeDaemon:
         elif any(not r.prompt.get("token_ids", []) for r in rollout.triplets):
             print(f"Warning: Rollout {rollout.rollout_id} contains empty prompt: {rollout.triplets}")
 
-    def _validate_data_v1(self, rollout: RolloutV2) -> Rollout:
+    async def _validate_data_v1(self, rollout: RolloutV2) -> Rollout:
         """Convert RolloutV2 to Rollout and validate.
 
         1. Task: construct from RolloutV2
         2. Triplets: obtained by querying spans and feeding into the adapter
         3. Final reward: extracted from last triplet's reward, searching backwards if not found
         """
-        # Get the event loop
-        loop = self._internal_loop
-        assert loop is not None
-
         # Query spans for this rollout (latest attempt)
-        spans_future = asyncio.run_coroutine_threadsafe(
-            self.store.query_spans(rollout.rollout_id, attempt_id="latest"), loop
-        )
-        try:
-            spans = spans_future.result(timeout=10)
-        except Exception as e:
-            print(f"Error querying spans for rollout {rollout.rollout_id}: {e}")
-            spans = []
+        spans = await self.store.query_spans(rollout.rollout_id, attempt_id="latest")
 
         # Convert spans to triplets using the adapter
         print("??? Spans:", spans)
@@ -513,7 +502,7 @@ class AgentModeDaemon:
                 )
             for rollout in completed_batch:
                 if isinstance(rollout, RolloutV2):
-                    rollout = self._validate_data_v1(rollout)
+                    rollout = await self._validate_data_v1(rollout)
                 else:
                     self._validate_data(rollout)
                 if rollout.rollout_id not in self._task_id_to_original_sample:

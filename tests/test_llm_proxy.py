@@ -486,3 +486,49 @@ def test_exporter_helpers():
     exporter.shutdown()
 
     # TODO: add more complex tests for the exporter helper
+
+
+def test_update_model_list():
+    store = InMemoryLightningStore()
+    proxy = LLMProxy(
+        port=get_free_port(),
+        model_list=[
+            {
+                "model_name": "gpt-4o-arbitrary",
+                "litellm_params": {
+                    "model": "openai/gpt-4o",
+                },
+            }
+        ],
+        store=store,
+    )
+    proxy.start()
+    assert proxy.is_running()
+    assert proxy.model_list == [
+        {
+            "model_name": "gpt-4o-arbitrary",
+            "litellm_params": {
+                "model": "openai/gpt-4o",
+            },
+        }
+    ]
+    proxy.update_model_list(
+        [
+            {
+                "model_name": "gpt-4o-arbitrary",
+                "litellm_params": {
+                    "model": "openai/gpt-4o-mini",
+                },
+            }
+        ]
+    )
+    assert proxy.model_list == [
+        {
+            "model_name": "gpt-4o-arbitrary",
+            "litellm_params": {
+                "model": "openai/gpt-4o-mini",
+            },
+        }
+    ]
+    assert proxy.is_running()
+    proxy.stop()
