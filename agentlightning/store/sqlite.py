@@ -16,7 +16,21 @@ import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Sequence, Tuple, TypeVar, cast
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 from opentelemetry.sdk.trace import ReadableSpan
 
@@ -41,7 +55,13 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def _healthcheck_wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
+TCoroutine = TypeVar(
+    "TCoroutine",
+    bound=Callable[..., Coroutine[Any, Any, Any]],
+)
+
+
+def _healthcheck_wrapper(func: TCoroutine) -> TCoroutine:
     """Decorator ensuring a health check runs before ``func``.
 
     The health check keeps attempts and rollouts in sync. It is skipped when the
@@ -55,13 +75,13 @@ def _healthcheck_wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
 
         self._healthcheck_running = True  # type: ignore[assignment]
         try:
-            await self._healthcheck()
+            await self._healthcheck()  # pyright: ignore[reportPrivateUsage]
         finally:
             self._healthcheck_running = False  # type: ignore[assignment]
 
         return await func(self, *args, **kwargs)
 
-    return wrapper
+    return cast(TCoroutine, wrapper)
 
 
 def _serialize_pickle(value: Any) -> bytes:
@@ -86,20 +106,24 @@ def _json_encode(value: Any) -> Any:
     if hasattr(value, "model_dump"):
         return _json_encode(value.model_dump())
     if isinstance(value, dict):
-        return {key: _json_encode(item) for key, item in value.items()}
+        items = cast(Dict[Any, Any], value)
+        return {str(key): _json_encode(item) for key, item in items.items()}
     if isinstance(value, (list, tuple, set)):
-        return [_json_encode(item) for item in value]
+        iterable = cast(Iterable[Any], value)
+        return [_json_encode(item) for item in iterable]
     return value
 
 
 def _json_decode(value: Any) -> Any:
     if isinstance(value, dict):
-        marker = value.get("__type__")
+        mapping = cast(Dict[str, Any], value)
+        marker = mapping.get("__type__")
         if marker == "bytes":
-            return base64.b64decode(cast(str, value["data"]))
-        return {key: _json_decode(item) for key, item in value.items()}
+            return base64.b64decode(cast(str, mapping["data"]))
+        return {key: _json_decode(item) for key, item in mapping.items()}
     if isinstance(value, list):
-        return [_json_decode(item) for item in value]
+        iterable = cast(List[Any], value)
+        return [_json_decode(item) for item in iterable]
     return value
 
 
@@ -111,34 +135,6 @@ def _json_loads(value: Optional[str]) -> Any:
     if value is None:
         return None
     return _json_decode(json.loads(value))
-
-
-@dataclass
-class _RolloutRow:
-    rollout_id: str
-    status: RolloutStatus
-    start_time: float
-    end_time: Optional[float]
-    mode: Optional[str]
-    resources_id: Optional[str]
-    input_blob: bytes
-    config_json: str
-    metadata_blob: Optional[bytes]
-    kind: str
-
-
-@dataclass
-class _AttemptRow:
-    attempt_id: str
-    rollout_id: str
-    sequence_id: int
-    status: AttemptStatus
-    start_time: float
-    end_time: Optional[float]
-    worker_id: Optional[str]
-    last_heartbeat_time: Optional[float]
-    metadata_blob: Optional[bytes]
-    span_counter: int
 
 
 @dataclass
@@ -270,7 +266,7 @@ class SqliteLightningStore(LightningStore):
         return connection
 
     @contextmanager
-    def _transaction(self) -> Iterable[sqlite3.Connection]:
+    def _transaction(self) -> Iterator[sqlite3.Connection]:
         """Context manager that executes a single ``BEGIN IMMEDIATE`` block.
 
         ``BEGIN IMMEDIATE`` upgrades to a write transaction immediately and
@@ -436,34 +432,40 @@ class SqliteLightningStore(LightningStore):
             "parent": _json_loads(row["parent_context_json"]),
             "resource": _json_loads(row["resource_json"]),
         }
-        extras = _json_loads(row["extras_json"])
+        extras = cast(Optional[Dict[str, Any]], _json_loads(row["extras_json"]))
         if isinstance(extras, dict):
             payload.update(extras)
         payload["status"] = TraceStatus.model_validate(payload["status"])
-        resource_raw = _json_loads(row["resource_json"])
-        payload["resource"] = resource_raw
+        resource_payload = _json_loads(row["resource_json"])
+        payload["resource"] = resource_payload
         span = Span.model_validate(payload)
         # Restore direct references to dicts for attributes/events/links so the
         # dataclasses remain mutable and efficient, matching the behaviour of
         # OpenTelemetry's native exporters.
         object.__setattr__(span, "attributes", _json_loads(row["attributes_json"]))
 
-        raw_events = _json_loads(row["events_json"])
-        if isinstance(raw_events, list):
+        raw_events_any = _json_loads(row["events_json"])
+        if isinstance(raw_events_any, list):
+            raw_events = cast(List[Any], raw_events_any)
             for event_obj, event_raw in zip(span.events, raw_events):
-                attributes_raw = event_raw.get("attributes") if isinstance(event_raw, dict) else None
-                if attributes_raw is not None:
-                    object.__setattr__(event_obj, "attributes", attributes_raw)
+                if isinstance(event_raw, dict):
+                    event_dict = cast(Dict[str, Any], event_raw)
+                    attributes_raw = cast(Optional[Dict[str, Any]], event_dict.get("attributes"))
+                    if attributes_raw is not None:
+                        object.__setattr__(event_obj, "attributes", attributes_raw)
 
-        raw_links = _json_loads(row["links_json"])
-        if isinstance(raw_links, list):
+        raw_links_any = _json_loads(row["links_json"])
+        if isinstance(raw_links_any, list):
+            raw_links = cast(List[Any], raw_links_any)
             for link_obj, link_raw in zip(span.links, raw_links):
-                attributes_raw = link_raw.get("attributes") if isinstance(link_raw, dict) else None
-                if attributes_raw is not None:
-                    object.__setattr__(link_obj, "attributes", attributes_raw)
+                if isinstance(link_raw, dict):
+                    link_dict = cast(Dict[str, Any], link_raw)
+                    attributes_raw = cast(Optional[Dict[str, Any]], link_dict.get("attributes"))
+                    if attributes_raw is not None:
+                        object.__setattr__(link_obj, "attributes", attributes_raw)
 
-        if isinstance(resource_raw, dict) and "attributes" in resource_raw:
-            object.__setattr__(span.resource, "attributes", resource_raw["attributes"])
+        if isinstance(resource_payload, dict) and "attributes" in resource_payload:
+            object.__setattr__(span.resource, "attributes", resource_payload["attributes"])
 
         return span
 
@@ -1497,7 +1499,8 @@ class SqliteLightningStore(LightningStore):
                 await self.update_attempt(rollout.rollout_id, attempt.attempt_id, status="timeout")
                 continue
 
-            if attempt.last_heartbeat_time is not None:
+            last_heartbeat = attempt.last_heartbeat_time
+            if last_heartbeat is not None:
                 # Heartbeats show the worker is alive—promote to running if it
                 # has not already made that transition.
                 if attempt.status == "preparing":
@@ -1505,7 +1508,7 @@ class SqliteLightningStore(LightningStore):
                     attempt = attempt.model_copy(update={"status": "running"})
                 if (
                     config.unresponsive_seconds is not None
-                    and current_time - attempt.last_heartbeat_time > config.unresponsive_seconds
+                    and current_time - last_heartbeat > config.unresponsive_seconds
                 ):
                     # The worker went silent after previously heartbeat-ing.
                     await self.update_attempt(rollout.rollout_id, attempt.attempt_id, status="unresponsive")
