@@ -10887,7 +10887,17 @@ both continuous iteration over tasks from the store and single-step execution.</
 <span class="normal"><a href="#__codelineno-0-502">502</a></span>
 <span class="normal"><a href="#__codelineno-0-503">503</a></span>
 <span class="normal"><a href="#__codelineno-0-504">504</a></span>
-<span class="normal"><a href="#__codelineno-0-505">505</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="k">class</span><span class="w"> </span><span class="nc">AgentRunnerV2</span><span class="p">(</span><span class="n">BaseRunner</span><span class="p">[</span><span class="n">T_task</span><span class="p">]):</span>
+<span class="normal"><a href="#__codelineno-0-505">505</a></span>
+<span class="normal"><a href="#__codelineno-0-506">506</a></span>
+<span class="normal"><a href="#__codelineno-0-507">507</a></span>
+<span class="normal"><a href="#__codelineno-0-508">508</a></span>
+<span class="normal"><a href="#__codelineno-0-509">509</a></span>
+<span class="normal"><a href="#__codelineno-0-510">510</a></span>
+<span class="normal"><a href="#__codelineno-0-511">511</a></span>
+<span class="normal"><a href="#__codelineno-0-512">512</a></span>
+<span class="normal"><a href="#__codelineno-0-513">513</a></span>
+<span class="normal"><a href="#__codelineno-0-514">514</a></span>
+<span class="normal"><a href="#__codelineno-0-515">515</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="k">class</span><span class="w"> </span><span class="nc">AgentRunnerV2</span><span class="p">(</span><span class="n">BaseRunner</span><span class="p">[</span><span class="n">T_task</span><span class="p">]):</span>
 <a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Runner implementation for executing agent tasks with distributed support.</span>
 <a id="__codelineno-0-47" name="__codelineno-0-47"></a>
 <a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    This runner manages the complete lifecycle of agent rollout execution,</span>
@@ -11230,124 +11240,134 @@ both continuous iteration over tasks from the store and single-step execution.</
 <a id="__codelineno-0-385" name="__codelineno-0-385"></a>                    <span class="n">hook_type</span><span class="o">=</span><span class="s2">&quot;on_trace_end&quot;</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">runner</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">tracer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_tracer</span><span class="p">,</span> <span class="n">rollout</span><span class="o">=</span><span class="n">next_rollout</span>
 <a id="__codelineno-0-386" name="__codelineno-0-386"></a>                <span class="p">)</span>
 <a id="__codelineno-0-387" name="__codelineno-0-387"></a>
-<a id="__codelineno-0-388" name="__codelineno-0-388"></a>            <span class="n">trace_spans</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_process_rollout_result</span><span class="p">(</span><span class="n">next_rollout</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
-<a id="__codelineno-0-389" name="__codelineno-0-389"></a>            <span class="n">last_reward</span> <span class="o">=</span> <span class="n">get_last_reward</span><span class="p">(</span><span class="n">trace_spans</span><span class="p">)</span>
-<a id="__codelineno-0-390" name="__codelineno-0-390"></a>
-<a id="__codelineno-0-391" name="__codelineno-0-391"></a>            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-<a id="__codelineno-0-392" name="__codelineno-0-392"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-<a id="__codelineno-0-393" name="__codelineno-0-393"></a>                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">)</span><span class="si">}</span><span class="s2"> Completed in &quot;</span>
-<a id="__codelineno-0-394" name="__codelineno-0-394"></a>                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s. Collected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">trace_spans</span><span class="p">)</span><span class="si">}</span><span class="s2"> span(s). &quot;</span>
-<a id="__codelineno-0-395" name="__codelineno-0-395"></a>                <span class="sa">f</span><span class="s2">&quot;Final reward: </span><span class="si">{</span><span class="n">last_reward</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-396" name="__codelineno-0-396"></a>            <span class="p">)</span>
-<a id="__codelineno-0-397" name="__codelineno-0-397"></a>
-<a id="__codelineno-0-398" name="__codelineno-0-398"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-<a id="__codelineno-0-399" name="__codelineno-0-399"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">)</span><span class="si">}</span><span class="s2"> Exception during rollout.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-400" name="__codelineno-0-400"></a>            <span class="n">has_exception</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-401" name="__codelineno-0-401"></a>
-<a id="__codelineno-0-402" name="__codelineno-0-402"></a>            <span class="k">if</span> <span class="n">raise_on_exception</span><span class="p">:</span>
-<a id="__codelineno-0-403" name="__codelineno-0-403"></a>                <span class="k">raise</span>
-<a id="__codelineno-0-404" name="__codelineno-0-404"></a>        <span class="k">finally</span><span class="p">:</span>
-<a id="__codelineno-0-405" name="__codelineno-0-405"></a>            <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-406" name="__codelineno-0-406"></a>                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trigger_hooks</span><span class="p">(</span>
-<a id="__codelineno-0-407" name="__codelineno-0-407"></a>                    <span class="n">hook_type</span><span class="o">=</span><span class="s2">&quot;on_rollout_end&quot;</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">runner</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">rollout</span><span class="o">=</span><span class="n">next_rollout</span><span class="p">,</span> <span class="n">spans</span><span class="o">=</span><span class="n">trace_spans</span>
-<a id="__codelineno-0-408" name="__codelineno-0-408"></a>                <span class="p">)</span>
-<a id="__codelineno-0-409" name="__codelineno-0-409"></a>            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-<a id="__codelineno-0-410" name="__codelineno-0-410"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">)</span><span class="si">}</span><span class="s2"> Exception during on_rollout_end hook.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-411" name="__codelineno-0-411"></a>
-<a id="__codelineno-0-412" name="__codelineno-0-412"></a>            <span class="k">if</span> <span class="n">has_exception</span><span class="p">:</span>
-<a id="__codelineno-0-413" name="__codelineno-0-413"></a>                <span class="c1"># possibly timed out and cancelled?</span>
-<a id="__codelineno-0-414" name="__codelineno-0-414"></a>                <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_attempt</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">next_rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;failed&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-415" name="__codelineno-0-415"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-416" name="__codelineno-0-416"></a>                <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_attempt</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">next_rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;succeeded&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-417" name="__codelineno-0-417"></a>
-<a id="__codelineno-0-418" name="__codelineno-0-418"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-419" name="__codelineno-0-419"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the runner, continuously iterating over tasks in the store.</span>
-<a id="__codelineno-0-420" name="__codelineno-0-420"></a>
-<a id="__codelineno-0-421" name="__codelineno-0-421"></a><span class="sd">        This method polls the store for new rollouts and executes them until:</span>
-<a id="__codelineno-0-422" name="__codelineno-0-422"></a><span class="sd">        - The event is set (if provided)</span>
-<a id="__codelineno-0-423" name="__codelineno-0-423"></a><span class="sd">        - The max_rollouts limit is reached (if configured)</span>
-<a id="__codelineno-0-424" name="__codelineno-0-424"></a><span class="sd">        - No more tasks are available</span>
-<a id="__codelineno-0-425" name="__codelineno-0-425"></a>
-<a id="__codelineno-0-426" name="__codelineno-0-426"></a><span class="sd">        All exceptions during rollout execution are caught and logged but not</span>
-<a id="__codelineno-0-427" name="__codelineno-0-427"></a><span class="sd">        propagated, allowing the runner to continue processing subsequent tasks.</span>
-<a id="__codelineno-0-428" name="__codelineno-0-428"></a>
-<a id="__codelineno-0-429" name="__codelineno-0-429"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-430" name="__codelineno-0-430"></a><span class="sd">            event: Optional Event object to signal the runner to stop. The runner</span>
-<a id="__codelineno-0-431" name="__codelineno-0-431"></a><span class="sd">                will check this event periodically and stop gracefully when set.</span>
-<a id="__codelineno-0-432" name="__codelineno-0-432"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-433" name="__codelineno-0-433"></a>        <span class="n">num_tasks_processed</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-0-434" name="__codelineno-0-434"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Started async rollouts (max: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unlimited&#39;</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-435" name="__codelineno-0-435"></a>        <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span>
-<a id="__codelineno-0-436" name="__codelineno-0-436"></a>
-<a id="__codelineno-0-437" name="__codelineno-0-437"></a>        <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span>
-<a id="__codelineno-0-438" name="__codelineno-0-438"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">num_tasks_processed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span>
-<a id="__codelineno-0-439" name="__codelineno-0-439"></a>        <span class="p">):</span>
-<a id="__codelineno-0-440" name="__codelineno-0-440"></a>            <span class="c1"># Retrieve the next rollout</span>
-<a id="__codelineno-0-441" name="__codelineno-0-441"></a>            <span class="n">next_rollout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RolloutV2</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-442" name="__codelineno-0-442"></a>            <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">()):</span>
-<a id="__codelineno-0-443" name="__codelineno-0-443"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Try to poll for next rollout.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-444" name="__codelineno-0-444"></a>                <span class="n">next_rollout</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">dequeue_rollout</span><span class="p">()</span>
-<a id="__codelineno-0-445" name="__codelineno-0-445"></a>                <span class="k">if</span> <span class="n">next_rollout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-446" name="__codelineno-0-446"></a>                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> No rollout to poll. Waiting for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_poll_interval</span><span class="si">}</span><span class="s2"> seconds.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-447" name="__codelineno-0-447"></a>                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sleep_until_next_poll</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-<a id="__codelineno-0-448" name="__codelineno-0-448"></a>                <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-449" name="__codelineno-0-449"></a>                    <span class="k">break</span>
-<a id="__codelineno-0-450" name="__codelineno-0-450"></a>
-<a id="__codelineno-0-451" name="__codelineno-0-451"></a>            <span class="k">if</span> <span class="n">next_rollout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-452" name="__codelineno-0-452"></a>                <span class="k">return</span>
-<a id="__codelineno-0-453" name="__codelineno-0-453"></a>
-<a id="__codelineno-0-454" name="__codelineno-0-454"></a>            <span class="c1"># Claim the rollout but updating the current worker id</span>
-<a id="__codelineno-0-455" name="__codelineno-0-455"></a>            <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_attempt</span><span class="p">(</span>
-<a id="__codelineno-0-456" name="__codelineno-0-456"></a>                <span class="n">next_rollout</span><span class="o">.</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">next_rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">,</span> <span class="n">worker_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_worker_id</span><span class="p">()</span>
-<a id="__codelineno-0-457" name="__codelineno-0-457"></a>            <span class="p">)</span>
-<a id="__codelineno-0-458" name="__codelineno-0-458"></a>
-<a id="__codelineno-0-459" name="__codelineno-0-459"></a>            <span class="c1"># Execute the step</span>
-<a id="__codelineno-0-460" name="__codelineno-0-460"></a>            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_impl</span><span class="p">(</span><span class="n">next_rollout</span><span class="p">)</span>
-<a id="__codelineno-0-461" name="__codelineno-0-461"></a>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>            <span class="n">num_tasks_processed</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a>            <span class="k">if</span> <span class="n">num_tasks_processed</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_tasks_processed</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Progress: </span><span class="si">{</span><span class="n">num_tasks_processed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unlimited&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-465" name="__codelineno-0-465"></a>
-<a id="__codelineno-0-466" name="__codelineno-0-466"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Finished async rollouts. Processed </span><span class="si">{</span><span class="n">num_tasks_processed</span><span class="si">}</span><span class="s2"> tasks.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-467" name="__codelineno-0-467"></a>
-<a id="__codelineno-0-468" name="__codelineno-0-468"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
-<a id="__codelineno-0-469" name="__codelineno-0-469"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>        <span class="nb">input</span><span class="p">:</span> <span class="n">T_task</span><span class="p">,</span>
-<a id="__codelineno-0-471" name="__codelineno-0-471"></a>        <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-472" name="__codelineno-0-472"></a>        <span class="n">resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NamedResources</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-473" name="__codelineno-0-473"></a>        <span class="n">mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RolloutMode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a>        <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-475" name="__codelineno-0-475"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a single task directly, bypassing the task queue.</span>
+<a id="__codelineno-0-388" name="__codelineno-0-388"></a>            <span class="c1"># Possible exceptions in post_process will be caught in the overall exception handler</span>
+<a id="__codelineno-0-389" name="__codelineno-0-389"></a>            <span class="n">trace_spans</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_process_rollout_result</span><span class="p">(</span><span class="n">next_rollout</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+<a id="__codelineno-0-390" name="__codelineno-0-390"></a>            <span class="n">last_reward</span> <span class="o">=</span> <span class="n">get_last_reward</span><span class="p">(</span><span class="n">trace_spans</span><span class="p">)</span>
+<a id="__codelineno-0-391" name="__codelineno-0-391"></a>
+<a id="__codelineno-0-392" name="__codelineno-0-392"></a>            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<a id="__codelineno-0-393" name="__codelineno-0-393"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-394" name="__codelineno-0-394"></a>                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">)</span><span class="si">}</span><span class="s2"> Completed in &quot;</span>
+<a id="__codelineno-0-395" name="__codelineno-0-395"></a>                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s. Collected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">trace_spans</span><span class="p">)</span><span class="si">}</span><span class="s2"> span(s). &quot;</span>
+<a id="__codelineno-0-396" name="__codelineno-0-396"></a>                <span class="sa">f</span><span class="s2">&quot;Final reward: </span><span class="si">{</span><span class="n">last_reward</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-397" name="__codelineno-0-397"></a>            <span class="p">)</span>
+<a id="__codelineno-0-398" name="__codelineno-0-398"></a>
+<a id="__codelineno-0-399" name="__codelineno-0-399"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-400" name="__codelineno-0-400"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">)</span><span class="si">}</span><span class="s2"> Exception during rollout.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-401" name="__codelineno-0-401"></a>            <span class="n">has_exception</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-402" name="__codelineno-0-402"></a>
+<a id="__codelineno-0-403" name="__codelineno-0-403"></a>            <span class="k">if</span> <span class="n">raise_on_exception</span><span class="p">:</span>
+<a id="__codelineno-0-404" name="__codelineno-0-404"></a>                <span class="k">raise</span>
+<a id="__codelineno-0-405" name="__codelineno-0-405"></a>        <span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-0-406" name="__codelineno-0-406"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-407" name="__codelineno-0-407"></a>                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trigger_hooks</span><span class="p">(</span>
+<a id="__codelineno-0-408" name="__codelineno-0-408"></a>                    <span class="n">hook_type</span><span class="o">=</span><span class="s2">&quot;on_rollout_end&quot;</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">runner</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">rollout</span><span class="o">=</span><span class="n">next_rollout</span><span class="p">,</span> <span class="n">spans</span><span class="o">=</span><span class="n">trace_spans</span>
+<a id="__codelineno-0-409" name="__codelineno-0-409"></a>                <span class="p">)</span>
+<a id="__codelineno-0-410" name="__codelineno-0-410"></a>            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-411" name="__codelineno-0-411"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">)</span><span class="si">}</span><span class="s2"> Exception during on_rollout_end hook.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-412" name="__codelineno-0-412"></a>
+<a id="__codelineno-0-413" name="__codelineno-0-413"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-414" name="__codelineno-0-414"></a>                <span class="k">if</span> <span class="n">has_exception</span><span class="p">:</span>
+<a id="__codelineno-0-415" name="__codelineno-0-415"></a>                    <span class="c1"># possibly timed out and cancelled?</span>
+<a id="__codelineno-0-416" name="__codelineno-0-416"></a>                    <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_attempt</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">next_rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;failed&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-417" name="__codelineno-0-417"></a>                <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-418" name="__codelineno-0-418"></a>                    <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_attempt</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">next_rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;succeeded&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-419" name="__codelineno-0-419"></a>            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-420" name="__codelineno-0-420"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+<a id="__codelineno-0-421" name="__codelineno-0-421"></a>                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">(</span><span class="n">rollout_id</span><span class="p">)</span><span class="si">}</span><span class="s2"> Exception during update_attempt. Giving up the update.&quot;</span>
+<a id="__codelineno-0-422" name="__codelineno-0-422"></a>                <span class="p">)</span>
+<a id="__codelineno-0-423" name="__codelineno-0-423"></a>
+<a id="__codelineno-0-424" name="__codelineno-0-424"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-425" name="__codelineno-0-425"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the runner, continuously iterating over tasks in the store.</span>
+<a id="__codelineno-0-426" name="__codelineno-0-426"></a>
+<a id="__codelineno-0-427" name="__codelineno-0-427"></a><span class="sd">        This method polls the store for new rollouts and executes them until:</span>
+<a id="__codelineno-0-428" name="__codelineno-0-428"></a><span class="sd">        - The event is set (if provided)</span>
+<a id="__codelineno-0-429" name="__codelineno-0-429"></a><span class="sd">        - The max_rollouts limit is reached (if configured)</span>
+<a id="__codelineno-0-430" name="__codelineno-0-430"></a><span class="sd">        - No more tasks are available</span>
+<a id="__codelineno-0-431" name="__codelineno-0-431"></a>
+<a id="__codelineno-0-432" name="__codelineno-0-432"></a><span class="sd">        All exceptions during rollout execution are caught and logged but not</span>
+<a id="__codelineno-0-433" name="__codelineno-0-433"></a><span class="sd">        propagated, allowing the runner to continue processing subsequent tasks.</span>
+<a id="__codelineno-0-434" name="__codelineno-0-434"></a>
+<a id="__codelineno-0-435" name="__codelineno-0-435"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-436" name="__codelineno-0-436"></a><span class="sd">            event: Optional Event object to signal the runner to stop. The runner</span>
+<a id="__codelineno-0-437" name="__codelineno-0-437"></a><span class="sd">                will check this event periodically and stop gracefully when set.</span>
+<a id="__codelineno-0-438" name="__codelineno-0-438"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-439" name="__codelineno-0-439"></a>        <span class="n">num_tasks_processed</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-440" name="__codelineno-0-440"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Started async rollouts (max: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unlimited&#39;</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-441" name="__codelineno-0-441"></a>        <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span>
+<a id="__codelineno-0-442" name="__codelineno-0-442"></a>
+<a id="__codelineno-0-443" name="__codelineno-0-443"></a>        <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span>
+<a id="__codelineno-0-444" name="__codelineno-0-444"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">num_tasks_processed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span>
+<a id="__codelineno-0-445" name="__codelineno-0-445"></a>        <span class="p">):</span>
+<a id="__codelineno-0-446" name="__codelineno-0-446"></a>            <span class="c1"># Retrieve the next rollout</span>
+<a id="__codelineno-0-447" name="__codelineno-0-447"></a>            <span class="n">next_rollout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RolloutV2</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-448" name="__codelineno-0-448"></a>            <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">()):</span>
+<a id="__codelineno-0-449" name="__codelineno-0-449"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Try to poll for next rollout.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-450" name="__codelineno-0-450"></a>                <span class="n">next_rollout</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">dequeue_rollout</span><span class="p">()</span>
+<a id="__codelineno-0-451" name="__codelineno-0-451"></a>                <span class="k">if</span> <span class="n">next_rollout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-452" name="__codelineno-0-452"></a>                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> No rollout to poll. Waiting for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_poll_interval</span><span class="si">}</span><span class="s2"> seconds.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-453" name="__codelineno-0-453"></a>                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sleep_until_next_poll</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+<a id="__codelineno-0-454" name="__codelineno-0-454"></a>                <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-455" name="__codelineno-0-455"></a>                    <span class="k">break</span>
+<a id="__codelineno-0-456" name="__codelineno-0-456"></a>
+<a id="__codelineno-0-457" name="__codelineno-0-457"></a>            <span class="k">if</span> <span class="n">next_rollout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-458" name="__codelineno-0-458"></a>                <span class="k">return</span>
+<a id="__codelineno-0-459" name="__codelineno-0-459"></a>
+<a id="__codelineno-0-460" name="__codelineno-0-460"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-461" name="__codelineno-0-461"></a>                <span class="c1"># Claim the rollout but updating the current worker id</span>
+<a id="__codelineno-0-462" name="__codelineno-0-462"></a>                <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_attempt</span><span class="p">(</span>
+<a id="__codelineno-0-463" name="__codelineno-0-463"></a>                    <span class="n">next_rollout</span><span class="o">.</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">next_rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">,</span> <span class="n">worker_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_worker_id</span><span class="p">()</span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a>                <span class="p">)</span>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a>            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Exception during update_attempt, giving up the rollout.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a>                <span class="k">continue</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a>            <span class="c1"># Execute the step</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a>            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_impl</span><span class="p">(</span><span class="n">next_rollout</span><span class="p">)</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a>            <span class="n">num_tasks_processed</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>            <span class="k">if</span> <span class="n">num_tasks_processed</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_tasks_processed</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Progress: </span><span class="si">{</span><span class="n">num_tasks_processed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unlimited&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Finished async rollouts. Processed </span><span class="si">{</span><span class="n">num_tasks_processed</span><span class="si">}</span><span class="s2"> tasks.&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-477" name="__codelineno-0-477"></a>
-<a id="__codelineno-0-478" name="__codelineno-0-478"></a><span class="sd">        This method creates a new rollout for the given input and executes it</span>
-<a id="__codelineno-0-479" name="__codelineno-0-479"></a><span class="sd">        immediately. Unlike iter(), exceptions are propagated to the caller.</span>
-<a id="__codelineno-0-480" name="__codelineno-0-480"></a>
-<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-482" name="__codelineno-0-482"></a><span class="sd">            input: The task input to be processed by the agent.</span>
-<a id="__codelineno-0-483" name="__codelineno-0-483"></a><span class="sd">            resources: Optional named resources to be used for this specific task.</span>
-<a id="__codelineno-0-484" name="__codelineno-0-484"></a><span class="sd">                If provided, a new resources entry will be created in the store.</span>
-<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="sd">                If not provided, the latest resources from the store will be used.</span>
-<a id="__codelineno-0-486" name="__codelineno-0-486"></a><span class="sd">            mode: Optional rollout mode (&quot;train&quot; or &quot;validation&quot;). If not provided,</span>
-<a id="__codelineno-0-487" name="__codelineno-0-487"></a><span class="sd">                the agent&#39;s default mode will be used.</span>
-<a id="__codelineno-0-488" name="__codelineno-0-488"></a><span class="sd">            event: Optional Event object to signal interruption (currently unused</span>
-<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">                but included for interface consistency).</span>
+<a id="__codelineno-0-478" name="__codelineno-0-478"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
+<a id="__codelineno-0-479" name="__codelineno-0-479"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-480" name="__codelineno-0-480"></a>        <span class="nb">input</span><span class="p">:</span> <span class="n">T_task</span><span class="p">,</span>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-482" name="__codelineno-0-482"></a>        <span class="n">resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NamedResources</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-483" name="__codelineno-0-483"></a>        <span class="n">mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RolloutMode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-484" name="__codelineno-0-484"></a>        <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-486" name="__codelineno-0-486"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a single task directly, bypassing the task queue.</span>
+<a id="__codelineno-0-487" name="__codelineno-0-487"></a>
+<a id="__codelineno-0-488" name="__codelineno-0-488"></a><span class="sd">        This method creates a new rollout for the given input and executes it</span>
+<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">        immediately. Unlike iter(), exceptions are propagated to the caller.</span>
 <a id="__codelineno-0-490" name="__codelineno-0-490"></a>
-<a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="sd">        Raises:</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a><span class="sd">            Exception: Any exception that occurs during rollout execution will be</span>
-<a id="__codelineno-0-493" name="__codelineno-0-493"></a><span class="sd">                re-raised to the caller.</span>
-<a id="__codelineno-0-494" name="__codelineno-0-494"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-495" name="__codelineno-0-495"></a>        <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span>
-<a id="__codelineno-0-496" name="__codelineno-0-496"></a>
-<a id="__codelineno-0-497" name="__codelineno-0-497"></a>        <span class="k">if</span> <span class="n">resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-498" name="__codelineno-0-498"></a>            <span class="c1"># TODO: move this to store.add_resources()</span>
-<a id="__codelineno-0-499" name="__codelineno-0-499"></a>            <span class="n">resources_id</span> <span class="o">=</span> <span class="s2">&quot;resource-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
-<a id="__codelineno-0-500" name="__codelineno-0-500"></a>            <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_resources</span><span class="p">(</span><span class="n">resources_id</span><span class="o">=</span><span class="n">resources_id</span><span class="p">,</span> <span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">)</span>
-<a id="__codelineno-0-501" name="__codelineno-0-501"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-502" name="__codelineno-0-502"></a>            <span class="n">resources_id</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
-<a id="__codelineno-0-504" name="__codelineno-0-504"></a>        <span class="n">attempted_rollout</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span><span class="o">.</span><span class="n">start_rollout</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">resources_id</span><span class="o">=</span><span class="n">resources_id</span><span class="p">)</span>
-<a id="__codelineno-0-505" name="__codelineno-0-505"></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_impl</span><span class="p">(</span><span class="n">attempted_rollout</span><span class="p">,</span> <span class="n">raise_on_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a><span class="sd">            input: The task input to be processed by the agent.</span>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a><span class="sd">            resources: Optional named resources to be used for this specific task.</span>
+<a id="__codelineno-0-494" name="__codelineno-0-494"></a><span class="sd">                If provided, a new resources entry will be created in the store.</span>
+<a id="__codelineno-0-495" name="__codelineno-0-495"></a><span class="sd">                If not provided, the latest resources from the store will be used.</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a><span class="sd">            mode: Optional rollout mode (&quot;train&quot; or &quot;validation&quot;). If not provided,</span>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a><span class="sd">                the agent&#39;s default mode will be used.</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a><span class="sd">            event: Optional Event object to signal interruption (currently unused</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a><span class="sd">                but included for interface consistency).</span>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a><span class="sd">        Raises:</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a><span class="sd">            Exception: Any exception that occurs during rollout execution will be</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a><span class="sd">                re-raised to the caller.</span>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a>        <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a>
+<a id="__codelineno-0-507" name="__codelineno-0-507"></a>        <span class="k">if</span> <span class="n">resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a>            <span class="c1"># TODO: move this to store.add_resources()</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a>            <span class="n">resources_id</span> <span class="o">=</span> <span class="s2">&quot;resource-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a>            <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_resources</span><span class="p">(</span><span class="n">resources_id</span><span class="o">=</span><span class="n">resources_id</span><span class="p">,</span> <span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">)</span>
+<a id="__codelineno-0-511" name="__codelineno-0-511"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-512" name="__codelineno-0-512"></a>            <span class="n">resources_id</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a>        <span class="n">attempted_rollout</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span><span class="o">.</span><span class="n">start_rollout</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">resources_id</span><span class="o">=</span><span class="n">resources_id</span><span class="p">)</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_impl</span><span class="p">(</span><span class="n">attempted_rollout</span><span class="p">,</span> <span class="n">raise_on_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -12040,13 +12060,7 @@ will check this event periodically and stop gracefully when set.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/runner/agent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-418">418</a></span>
-<span class="normal"><a href="#__codelineno-0-419">419</a></span>
-<span class="normal"><a href="#__codelineno-0-420">420</a></span>
-<span class="normal"><a href="#__codelineno-0-421">421</a></span>
-<span class="normal"><a href="#__codelineno-0-422">422</a></span>
-<span class="normal"><a href="#__codelineno-0-423">423</a></span>
-<span class="normal"><a href="#__codelineno-0-424">424</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-424">424</a></span>
 <span class="normal"><a href="#__codelineno-0-425">425</a></span>
 <span class="normal"><a href="#__codelineno-0-426">426</a></span>
 <span class="normal"><a href="#__codelineno-0-427">427</a></span>
@@ -12088,55 +12102,69 @@ will check this event periodically and stop gracefully when set.</p>
 <span class="normal"><a href="#__codelineno-0-463">463</a></span>
 <span class="normal"><a href="#__codelineno-0-464">464</a></span>
 <span class="normal"><a href="#__codelineno-0-465">465</a></span>
-<span class="normal"><a href="#__codelineno-0-466">466</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-418" name="__codelineno-0-418"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-419" name="__codelineno-0-419"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the runner, continuously iterating over tasks in the store.</span>
-<a id="__codelineno-0-420" name="__codelineno-0-420"></a>
-<a id="__codelineno-0-421" name="__codelineno-0-421"></a><span class="sd">    This method polls the store for new rollouts and executes them until:</span>
-<a id="__codelineno-0-422" name="__codelineno-0-422"></a><span class="sd">    - The event is set (if provided)</span>
-<a id="__codelineno-0-423" name="__codelineno-0-423"></a><span class="sd">    - The max_rollouts limit is reached (if configured)</span>
-<a id="__codelineno-0-424" name="__codelineno-0-424"></a><span class="sd">    - No more tasks are available</span>
-<a id="__codelineno-0-425" name="__codelineno-0-425"></a>
-<a id="__codelineno-0-426" name="__codelineno-0-426"></a><span class="sd">    All exceptions during rollout execution are caught and logged but not</span>
-<a id="__codelineno-0-427" name="__codelineno-0-427"></a><span class="sd">    propagated, allowing the runner to continue processing subsequent tasks.</span>
-<a id="__codelineno-0-428" name="__codelineno-0-428"></a>
-<a id="__codelineno-0-429" name="__codelineno-0-429"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-430" name="__codelineno-0-430"></a><span class="sd">        event: Optional Event object to signal the runner to stop. The runner</span>
-<a id="__codelineno-0-431" name="__codelineno-0-431"></a><span class="sd">            will check this event periodically and stop gracefully when set.</span>
-<a id="__codelineno-0-432" name="__codelineno-0-432"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-433" name="__codelineno-0-433"></a>    <span class="n">num_tasks_processed</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-0-434" name="__codelineno-0-434"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Started async rollouts (max: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unlimited&#39;</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-435" name="__codelineno-0-435"></a>    <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span>
-<a id="__codelineno-0-436" name="__codelineno-0-436"></a>
-<a id="__codelineno-0-437" name="__codelineno-0-437"></a>    <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span>
-<a id="__codelineno-0-438" name="__codelineno-0-438"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">num_tasks_processed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span>
-<a id="__codelineno-0-439" name="__codelineno-0-439"></a>    <span class="p">):</span>
-<a id="__codelineno-0-440" name="__codelineno-0-440"></a>        <span class="c1"># Retrieve the next rollout</span>
-<a id="__codelineno-0-441" name="__codelineno-0-441"></a>        <span class="n">next_rollout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RolloutV2</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-442" name="__codelineno-0-442"></a>        <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">()):</span>
-<a id="__codelineno-0-443" name="__codelineno-0-443"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Try to poll for next rollout.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-444" name="__codelineno-0-444"></a>            <span class="n">next_rollout</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">dequeue_rollout</span><span class="p">()</span>
-<a id="__codelineno-0-445" name="__codelineno-0-445"></a>            <span class="k">if</span> <span class="n">next_rollout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-446" name="__codelineno-0-446"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> No rollout to poll. Waiting for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_poll_interval</span><span class="si">}</span><span class="s2"> seconds.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-447" name="__codelineno-0-447"></a>                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sleep_until_next_poll</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-<a id="__codelineno-0-448" name="__codelineno-0-448"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-449" name="__codelineno-0-449"></a>                <span class="k">break</span>
-<a id="__codelineno-0-450" name="__codelineno-0-450"></a>
-<a id="__codelineno-0-451" name="__codelineno-0-451"></a>        <span class="k">if</span> <span class="n">next_rollout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-452" name="__codelineno-0-452"></a>            <span class="k">return</span>
-<a id="__codelineno-0-453" name="__codelineno-0-453"></a>
-<a id="__codelineno-0-454" name="__codelineno-0-454"></a>        <span class="c1"># Claim the rollout but updating the current worker id</span>
-<a id="__codelineno-0-455" name="__codelineno-0-455"></a>        <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_attempt</span><span class="p">(</span>
-<a id="__codelineno-0-456" name="__codelineno-0-456"></a>            <span class="n">next_rollout</span><span class="o">.</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">next_rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">,</span> <span class="n">worker_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_worker_id</span><span class="p">()</span>
-<a id="__codelineno-0-457" name="__codelineno-0-457"></a>        <span class="p">)</span>
-<a id="__codelineno-0-458" name="__codelineno-0-458"></a>
-<a id="__codelineno-0-459" name="__codelineno-0-459"></a>        <span class="c1"># Execute the step</span>
-<a id="__codelineno-0-460" name="__codelineno-0-460"></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_impl</span><span class="p">(</span><span class="n">next_rollout</span><span class="p">)</span>
-<a id="__codelineno-0-461" name="__codelineno-0-461"></a>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>        <span class="n">num_tasks_processed</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a>        <span class="k">if</span> <span class="n">num_tasks_processed</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_tasks_processed</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Progress: </span><span class="si">{</span><span class="n">num_tasks_processed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unlimited&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-465" name="__codelineno-0-465"></a>
-<a id="__codelineno-0-466" name="__codelineno-0-466"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Finished async rollouts. Processed </span><span class="si">{</span><span class="n">num_tasks_processed</span><span class="si">}</span><span class="s2"> tasks.&quot;</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-466">466</a></span>
+<span class="normal"><a href="#__codelineno-0-467">467</a></span>
+<span class="normal"><a href="#__codelineno-0-468">468</a></span>
+<span class="normal"><a href="#__codelineno-0-469">469</a></span>
+<span class="normal"><a href="#__codelineno-0-470">470</a></span>
+<span class="normal"><a href="#__codelineno-0-471">471</a></span>
+<span class="normal"><a href="#__codelineno-0-472">472</a></span>
+<span class="normal"><a href="#__codelineno-0-473">473</a></span>
+<span class="normal"><a href="#__codelineno-0-474">474</a></span>
+<span class="normal"><a href="#__codelineno-0-475">475</a></span>
+<span class="normal"><a href="#__codelineno-0-476">476</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-424" name="__codelineno-0-424"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-425" name="__codelineno-0-425"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the runner, continuously iterating over tasks in the store.</span>
+<a id="__codelineno-0-426" name="__codelineno-0-426"></a>
+<a id="__codelineno-0-427" name="__codelineno-0-427"></a><span class="sd">    This method polls the store for new rollouts and executes them until:</span>
+<a id="__codelineno-0-428" name="__codelineno-0-428"></a><span class="sd">    - The event is set (if provided)</span>
+<a id="__codelineno-0-429" name="__codelineno-0-429"></a><span class="sd">    - The max_rollouts limit is reached (if configured)</span>
+<a id="__codelineno-0-430" name="__codelineno-0-430"></a><span class="sd">    - No more tasks are available</span>
+<a id="__codelineno-0-431" name="__codelineno-0-431"></a>
+<a id="__codelineno-0-432" name="__codelineno-0-432"></a><span class="sd">    All exceptions during rollout execution are caught and logged but not</span>
+<a id="__codelineno-0-433" name="__codelineno-0-433"></a><span class="sd">    propagated, allowing the runner to continue processing subsequent tasks.</span>
+<a id="__codelineno-0-434" name="__codelineno-0-434"></a>
+<a id="__codelineno-0-435" name="__codelineno-0-435"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-436" name="__codelineno-0-436"></a><span class="sd">        event: Optional Event object to signal the runner to stop. The runner</span>
+<a id="__codelineno-0-437" name="__codelineno-0-437"></a><span class="sd">            will check this event periodically and stop gracefully when set.</span>
+<a id="__codelineno-0-438" name="__codelineno-0-438"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-439" name="__codelineno-0-439"></a>    <span class="n">num_tasks_processed</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-440" name="__codelineno-0-440"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Started async rollouts (max: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unlimited&#39;</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-441" name="__codelineno-0-441"></a>    <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span>
+<a id="__codelineno-0-442" name="__codelineno-0-442"></a>
+<a id="__codelineno-0-443" name="__codelineno-0-443"></a>    <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span>
+<a id="__codelineno-0-444" name="__codelineno-0-444"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">num_tasks_processed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span>
+<a id="__codelineno-0-445" name="__codelineno-0-445"></a>    <span class="p">):</span>
+<a id="__codelineno-0-446" name="__codelineno-0-446"></a>        <span class="c1"># Retrieve the next rollout</span>
+<a id="__codelineno-0-447" name="__codelineno-0-447"></a>        <span class="n">next_rollout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RolloutV2</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-448" name="__codelineno-0-448"></a>        <span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">()):</span>
+<a id="__codelineno-0-449" name="__codelineno-0-449"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Try to poll for next rollout.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-450" name="__codelineno-0-450"></a>            <span class="n">next_rollout</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">dequeue_rollout</span><span class="p">()</span>
+<a id="__codelineno-0-451" name="__codelineno-0-451"></a>            <span class="k">if</span> <span class="n">next_rollout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-452" name="__codelineno-0-452"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> No rollout to poll. Waiting for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_poll_interval</span><span class="si">}</span><span class="s2"> seconds.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-453" name="__codelineno-0-453"></a>                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sleep_until_next_poll</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+<a id="__codelineno-0-454" name="__codelineno-0-454"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-455" name="__codelineno-0-455"></a>                <span class="k">break</span>
+<a id="__codelineno-0-456" name="__codelineno-0-456"></a>
+<a id="__codelineno-0-457" name="__codelineno-0-457"></a>        <span class="k">if</span> <span class="n">next_rollout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-458" name="__codelineno-0-458"></a>            <span class="k">return</span>
+<a id="__codelineno-0-459" name="__codelineno-0-459"></a>
+<a id="__codelineno-0-460" name="__codelineno-0-460"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-461" name="__codelineno-0-461"></a>            <span class="c1"># Claim the rollout but updating the current worker id</span>
+<a id="__codelineno-0-462" name="__codelineno-0-462"></a>            <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_attempt</span><span class="p">(</span>
+<a id="__codelineno-0-463" name="__codelineno-0-463"></a>                <span class="n">next_rollout</span><span class="o">.</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">next_rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">,</span> <span class="n">worker_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_worker_id</span><span class="p">()</span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a>            <span class="p">)</span>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Exception during update_attempt, giving up the rollout.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a>            <span class="k">continue</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a>        <span class="c1"># Execute the step</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_impl</span><span class="p">(</span><span class="n">next_rollout</span><span class="p">)</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a>        <span class="n">num_tasks_processed</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>        <span class="k">if</span> <span class="n">num_tasks_processed</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_tasks_processed</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Progress: </span><span class="si">{</span><span class="n">num_tasks_processed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_rollouts</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unlimited&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_prefix</span><span class="p">()</span><span class="si">}</span><span class="s2"> Finished async rollouts. Processed </span><span class="si">{</span><span class="n">num_tasks_processed</span><span class="si">}</span><span class="s2"> tasks.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -12276,17 +12304,7 @@ re-raised to the caller.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/runner/agent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-468">468</a></span>
-<span class="normal"><a href="#__codelineno-0-469">469</a></span>
-<span class="normal"><a href="#__codelineno-0-470">470</a></span>
-<span class="normal"><a href="#__codelineno-0-471">471</a></span>
-<span class="normal"><a href="#__codelineno-0-472">472</a></span>
-<span class="normal"><a href="#__codelineno-0-473">473</a></span>
-<span class="normal"><a href="#__codelineno-0-474">474</a></span>
-<span class="normal"><a href="#__codelineno-0-475">475</a></span>
-<span class="normal"><a href="#__codelineno-0-476">476</a></span>
-<span class="normal"><a href="#__codelineno-0-477">477</a></span>
-<span class="normal"><a href="#__codelineno-0-478">478</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-478">478</a></span>
 <span class="normal"><a href="#__codelineno-0-479">479</a></span>
 <span class="normal"><a href="#__codelineno-0-480">480</a></span>
 <span class="normal"><a href="#__codelineno-0-481">481</a></span>
@@ -12313,44 +12331,54 @@ re-raised to the caller.</p>
 <span class="normal"><a href="#__codelineno-0-502">502</a></span>
 <span class="normal"><a href="#__codelineno-0-503">503</a></span>
 <span class="normal"><a href="#__codelineno-0-504">504</a></span>
-<span class="normal"><a href="#__codelineno-0-505">505</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-468" name="__codelineno-0-468"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
-<a id="__codelineno-0-469" name="__codelineno-0-469"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>    <span class="nb">input</span><span class="p">:</span> <span class="n">T_task</span><span class="p">,</span>
-<a id="__codelineno-0-471" name="__codelineno-0-471"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-472" name="__codelineno-0-472"></a>    <span class="n">resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NamedResources</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-473" name="__codelineno-0-473"></a>    <span class="n">mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RolloutMode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a>    <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-475" name="__codelineno-0-475"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a single task directly, bypassing the task queue.</span>
-<a id="__codelineno-0-477" name="__codelineno-0-477"></a>
-<a id="__codelineno-0-478" name="__codelineno-0-478"></a><span class="sd">    This method creates a new rollout for the given input and executes it</span>
-<a id="__codelineno-0-479" name="__codelineno-0-479"></a><span class="sd">    immediately. Unlike iter(), exceptions are propagated to the caller.</span>
-<a id="__codelineno-0-480" name="__codelineno-0-480"></a>
-<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-482" name="__codelineno-0-482"></a><span class="sd">        input: The task input to be processed by the agent.</span>
-<a id="__codelineno-0-483" name="__codelineno-0-483"></a><span class="sd">        resources: Optional named resources to be used for this specific task.</span>
-<a id="__codelineno-0-484" name="__codelineno-0-484"></a><span class="sd">            If provided, a new resources entry will be created in the store.</span>
-<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="sd">            If not provided, the latest resources from the store will be used.</span>
-<a id="__codelineno-0-486" name="__codelineno-0-486"></a><span class="sd">        mode: Optional rollout mode (&quot;train&quot; or &quot;validation&quot;). If not provided,</span>
-<a id="__codelineno-0-487" name="__codelineno-0-487"></a><span class="sd">            the agent&#39;s default mode will be used.</span>
-<a id="__codelineno-0-488" name="__codelineno-0-488"></a><span class="sd">        event: Optional Event object to signal interruption (currently unused</span>
-<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">            but included for interface consistency).</span>
+<span class="normal"><a href="#__codelineno-0-505">505</a></span>
+<span class="normal"><a href="#__codelineno-0-506">506</a></span>
+<span class="normal"><a href="#__codelineno-0-507">507</a></span>
+<span class="normal"><a href="#__codelineno-0-508">508</a></span>
+<span class="normal"><a href="#__codelineno-0-509">509</a></span>
+<span class="normal"><a href="#__codelineno-0-510">510</a></span>
+<span class="normal"><a href="#__codelineno-0-511">511</a></span>
+<span class="normal"><a href="#__codelineno-0-512">512</a></span>
+<span class="normal"><a href="#__codelineno-0-513">513</a></span>
+<span class="normal"><a href="#__codelineno-0-514">514</a></span>
+<span class="normal"><a href="#__codelineno-0-515">515</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-478" name="__codelineno-0-478"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
+<a id="__codelineno-0-479" name="__codelineno-0-479"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-480" name="__codelineno-0-480"></a>    <span class="nb">input</span><span class="p">:</span> <span class="n">T_task</span><span class="p">,</span>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-482" name="__codelineno-0-482"></a>    <span class="n">resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NamedResources</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-483" name="__codelineno-0-483"></a>    <span class="n">mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RolloutMode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-484" name="__codelineno-0-484"></a>    <span class="n">event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-486" name="__codelineno-0-486"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a single task directly, bypassing the task queue.</span>
+<a id="__codelineno-0-487" name="__codelineno-0-487"></a>
+<a id="__codelineno-0-488" name="__codelineno-0-488"></a><span class="sd">    This method creates a new rollout for the given input and executes it</span>
+<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">    immediately. Unlike iter(), exceptions are propagated to the caller.</span>
 <a id="__codelineno-0-490" name="__codelineno-0-490"></a>
-<a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a><span class="sd">        Exception: Any exception that occurs during rollout execution will be</span>
-<a id="__codelineno-0-493" name="__codelineno-0-493"></a><span class="sd">            re-raised to the caller.</span>
-<a id="__codelineno-0-494" name="__codelineno-0-494"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-495" name="__codelineno-0-495"></a>    <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span>
-<a id="__codelineno-0-496" name="__codelineno-0-496"></a>
-<a id="__codelineno-0-497" name="__codelineno-0-497"></a>    <span class="k">if</span> <span class="n">resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-498" name="__codelineno-0-498"></a>        <span class="c1"># TODO: move this to store.add_resources()</span>
-<a id="__codelineno-0-499" name="__codelineno-0-499"></a>        <span class="n">resources_id</span> <span class="o">=</span> <span class="s2">&quot;resource-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
-<a id="__codelineno-0-500" name="__codelineno-0-500"></a>        <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_resources</span><span class="p">(</span><span class="n">resources_id</span><span class="o">=</span><span class="n">resources_id</span><span class="p">,</span> <span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">)</span>
-<a id="__codelineno-0-501" name="__codelineno-0-501"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-502" name="__codelineno-0-502"></a>        <span class="n">resources_id</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
-<a id="__codelineno-0-504" name="__codelineno-0-504"></a>    <span class="n">attempted_rollout</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span><span class="o">.</span><span class="n">start_rollout</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">resources_id</span><span class="o">=</span><span class="n">resources_id</span><span class="p">)</span>
-<a id="__codelineno-0-505" name="__codelineno-0-505"></a>    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_impl</span><span class="p">(</span><span class="n">attempted_rollout</span><span class="p">,</span> <span class="n">raise_on_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a><span class="sd">        input: The task input to be processed by the agent.</span>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a><span class="sd">        resources: Optional named resources to be used for this specific task.</span>
+<a id="__codelineno-0-494" name="__codelineno-0-494"></a><span class="sd">            If provided, a new resources entry will be created in the store.</span>
+<a id="__codelineno-0-495" name="__codelineno-0-495"></a><span class="sd">            If not provided, the latest resources from the store will be used.</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a><span class="sd">        mode: Optional rollout mode (&quot;train&quot; or &quot;validation&quot;). If not provided,</span>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a><span class="sd">            the agent&#39;s default mode will be used.</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a><span class="sd">        event: Optional Event object to signal interruption (currently unused</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a><span class="sd">            but included for interface consistency).</span>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a><span class="sd">        Exception: Any exception that occurs during rollout execution will be</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a><span class="sd">            re-raised to the caller.</span>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a>    <span class="n">store</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a>
+<a id="__codelineno-0-507" name="__codelineno-0-507"></a>    <span class="k">if</span> <span class="n">resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a>        <span class="c1"># TODO: move this to store.add_resources()</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a>        <span class="n">resources_id</span> <span class="o">=</span> <span class="s2">&quot;resource-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a>        <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">update_resources</span><span class="p">(</span><span class="n">resources_id</span><span class="o">=</span><span class="n">resources_id</span><span class="p">,</span> <span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">)</span>
+<a id="__codelineno-0-511" name="__codelineno-0-511"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-512" name="__codelineno-0-512"></a>        <span class="n">resources_id</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a>    <span class="n">attempted_rollout</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_store</span><span class="p">()</span><span class="o">.</span><span class="n">start_rollout</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">resources_id</span><span class="o">=</span><span class="n">resources_id</span><span class="p">)</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a>    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_impl</span><span class="p">(</span><span class="n">attempted_rollout</span><span class="p">,</span> <span class="n">raise_on_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
