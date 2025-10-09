@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft. All rights reserved.
+
 """SQLite-backed LightningStore implementation with transactional safety."""
 
 from __future__ import annotations
