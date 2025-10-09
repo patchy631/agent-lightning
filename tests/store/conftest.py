@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import time
+from pathlib import Path
+from typing import Generator
 from unittest.mock import Mock
 
 import pytest
@@ -23,7 +25,7 @@ def inmemory_store() -> InMemoryLightningStore:
 
 
 @pytest.fixture
-def sqlite_store(tmp_path) -> SqliteLightningStore:
+def sqlite_store(tmp_path: Path) -> Generator[SqliteLightningStore, None, None]:
     """Create a SqliteLightningStore backed by a temporary database file."""
     store = SqliteLightningStore(str(tmp_path / "lightning.db"))
     yield store

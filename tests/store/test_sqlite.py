@@ -5,24 +5,26 @@
 import asyncio
 import json
 import multiprocessing as mp
+import sqlite3
 import threading
 import time
-from typing import Any, List
+from typing import List
 
 import pytest
 
 from agentlightning.store.sqlite import SqliteLightningStore
 from agentlightning.types import PromptTemplate, Resource, RolloutConfig, Span, TraceStatus
 
-_PROCESS_STORE: SqliteLightningStore | None = None
+_process_store: SqliteLightningStore | None = None
 
 
-def _process_update_attempt(queue: mp.Queue, rollout_id: str, attempt_id: str) -> None:
-    if _PROCESS_STORE is None:
+def _process_update_attempt(queue: "mp.Queue[str]", rollout_id: str, attempt_id: str) -> None:
+    store = _process_store
+    if store is None:
         raise RuntimeError("process store not initialized")
 
     async def runner() -> None:
-        await _PROCESS_STORE.update_attempt(rollout_id, attempt_id, status="succeeded")
+        await store.update_attempt(rollout_id, attempt_id, status="succeeded")
 
     asyncio.run(runner())
     queue.put("done")
@@ -51,11 +53,11 @@ def _make_span(rollout_id: str, attempt_id: str, sequence_id: int, name: str = "
 
 @pytest.mark.asyncio
 async def test_schema_has_three_tables(sqlite_store: SqliteLightningStore) -> None:
-    def reader(connection) -> List[str]:
-        rows = connection.execute(
+    def reader(connection: sqlite3.Connection) -> List[str]:
+        rows: list[sqlite3.Row] = connection.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
         ).fetchall()
-        return sorted(row["name"] for row in rows)
+        return sorted([str(row["name"]) for row in rows])
 
     tables = await sqlite_store._execute_read(reader)  # type: ignore[attr-defined]
     assert tables == ["attempts", "rollouts", "spans"]
@@ -122,11 +124,15 @@ async def test_span_json_storage(sqlite_store: SqliteLightningStore) -> None:
     span.attributes = {"binary": b"\x00\x01"}
     await sqlite_store.add_span(span)
 
-    def reader(connection) -> Any:
-        return connection.execute(
+    def reader(connection: sqlite3.Connection) -> str:
+        row = connection.execute(
             "SELECT attributes_json FROM spans WHERE rollout_id=? AND attempt_id=?",
             (span.rollout_id, span.attempt_id),
-        ).fetchone()[0]
+        ).fetchone()
+        assert row is not None
+        encoded = row[0]
+        assert isinstance(encoded, str)
+        return encoded
 
     encoded = await sqlite_store._execute_read(reader)  # type: ignore[attr-defined]
     data = json.loads(encoded)
@@ -178,7 +184,7 @@ async def test_healthcheck_marks_timeout(sqlite_store: SqliteLightningStore) -> 
         config=RolloutConfig(timeout_seconds=0.01, max_attempts=1, retry_condition=[]),
     )
 
-    def writer(connection) -> None:
+    def writer(connection: sqlite3.Connection) -> None:
         connection.execute(
             "UPDATE attempts SET start_time=? WHERE attempt_id=?",
             (time.time() - 5, attempted.attempt.attempt_id),
@@ -211,7 +217,13 @@ async def test_thread_uses_separate_connection(sqlite_store: SqliteLightningStor
     attempted = await sqlite_store.start_rollout(input={"task": "thread"})
 
     def worker() -> None:
-        asyncio.run(sqlite_store.update_attempt(attempted.rollout_id, attempted.attempt.attempt_id, status="succeeded"))
+        asyncio.run(
+            sqlite_store.update_attempt(
+                attempted.rollout_id,
+                attempted.attempt.attempt_id,
+                status="succeeded",
+            )
+        )
 
     thread = threading.Thread(target=worker)
     thread.start()
@@ -227,11 +239,11 @@ async def test_process_reopens_connection(sqlite_store: SqliteLightningStore) ->
         pytest.skip("fork start method not available")
 
     attempted = await sqlite_store.start_rollout(input={"task": "process"})
-    global _PROCESS_STORE
-    _PROCESS_STORE = sqlite_store
+    global _process_store
+    _process_store = sqlite_store
 
     ctx = mp.get_context("fork")
-    queue: mp.Queue = ctx.Queue()
+    queue: mp.Queue[str] = ctx.Queue()
     process = ctx.Process(
         target=_process_update_attempt,
         args=(queue, attempted.rollout_id, attempted.attempt.attempt_id),
@@ -244,4 +256,4 @@ async def test_process_reopens_connection(sqlite_store: SqliteLightningStore) ->
     stored = await sqlite_store.get_rollout_by_id(attempted.rollout_id)
     assert stored is not None and stored.status == "succeeded"
 
-    _PROCESS_STORE = None
+    _process_store = None
