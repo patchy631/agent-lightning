@@ -71,7 +71,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="red">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="agl" data-md-color-accent="agl">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -132,7 +132,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="red"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="agl" data-md-color-accent="agl"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
     
       <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
@@ -142,7 +142,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="red" data-md-color-accent="red"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="agl" data-md-color-accent="agl"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
     
       <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
@@ -1072,6 +1072,11 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
+  <div id="version-warning" class="version-warning" style="display: none;">
+    ⚠️ You are viewing development documentation. For stable documentation, please visit
+    <a href="https://microsoft.github.io/agent-lightning/stable/">https://microsoft.github.io/agent-lightning/stable/</a>
+  </div>
+  
                   
 
 
@@ -1083,7 +1088,7 @@
 <p>This guide walks you through building your first Agent Lightning application - a simple prompt optimization system that finds the best system prompt for an AI agent.</p>
 <h2 id="what-youll-build">What You'll Build<a class="headerlink" href="#what-youll-build" title="Permanent link">&para;</a></h2>
 <p>You'll create a distributed training system with a server that manages optimization algorithms and tasks, a client with multiple workers that execute tasks in parallel, and built-in telemetry for monitoring and debugging.</p>
-<p>Before starting, ensure you have Python 3.10 or later, Agent Lightning installed (<code>pip install agentlightning</code>), and an OpenAI API key. The complete code is available in the <a href="https://github.com/microsoft/agent-lightning/tree/8a4ecbacf6cd335636286393a6ed92f755f6b998/examples/apo">examples/apo</a> directory.</p>
+<p>Before starting, ensure you have Python 3.10 or later, Agent Lightning installed (<code>pip install agentlightning</code>), and an OpenAI API key. The complete code is available in the <a href="https://github.com/microsoft/agent-lightning/tree/a4cf2fd5fdf92eec507df8a40682ea1615374bb6/examples/apo">examples/apo</a> directory.</p>
 <h2 id="part-1-building-your-agent">Part 1: Building Your Agent<a class="headerlink" href="#part-1-building-your-agent" title="Permanent link">&para;</a></h2>
 <p>Let's start by creating a simple agent that can answer questions using OpenAI's API. Your agent needs to inherit from <code>LitAgent</code> and implement a <code>training_rollout</code> method.</p>
 <h3 id="step-1-create-your-agent-class">Step 1: Create Your Agent Class<a class="headerlink" href="#step-1-create-your-agent-class" title="Permanent link">&para;</a></h3>
@@ -1175,7 +1180,7 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best prompt: &#39;</span><span class="si">{</span><span class="n">best_prompt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; with reward </span><span class="si">{</span><span class="n">best_prompt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="running-your-system">Running Your System<a class="headerlink" href="#running-your-system" title="Permanent link">&para;</a></h2>
-<p>The <a href="https://github.com/microsoft/agent-lightning/tree/8a4ecbacf6cd335636286393a6ed92f755f6b998/examples/apo">Complete example code</a> can be found on the GitHub repository. To run it:</p>
+<p>The <a href="https://github.com/microsoft/agent-lightning/tree/a4cf2fd5fdf92eec507df8a40682ea1615374bb6/examples/apo">Complete example code</a> can be found on the GitHub repository. To run it:</p>
 <p>Create a <code>.env</code> file with your API credentials:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>your-api-key-here
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nv">OPENAI_API_BASE</span><span class="o">=</span>https://api.openai.com/v1<span class="w">  </span><span class="c1"># Optional</span>
@@ -1290,6 +1295,7 @@ After testing all prompts, the server identifies which one performed best.</p>
 
 
                 
+
               </article>
             </div>
           
@@ -1334,6 +1340,7 @@ After testing all prompts, the server identifies which one performed best.</p>
       <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
+  
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
         <script src="../../js/timeago.min.js"></script>
@@ -1343,5 +1350,19 @@ After testing all prompts, the server identifies which one performed best.</p>
         <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
       
     
+  <script>
+    // Show warning banner if not viewing stable documentation
+    document.addEventListener("DOMContentLoaded", function() {
+      const currentURL = window.location.href;
+      const warningDiv = document.getElementById("version-warning");
+
+      // Check if we're on the stable docs or the redirect page
+      if (currentURL.includes('agent-lightning/latest/')) {
+        // Show warning for explicitly latest docs
+        warningDiv.style.display = "block";
+      }
+    });
+  </script>
+
   </body>
 </html>
