@@ -17,7 +17,7 @@
         <link rel="next" href="../../how-to/train-sql-agent/">
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/favicon.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.21">
     
     
@@ -51,6 +51,8 @@
       <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
       <link rel="stylesheet" href="../../css/timeago.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -100,7 +102,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="Agent Lightning" class="md-header__button md-logo" aria-label="Agent Lightning" data-md-component="logo">
       
-  <img src="../../assets/logo-light.png" alt="logo">
+  <img src="../../assets/favicon-white.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -237,7 +239,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Agent Lightning" class="md-nav__button md-logo" aria-label="Agent Lightning" data-md-component="logo">
       
-  <img src="../../assets/logo-light.png" alt="logo">
+  <img src="../../assets/favicon-white.svg" alt="logo">
 
     </a>
     Agent Lightning
@@ -717,12 +719,35 @@
   
   
     <li class="md-nav__item">
+      <a href="../../deep-dive/birds-eye-view/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bird's Eye View
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../deep-dive/server-client-architecture/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Server-Client Architecture
+    Server-Client Architecture (Legacy)
     
   </span>
   
@@ -1058,7 +1083,7 @@
 <p>This guide walks you through building your first Agent Lightning application - a simple prompt optimization system that finds the best system prompt for an AI agent.</p>
 <h2 id="what-youll-build">What You'll Build<a class="headerlink" href="#what-youll-build" title="Permanent link">&para;</a></h2>
 <p>You'll create a distributed training system with a server that manages optimization algorithms and tasks, a client with multiple workers that execute tasks in parallel, and built-in telemetry for monitoring and debugging.</p>
-<p>Before starting, ensure you have Python 3.10 or later, Agent Lightning installed (<code>pip install agentlightning</code>), and an OpenAI API key. The complete code is available in the <a href="https://github.com/microsoft/agent-lightning/tree/2489d068ba2ded8a45de909e33bf127ebfdb3231/examples/apo">examples/apo</a> directory.</p>
+<p>Before starting, ensure you have Python 3.10 or later, Agent Lightning installed (<code>pip install agentlightning</code>), and an OpenAI API key. The complete code is available in the <a href="https://github.com/microsoft/agent-lightning/tree/a0626bdea905007e5d116abf3bc3854f403d9bfe/examples/apo">examples/apo</a> directory.</p>
 <h2 id="part-1-building-your-agent">Part 1: Building Your Agent<a class="headerlink" href="#part-1-building-your-agent" title="Permanent link">&para;</a></h2>
 <p>Let's start by creating a simple agent that can answer questions using OpenAI's API. Your agent needs to inherit from <code>LitAgent</code> and implement a <code>training_rollout</code> method.</p>
 <h3 id="step-1-create-your-agent-class">Step 1: Create Your Agent Class<a class="headerlink" href="#step-1-create-your-agent-class" title="Permanent link">&para;</a></h3>
@@ -1150,7 +1175,7 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best prompt: &#39;</span><span class="si">{</span><span class="n">best_prompt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; with reward </span><span class="si">{</span><span class="n">best_prompt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="running-your-system">Running Your System<a class="headerlink" href="#running-your-system" title="Permanent link">&para;</a></h2>
-<p>The <a href="https://github.com/microsoft/agent-lightning/tree/2489d068ba2ded8a45de909e33bf127ebfdb3231/examples/apo">Complete example code</a> can be found on the GitHub repository. To run it:</p>
+<p>The <a href="https://github.com/microsoft/agent-lightning/tree/a0626bdea905007e5d116abf3bc3854f403d9bfe/examples/apo">Complete example code</a> can be found on the GitHub repository. To run it:</p>
 <p>Create a <code>.env</code> file with your API credentials:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>your-api-key-here
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nv">OPENAI_API_BASE</span><span class="o">=</span>https://api.openai.com/v1<span class="w">  </span><span class="c1"># Optional</span>
@@ -1316,8 +1341,6 @@ After testing all prompts, the server identifies which one performed best.</p>
         <script src="../../js/timeago_mkdocs_material.js"></script>
       
         <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
-      
-        <script src="../../js/favicon-theme.js"></script>
       
     
   </body>
