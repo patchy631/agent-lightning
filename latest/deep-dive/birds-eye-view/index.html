@@ -1064,7 +1064,7 @@
 <li><strong>Attempt:</strong> A single execution of a rollout. One rollout can have multiple attempts in case of failures or timeouts.</li>
 <li><strong>Span:</strong> During the rollout, the agent can generate multiple spans (also known as "traces" or "events"). The recorded spans are collected in the store, which is crucial for understanding agent behavior and optimizing agents.</li>
 <li><strong>Reward:</strong> A special span that is defined as a number judging the quality of the rollout during some period of the rollout.</li>
-<li><strong>Dataset:</strong> A collection of incomplete rollouts (i.e., tasks) for the agent to process. The three datasets (train, val, dev) serve as the initial input for the algorithm to enqueue the first batch of rollouts.</li>
+<li><strong>Dataset:</strong> A collection of incomplete rollouts (i.e., tasks) for the agent to process. The dual datasets (train, val) serve as the initial input for the algorithm to enqueue the first batch of rollouts.</li>
 </ul>
 <h3 id="store">Store<a class="headerlink" href="#store" title="Permanent link">&para;</a></h3>
 <p>As discussed previously, the store is the central hub for all data in Agent-lightning. The store exposes a set of APIs for algorithms and runners to interact with the data; the most important ones are:</p>
@@ -1494,7 +1494,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 10, 2025 09:09:02 UTC"><span class="timeago" datetime="2025-10-10T09:09:02+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 10, 2025 09:09:02 UTC">2025-10-10</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 10, 2025 17:42:54 UTC"><span class="timeago" datetime="2025-10-10T17:42:54+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 10, 2025 17:42:54 UTC">2025-10-10</span>
   </span>
 
     
@@ -1573,7 +1573,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
