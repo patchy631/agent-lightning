@@ -715,6 +715,7 @@ class AgentModeDaemon:
                     # Truncate responses that exceed max_response_length
                     if len(response_ids) > max_response_length:
                         response_ids = response_ids[:max_response_length]
+                        response_mask = response_mask[:max_response_length]
                         n_trunc_sample_because_of_response += 1
 
                     # Pad prompts to the left and responses to the right
