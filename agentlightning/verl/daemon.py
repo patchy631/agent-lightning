@@ -673,13 +673,13 @@ class AgentModeDaemon:
 
         elif self.trace_agg_mode == "trajectory":
             response_mask_list: List[List[int]] = []
-            
+
             for rollout_id, sample_info in finished_id_to_sample_info.items():
                 merged_trace_idx: List[List[int]] = []
                 current_merged_trace_idx: List[int] = []
                 current_context: List[int] = []
                 for turn_index, trace in enumerate(sample_info["trace_list"]):
-                    if (trace["prompt_ids"] + trace["response_ids"])[:len(current_context)] == current_context:
+                    if (trace["prompt_ids"] + trace["response_ids"])[: len(current_context)] == current_context:
                         current_context = trace["prompt_ids"] + trace["response_ids"]
                         current_merged_trace_idx.append(turn_index)
                     else:
@@ -687,7 +687,7 @@ class AgentModeDaemon:
                         merged_trace_idx.append(current_merged_trace_idx)
                         current_merged_trace_idx = [turn_index]
                         current_context = trace["prompt_ids"] + trace["response_ids"]
-                if current_merged_trace_idx not in  merged_trace_idx:
+                if current_merged_trace_idx not in merged_trace_idx:
                     merged_trace_idx.append(current_merged_trace_idx)
 
                 for current_merged_trace_idx in merged_trace_idx:
