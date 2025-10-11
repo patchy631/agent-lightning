@@ -1,15 +1,16 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import re
-from typing import Any, Tuple
+from typing import Any
 
 from autogen_ext.tools.mcp import McpWorkbench, StdioServerParams
 from calc_agent import eval, get_agent
-from datasets import Dataset as HuggingFaceDataset
+from datasets import Dataset
 
 from agentlightning import LLM, Trainer, rollout
+from agentlightning.adapter import LlmProxyTripletAdapter
 from agentlightning.algorithm.verl import VERL
-from agentlightning.types import Dataset
+from agentlightning.tracer import OtelTracer
 
 calculator_mcp_server = StdioServerParams(command="uvx", args=["mcp-server-calculator"])
 
@@ -40,7 +41,7 @@ async def calc_agent(task: Any, llm: LLM) -> Any:
         print("answer: {} ground_truth: {} reward: {}".format(answer, task["result"], reward))  # type: ignore
 
 
-def verl_algorithm():
+def main():
     rl_training_config = {
         "agentlightning": {
             "port": 9999,
@@ -96,33 +97,25 @@ def verl_algorithm():
             "critic_warmup": 0,
             "logger": ["console", "wandb"],
             "project_name": "AgentLightningCI",
-            "experiment_name": "train_verl_v0_2",
+            "experiment_name": "train_verl_v0_2_llm_proxy",
             "nnodes": 1,
-            "save_freq": 3,
-            "test_freq": 3,
+            "test_freq": 2,
             "total_epochs": 1,
-            "total_training_steps": 3,
+            "total_training_steps": 2,
         },
     }
 
-    return VERL(rl_training_config)
+    train_dataset = Dataset.from_parquet("data/train.parquet").to_list()  # type: ignore
+    val_dataset = Dataset.from_parquet("data/test_mini.parquet").to_list()  # type: ignore
 
-
-def train_val_dataset() -> Tuple[Dataset[Any], Dataset[Any]]:
-    train_dataset = HuggingFaceDataset.from_parquet("data/train.parquet").to_list()  # type: ignore
-    val_dataset = HuggingFaceDataset.from_parquet("data/test_mini.parquet").to_list()  # type: ignore
-
-    return train_dataset, val_dataset  # type: ignore
-
-
-def main():
-    train_dataset, val_dataset = train_val_dataset()
     print("First 5 rows of train dataset:")
     print(train_dataset[:5])  # type: ignore
     print("First 5 rows of val dataset:")
     print(val_dataset[:5])  # type: ignore
 
-    trainer = Trainer(algorithm=verl_algorithm(), n_workers=4)
+    tracer = OtelTracer()
+    adapter = LlmProxyTripletAdapter()
+    trainer = Trainer(algorithm=VERL(rl_training_config), n_workers=10, tracer=tracer, adapter=adapter)
     trainer.fit_v2(calc_agent, train_dataset, val_dataset=val_dataset)  # type: ignore
 
 
