@@ -19,6 +19,7 @@ from typing import (
     cast,
 )
 
+import agentops
 import opentelemetry.trace as trace_api
 from agentops.sdk.decorators import operation
 from opentelemetry.sdk.trace import ReadableSpan
@@ -35,6 +36,11 @@ class RewardSpanData(TypedDict):
 
 
 FnType = TypeVar("FnType", bound=Callable[..., Any])
+
+
+def _agentops_initialized() -> bool:
+    """Check if AgentOps is initialized in the current context."""
+    return agentops.get_client().initialized
 
 
 def reward(fn: FnType) -> FnType:
@@ -60,6 +66,12 @@ def reward(fn: FnType) -> FnType:
     if is_async:
 
         async def wrapper_async(*args: Any, **kwargs: Any) -> Any:
+            if not _agentops_initialized():
+                # Track the reward without AgentOps
+                result = await fn(*args, **kwargs)
+                emit_reward(cast(float, result))
+                return result
+
             result: Optional[float] = None
 
             @operation
@@ -78,6 +90,12 @@ def reward(fn: FnType) -> FnType:
     else:
 
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not _agentops_initialized():
+                # Track the reward without AgentOps
+                result = fn(*args, **kwargs)
+                emit_reward(cast(float, result))
+                return result
+
             result: Optional[float] = None
 
             @operation

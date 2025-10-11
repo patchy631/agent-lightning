@@ -18,10 +18,10 @@ from tensordict import TensorDict
 from verl import DataProto
 
 from agentlightning import LLM, AgentLightningServer, NamedResources, Rollout, configure_logger
-from agentlightning.adapter.triplet import TraceTripletAdapter
+from agentlightning.adapter.triplet import BaseTraceTripletAdapter, TraceTripletAdapter
 from agentlightning.llm_proxy import LLMProxy, ModelConfig
 from agentlightning.store.base import LightningStore
-from agentlightning.types import RolloutV2, Task
+from agentlightning.types import RolloutConfig, RolloutV2, Task
 
 configure_logger()
 
@@ -138,16 +138,16 @@ class AgentModeDaemon:
         mode: Literal["v0", "v1"] = "v1",
         llm_proxy: LLMProxy | None = None,
         store: LightningStore | None = None,
-        adapter: TraceTripletAdapter | None = None,
+        adapter: BaseTraceTripletAdapter | None = None,
         trace_agg_mode: Literal["transition", "trajectory"] = "transition",
     ):
         self.mode = mode
+        self.llm_timeout_seconds = llm_timeout_seconds
 
         # Server and Task Configuration
         if mode == "v0":
             assert port is not None
             self.server_port = port
-            self.llm_timeout_seconds = llm_timeout_seconds
             self.server = AgentLightningServer(
                 host="0.0.0.0", port=self.server_port, task_timeout_seconds=self.llm_timeout_seconds
             )
@@ -403,6 +403,13 @@ class AgentModeDaemon:
                         mode="train" if is_train else "val",
                         resources_id=resources_id,
                         metadata=task_metadata,
+                    )
+                    await self.store.update_rollout(
+                        rollout_id=rollout.rollout_id,
+                        config=RolloutConfig(
+                            unresponsive_seconds=self.llm_timeout_seconds,
+                            timeout_seconds=self.llm_timeout_seconds,
+                        ),
                     )
                     rollout_id = rollout.rollout_id
 

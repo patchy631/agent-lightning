@@ -1,4 +1,6 @@
-![Agent-lightning-banner](docs/assets/readme-banner.png)
+<div style="text-align:center; margin-bottom:20px;">
+  <img src="docs/assets/readme-banner.png" alt="Agent-lightning-banner" style="max-width:600px"/>
+</div>
 
 # Agent Lightning⚡
 
@@ -31,6 +33,7 @@ Join our [Discord community](https://discord.gg/RYk7CdvDR7) to connect with othe
 ## ⚡ Community Projects
 
 - [DeepWerewolf](https://github.com/af-74413592/DeepWerewolf) — A case study of agent RL training for the Chinese Werewolf game built with AgentScope and Agent Lightning.
+- [AgentFlow](https://agentflow.stanford.edu/) — A modular multi-agent framework that combines planner, executor, verifier, and generator agents with the Flow-GRPO algorithm to tackle long-horizon, sparse-reward tasks.
 
 ## ⚡ Installation
 
