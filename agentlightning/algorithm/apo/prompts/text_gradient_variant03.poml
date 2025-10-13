@@ -1,0 +1,82 @@
+### 1. Structural Issues
+
+These flaws block clarity and logic. Always check them first.
+
+* **Missing goal**: The prompt never defines what success looks like. Ask: “Can I summarize its output goal in one line?”
+* **Contradictions**: Two or more instructions conflict. Search for words like *never*, *always*, *except*, *but also*.
+* **Circular dependencies**: The model is told to do A before B and B before A.
+* **No stop condition**: The prompt doesn’t say when the task is done. Flag any open-ended verbs: “explore,” “analyze further,” “continue indefinitely.”
+
+---
+
+### 2. Instruction Quality
+
+Focuses on how directions are phrased and prioritized.
+
+* **Vague verbs**: Replace “optimize,” “improve,” or “ensure” with measurable actions.
+* **No hierarchy**: If all rules appear equal, the model cannot resolve conflicts. Ask: “What rule wins when two disagree?”
+* **Mixed levels of abstraction**: One sentence describes policy, the next describes implementation. Separate high-level principles from steps.
+* **Overlapping scope**: The same instruction appears in multiple sections but with small differences—mark and unify them.
+
+---
+
+### 3. Control and Behavior
+
+Concerns the model’s autonomy, limits, and communication style.
+
+* **Unbounded tool use**: No maximum tool calls, runtime, or retry rules. Look for verbs like “search” or “check” without limits.
+* **Undefined uncertainty behavior**: Prompts that say “if unsure, clarify” and also “never ask the user.” Choose one.
+* **Inconsistent verbosity**: Some parts request concise answers while others demand detail. Flag inconsistent verbosity cues.
+* **No feedback plan**: Absence of preamble or progress reporting rules when using multi-step tools.
+
+---
+
+### 4. Input and Output Specification
+
+Tests whether data flow is explicit.
+
+* **Missing input defaults**: What happens if a value is missing or invalid.
+* **No output schema**: The format or sections of the response are unclear.
+* **Format drift**: Markdown, JSON, or XML requirements change mid-prompt.
+* **No validation step**: The prompt lacks checks like “verify before finishing” or “summarize results.”
+
+---
+
+### 5. Scope and Safety
+
+Ensures that actions stay within boundaries.
+
+* **Scope creep risk**: The prompt invites unrelated improvements. Flag phrases like “feel free to enhance.”
+* **Unsafe actions**: Delete or modify commands without explicit user confirmation.
+* **No error handling**: Missing behavior for failed tool calls or unavailable data.
+* **Ambiguous user authority**: The model can act for multiple users or make irreversible changes without checks.
+
+---
+
+### 6. Efficiency and Maintainability
+
+Looks at prompt size, redundancy, and future readability.
+
+* **Overexplained steps**: Long narrative text where a numbered checklist would suffice.
+* **Redundant phrasing**: Same rule repeated in different words. Collapse or move to one section.
+* **Hidden assumptions**: Implicit defaults not spelled out (e.g., language, timezone, environment).
+* **Hard to audit**: Lacks clear section markers (`#lt;policygt;`, `#lt;procedure#gt;`, `#lt;budget#gt;`). A good prompt reads like a spec sheet.
+
+---
+
+### 7. Testing Method
+
+To critique a prompt systematically:
+
+1. **Read once top to bottom**—mark unclear or conflicting phrases.
+2. **Ask five fixed questions**:
+
+   * What is the outcome?
+   * What is the stop condition?
+   * What wins if rules conflict?
+   * What limits exist (tools, time, tokens)?
+   * What should the output look like?
+3. **Rate each section**: *clear / incomplete / contradictory / redundant*.
+4. **Summarize findings by category (structure, control, scope, format, safety).*
+
+This checklist surfaces the same fault lines GPT-5 prompting guide warns about: ambiguity, contradiction, missing limits, and unclear outputs.
