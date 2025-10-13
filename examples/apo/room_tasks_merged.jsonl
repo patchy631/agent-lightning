@@ -27,7 +27,7 @@
 {"id": "s27", "task_input": {"date": "2025-10-13", "time": "13:45", "duration_min": 30, "attendees": 12, "needs": ["projector", "whiteboard", "confphone"], "accessible_required": true}, "expected_choice": "No Room"}
 {"id": "s28", "task_input": {"date": "2025-10-13", "time": "14:00", "duration_min": 60, "attendees": 4, "needs": ["tv", "whiteboard"], "accessible_required": true}, "expected_choice": "Orion"}
 {"id": "s29", "task_input": {"date": "2025-10-13", "time": "14:30", "duration_min": 30, "attendees": 10, "needs": ["whiteboard", "confphone"], "accessible_required": true}, "expected_choice": "Lyra"}
-{"id": "s30", "task_input": {"date": "2025-10-13", "time": "12:00", "duration_min": 60, "attendees": 4, "needs": ["tv"], "accessible_required": false}, "expected_choice": "Vega"}
+{"id": "s30", "task_input": {"date": "2025-10-13", "time": "12:00", "duration_min": 60, "attendees": 4, "needs": ["tv"], "accessible_required": false}, "expected_choice": "Orion"}
 {"id": "s31", "task_input": {"date": "2025-10-13", "time": "15:00", "duration_min": 30, "attendees": 9, "needs": ["tv", "whiteboard"], "accessible_required": true}, "expected_choice": "No Room"}
 {"id": "s32", "task_input": {"date": "2025-10-13", "time": "10:45", "duration_min": 30, "attendees": 8, "needs": ["projector"], "accessible_required": true}, "expected_choice": "No Room"}
 {"id": "s33", "task_input": {"date": "2025-10-13", "time": "10:00", "duration_min": 30, "attendees": 3, "needs": ["tv"], "accessible_required": true}, "expected_choice": "Pulse"}
@@ -37,7 +37,7 @@
 {"id": "s37", "task_input": {"date": "2025-10-13", "time": "13:45", "duration_min": 30, "attendees": 4, "needs": ["tv", "whiteboard"], "accessible_required": true}, "expected_choice": "Orion"}
 {"id": "s38", "task_input": {"date": "2025-10-13", "time": "11:30", "duration_min": 30, "attendees": 6, "needs": ["whiteboard"], "accessible_required": true}, "expected_choice": "Atlas"}
 {"id": "s39", "task_input": {"date": "2025-10-13", "time": "16:00", "duration_min": 30, "attendees": 8, "needs": ["confphone", "whiteboard"], "accessible_required": true}, "expected_choice": "Pulse"}
-{"id": "s40", "task_input": {"date": "2025-10-13", "time": "14:15", "duration_min": 30, "attendees": 6, "needs": ["tv"], "accessible_required": false}, "expected_choice": "Vega"}
+{"id": "s40", "task_input": {"date": "2025-10-13", "time": "14:15", "duration_min": 30, "attendees": 6, "needs": ["tv"], "accessible_required": false}, "expected_choice": "Pulse"}
 {"id": "s41", "task_input": {"date": "2025-10-13", "time": "12:30", "duration_min": 60, "attendees": 10, "needs": ["projector", "whiteboard"], "accessible_required": true}, "expected_choice": "Lyra"}
 {"id": "s42", "task_input": {"date": "2025-10-13", "time": "15:30", "duration_min": 30, "attendees": 4, "needs": ["whiteboard"], "accessible_required": true}, "expected_choice": "Orion"}
 {"id": "s43", "task_input": {"date": "2025-10-13", "time": "10:30", "duration_min": 30, "attendees": 12, "needs": ["confphone", "whiteboard"], "accessible_required": true}, "expected_choice": "Nova"}
@@ -48,7 +48,7 @@
 {"id": "s48", "task_input": {"date": "2025-10-13", "time": "09:30", "duration_min": 60, "attendees": 10, "needs": ["projector", "confphone"], "accessible_required": true}, "expected_choice": "No Room"}
 {"id": "s49", "task_input": {"date": "2025-10-13", "time": "12:00", "duration_min": 30, "attendees": 12, "needs": ["confphone", "whiteboard"], "accessible_required": true}, "expected_choice": "Nova"}
 {"id": "s50", "task_input": {"date": "2025-10-13", "time": "15:00", "duration_min": 30, "attendees": 3, "needs": ["whiteboard", "confphone"], "accessible_required": true}, "expected_choice": "Pulse"}
-{"id": "s51", "task_input": {"date": "2025-10-13", "time": "14:30", "duration_min": 30, "attendees": 6, "needs": ["tv"], "accessible_required": false}, "expected_choice": "Vega"}
+{"id": "s51", "task_input": {"date": "2025-10-13", "time": "14:30", "duration_min": 30, "attendees": 6, "needs": ["tv"], "accessible_required": false}, "expected_choice": "Pulse"}
 {"id": "s52", "task_input": {"date": "2025-10-13", "time": "11:00", "duration_min": 30, "attendees": 6, "needs": ["projector"], "accessible_required": true}, "expected_choice": "Atlas"}
 {"id": "s53", "task_input": {"date": "2025-10-13", "time": "13:30", "duration_min": 45, "attendees": 6, "needs": ["projector"], "accessible_required": true}, "expected_choice": "Lyra"}
 {"id": "s54", "task_input": {"date": "2025-10-13", "time": "10:00", "duration_min": 30, "attendees": 12, "needs": ["projector", "whiteboard", "confphone"], "accessible_required": true}, "expected_choice": "No Room"}

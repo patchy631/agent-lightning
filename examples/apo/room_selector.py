@@ -242,21 +242,23 @@ if __name__ == "__main__":
     for line in open("room_tasks_merged.jsonl"):
         task = json.loads(line)
 
-        from agentlightning.tracer import AgentOpsTracer
-        from agentlightning.types import Span
+        room_selector(task)
 
-        tracer = AgentOpsTracer()
-        tracer.init()
-        tracer.init_worker(0)
-        with tracer.trace_context():
-            room_selector(task)
-        spans = []
-        for span in tracer.get_last_trace():
-            spans.append(Span.from_opentelemetry(span, "dummy", "dummy", 0))
-            print(" Span name: ", span.name, "Span attributes:", span.attributes)
-        from agentlightning.adapter.messages import TraceMessagesAdapter
+        # from agentlightning.tracer import AgentOpsTracer
+        # from agentlightning.types import Span
 
-        adapter = TraceMessagesAdapter()
-        messages = adapter.adapt(spans)
-        print(messages)
-        break
+        # tracer = AgentOpsTracer()
+        # tracer.init()
+        # tracer.init_worker(0)
+        # with tracer.trace_context():
+        #     room_selector(task)
+        # spans = []
+        # for span in tracer.get_last_trace():
+        #     spans.append(Span.from_opentelemetry(span, "dummy", "dummy", 0))
+        #     print(" Span name: ", span.name, "Span attributes:", span.attributes)
+        # from agentlightning.adapter.messages import TraceMessagesAdapter
+
+        # adapter = TraceMessagesAdapter()
+        # messages = adapter.adapt(spans)
+        # print(messages)
+        # break
