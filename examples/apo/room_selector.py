@@ -1,6 +1,7 @@
 import json
 import re
 import time
+import traceback
 from typing import List, Tuple, TypedDict
 
 from openai import OpenAI
@@ -39,134 +40,6 @@ class RoomSelectionTask(TypedDict):
     expected_choice: str
 
 
-@rollout
-def room_selector(task_input: RoomSelectionTask):
-    client = OpenAI()
-
-    system = (
-        "You are a scheduling assistant.\n"
-        "Hard constraints: free for slot, capacity >= attendees, includes all required equipment, "
-        "accessible==True if requested.\n"
-        "Tie-break scoring (lower is better):\n"
-        "  1) capacity_slack = capacity - attendees (minimize)\n"
-        "  2) extra_equipment = provided_equipment_count - required_equipment_count (minimize)\n"
-        "  3) distance_m (minimize)\n"
-        "  4) fewer total booked blocks that day (minimize)\n"
-        "Return strictly:\n"
-        "final_choice: <ROOM_ID>\nreason: <one line stating the decisive criteria>\n"
-    )
-
-    task_input = {
-        "date": "2025-10-13",
-        "time": "10:30",
-        "duration_min": 45,
-        "attendees": 6,
-        "needs": ["whiteboard", "projector"],
-        "accessible_required": True,
-    }
-
-    messages = [
-        {"role": "system", "content": system},
-        {
-            "role": "user",
-            "content": (
-                f"Find a room on {task_input['date']} at {task_input['time']} for {task_input['duration_min']} minutes, "
-                f"{task_input['attendees']} attendees. Needs: {', '.join(task_input['needs']) or 'none'}. "
-                f"Accessible required: {task_input['accessible_required']}"
-            ),
-        },
-    ]
-
-    resp = client.chat.completions.create(
-        model="gpt-5",
-        messages=messages,
-        tools=tools,
-        tool_choice="auto",
-    )
-    messages.append(resp.choices[0].message)
-
-    for tc in resp.choices[0].message.tool_calls or []:
-        if tc.function.name == "get_rooms_and_availability":
-            args = json.loads(tc.function.arguments)
-            tool_output = get_rooms_and_availability(args["date"], args["time"], args["duration_min"])
-            # Attach a lightweight view of daily booking counts for tie-break #4
-            for r in tool_output["rooms"]:
-                r["booked_blocks_today"] = sum(
-                    1 for (d, _, _) in next(x for x in ROOMS if x["id"] == r["id"])["booked"] if d == args["date"]
-                )
-            messages.append(
-                {
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "name": tc.function.name,
-                    "content": json.dumps(tool_output),
-                }
-            )
-
-    final = client.chat.completions.create(
-        model="gpt-5",
-        messages=messages,
-    )
-    answer_text = final.choices[0].message.content
-    print("=== Model Answer ===\n", answer_text)
-
-    # ---- 4) Judge exact choice against expected
-    expected_choice = "Atlas"  # Candidates: Atlas (6 cap, proj+wb, acc, free) vs Lyra (10) vs Nova (12). Atlas wins by smallest slack and shortest distance.
-
-    def extract_choice(text):
-        m = re.search(r"final_choice:\s*([A-Za-z0-9_-]+)", text)
-        return m.group(1) if m else ""
-
-    model_choice = extract_choice(answer_text)
-
-    judge_prompt = f"""Task output:
-    {answer_text}
-
-    Task expected answer:
-    final_choice: {expected_choice}
-
-    Score the match on a 0-1 scale. Return JSON: {{"score": <0..1>, "reason": "<brief>"}}
-    """
-    judge = client.chat.completions.create(
-        model="gpt-5",
-        messages=[
-            {"role": "system", "content": "Be a strict grader of exact room choice."},
-            {"role": "user", "content": judge_prompt},
-        ],
-    )
-    print("=== Judge ===\n", judge.choices[0].message.content)
-
-
-# ---- 5) Batch evaluation over dataset.jsonl
-# def run_one(sample):
-#     t = sample["task_input"]
-#     msgs = [
-#         {"role":"system","content":system},
-#         {"role":"user","content":(
-#             f"Find a room on {t['date']} at {t['time']} for {t['duration_min']} minutes, "
-#             f"{t['attendees']} attendees. Needs: {', '.join(t['needs']) if t['needs'] else 'none'}. "
-#             f\"Accessible required: {t['accessible_required']}\""
-#         )}
-#     ]
-#     r1 = client.chat.completions.create(model="gpt-5", messages=msgs, tools=tools, tool_choice="auto")
-#     msgs.append(r1.choices[0].message)
-#     for tc in r1.choices[0].message.tool_calls or []:
-#         args = json.loads(tc.function.arguments)
-#         out = get_rooms_and_availability(args["date"], args["time"], args["duration_min"])
-#         for r in out["rooms"]:
-#             r["booked_blocks_today"] = sum(1 for (d,_,_) in next(x for x in ROOMS if x["id"]==r["id"])["booked"] if d==args["date"])
-#         msgs.append({"role":"tool","tool_call_id":tc.id,"name":tc.function.name,"content":json.dumps(out)})
-#     r2 = client.chat.completions.create(model="gpt-5", messages=msgs)
-#     out_text = r2.choices[0].message.content
-#     choice = extract_choice(out_text)
-#     exp = sample["expected_choice"]
-#     jp = f"Task output:\n{out_text}\n\nTask expected answer:\nfinal_choice: {exp}\n\nReturn JSON: {{\"score\": <0..1>, \"reason\": \"<brief>\"}}"
-#     j = client.chat.completions.create(model="gpt-5",
-#                                        messages=[{"role":"system","content":"Be a strict grader of exact room choice."},
-#                                                  {"role":"user","content":jp}])
-#     return {"id": sample["id"], "choice": choice, "expected": exp, "judge": j.choices[0].message.content}
-
-
 tools = [
     {
         "type": "function",
@@ -185,6 +58,99 @@ tools = [
         },
     },
 ]
+
+
+# @rollout
+def room_selector(task: RoomSelectionTask):
+    client = OpenAI()
+
+    system = (
+        "You are a scheduling assistant.\n"
+        "Hard constraints: free for slot, capacity >= attendees, includes all required equipment, "
+        "accessible==True if requested.\n"
+        "Tie-break scoring (lower is better):\n"
+        "  1) capacity_slack = capacity - attendees (minimize)\n"
+        "  2) extra_equipment = provided_equipment_count - required_equipment_count (minimize)\n"
+        "  3) distance_m (minimize)\n"
+        "  4) fewer total booked blocks that day (minimize)\n"
+        "Return No Room if no room is found that satisfies the constraints.\n"
+        "Return strictly:\n"
+        "final_choice: <ROOM_ID>\nreason: <one line stating the decisive criteria>\n"
+    )
+
+    print("=== Task ===")
+    print(task)
+
+    task_input = task["task_input"]
+
+    messages = [
+        {"role": "system", "content": system},
+        {
+            "role": "user",
+            "content": (
+                f"Find a room on {task_input['date']} at {task_input['time']} for {task_input['duration_min']} minutes, "
+                f"{task_input['attendees']} attendees. Needs: {', '.join(task_input['needs']) or 'none'}. "
+                f"Accessible required: {task_input['accessible_required']}"
+            ),
+        },
+    ]
+
+    resp = client.chat.completions.create(
+        model="gpt-5-mini",
+        messages=messages,
+        tools=tools,
+        tool_choice="auto",
+        reasoning_effort="low",
+    )
+    messages.append(resp.choices[0].message)
+
+    for tc in resp.choices[0].message.tool_calls or []:
+        if tc.function.name == "get_rooms_and_availability":
+            args = json.loads(tc.function.arguments)
+            try:
+                tool_output = get_rooms_and_availability(args["date"], args["time"], args["duration_min"])
+            except Exception as e:
+                tool_output = {
+                    "error": str(e),
+                    "traceback": traceback.format_exc(),
+                }
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "name": tc.function.name,
+                    "content": json.dumps(tool_output),
+                }
+            )
+
+    final = client.chat.completions.create(
+        model="gpt-5-mini",
+        messages=messages,
+        reasoning_effort="low",
+    )
+    answer_text = final.choices[0].message.content
+    print("=== Model Answer ===\n", answer_text)
+
+    # Judge exact choice against expected
+    expected_choice = task["expected_choice"]
+
+    judge_prompt = f"""Task output:
+    {answer_text}
+
+    Task expected answer:
+    final_choice: {expected_choice}
+
+    Score the match on a 0-1 scale. Return JSON: {{"score": <0..1>, "reason": "<brief>"}}
+    """
+    judge = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "Be a strict grader of exact room choice."},
+            {"role": "user", "content": judge_prompt},
+        ],
+    )
+    print("=== Judge ===\n", judge.choices[0].message.content)
+
 
 # Local tool database (there might be multiple plausible fits)
 ROOMS: List[Room] = [
@@ -270,3 +236,27 @@ def get_rooms_and_availability(date: str, time_str: str, duration_min: int) -> A
         }
         avail.append(item)
     return {"rooms": avail}
+
+
+if __name__ == "__main__":
+    for line in open("room_tasks_merged.jsonl"):
+        task = json.loads(line)
+
+        from agentlightning.tracer import AgentOpsTracer
+        from agentlightning.types import Span
+
+        tracer = AgentOpsTracer()
+        tracer.init()
+        tracer.init_worker(0)
+        with tracer.trace_context():
+            room_selector(task)
+        spans = []
+        for span in tracer.get_last_trace():
+            spans.append(Span.from_opentelemetry(span, "dummy", "dummy", 0))
+            print(" Span name: ", span.name, "Span attributes:", span.attributes)
+        from agentlightning.adapter.messages import TraceMessagesAdapter
+
+        adapter = TraceMessagesAdapter()
+        messages = adapter.adapt(spans)
+        print(messages)
+        break
