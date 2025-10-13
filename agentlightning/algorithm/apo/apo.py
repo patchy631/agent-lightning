@@ -5,26 +5,21 @@ APO with textual gradients that read rollout spans and outputs to modify the pro
 
 - algo: beam search with span-aware textual gradients -> apply_edit via LLM
 - rollout: same pattern as your example, but task is a dict (T_task)
-
-Based on the idea of:
-
-- ProTeGi: https://aclanthology.org/2023.emnlp-main.494.pdf
-- TextGrad: https://github.com/zou-group/textgrad
 """
 
 import logging
 import random
 import time
 from pathlib import Path
-from typing import Any, Dict, Generic, Iterable, Iterator, List, Optional, Sequence, Tuple, TypedDict, TypeVar, cast
+from typing import Any, Dict, Generic, Iterator, List, Optional, Sequence, Tuple, TypedDict, TypeVar, cast
 
 import poml
 from openai import AsyncOpenAI
 
 from agentlightning.adapter.messages import TraceMessagesAdapter
-from agentlightning.algorithm.base import BaseAlgorithm, algo
+from agentlightning.algorithm.base import BaseAlgorithm
 from agentlightning.reward import find_final_reward
-from agentlightning.types import Dataset, NamedResources, PromptTemplate, RolloutMode, RolloutStatus, RolloutV2, Span
+from agentlightning.types import Dataset, NamedResources, PromptTemplate, RolloutMode, RolloutStatus, RolloutV2
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +47,21 @@ APPLY_EDIT_PROMPT_FILES = [
 
 
 def batch_iter_over_dataset(dataset: Dataset[T_task], batch_size: int) -> Iterator[Sequence[T_task]]:
-    if batch_size <= len(dataset):
+    """
+    Create an infinite iterator that yields batches from the dataset.
+
+    When batch_size >= dataset size, yields the entire shuffled dataset repeatedly.
+    When batch_size < dataset size, yields batches of the specified size, reshuffling
+    after each complete pass through the dataset.
+
+    Args:
+        dataset: The dataset to iterate over.
+        batch_size: The desired batch size.
+
+    Yields:
+        Sequences of tasks from the dataset. Each task appears at most once per epoch.
+    """
+    if batch_size >= len(dataset):
         while True:
             dataset_copy = [dataset[i] for i in range(len(dataset))]
             random.shuffle(dataset_copy)
@@ -73,6 +82,22 @@ def batch_iter_over_dataset(dataset: Dataset[T_task], batch_size: int) -> Iterat
 
 
 class APO(BaseAlgorithm, Generic[T_task]):
+    """Automatic Prompt Optimization (APO) algorithm using textual gradients and beam search.
+
+    APO is an iterative prompt optimization algorithm that uses LLM-generated textual gradients
+    to improve prompts through a beam search process. It evaluates prompts on rollouts,
+    computes critiques based on the results, and applies edits to generate improved prompts.
+
+    The algorithm operates in rounds, where each round:
+    1. Samples parent prompts from the current beam
+    2. Generates new prompts by computing textual gradients and applying edits
+    3. Evaluates all candidates on a validation set
+    4. Selects the top-k prompts for the next round
+
+    Based on the ideas from:
+    - ProTeGi: https://aclanthology.org/2023.emnlp-main.494.pdf
+    - TextGrad: https://github.com/zou-group/textgrad
+    """
 
     def __init__(
         self,
@@ -81,14 +106,29 @@ class APO(BaseAlgorithm, Generic[T_task]):
         gradient_model: str = "gpt-5-mini",
         apply_edit_model: str = "gpt-4.1-mini",
         diversity_temperature: float = 1.0,
-        rollout_batch_size: int = 16,
         gradient_batch_size: int = 4,
         val_batch_size: int = 16,
         beam_width: int = 4,
-        search_width: int = 4,
+        branch_factor: int = 4,
         beam_rounds: int = 3,
         rollout_batch_timeout: float = 600.0,
     ):
+        """
+        Initialize the APO algorithm with configuration parameters.
+
+        Args:
+            async_openai_client: AsyncOpenAI client for making LLM API calls.
+            gradient_model: Model name for computing textual gradients (critiques).
+            apply_edit_model: Model name for applying edits based on critiques.
+            diversity_temperature: Temperature parameter for LLM calls to control diversity.
+            gradient_batch_size: Number of rollout results to sample for gradient computation.
+            val_batch_size: Number of validation examples to use for evaluation.
+            beam_width: Number of top-scoring prompts to keep in the beam at each round.
+            branch_factor: Number of new prompt candidates to generate from each parent prompt
+                by applying textual gradient edits. This controls the expansion of the search tree.
+            beam_rounds: Number of beam search rounds to perform.
+            rollout_batch_timeout: Maximum time in seconds to wait for rollout batch completion.
+        """
         self.async_openai_client = async_openai_client
         self.gradient_model = gradient_model
         self.apply_edit_model = apply_edit_model
@@ -96,7 +136,7 @@ class APO(BaseAlgorithm, Generic[T_task]):
         self.gradient_batch_size = gradient_batch_size
         self.val_batch_size = val_batch_size
         self.beam_width = beam_width
-        self.search_width = search_width
+        self.branch_factor = branch_factor
         self.beam_rounds = beam_rounds
         self.rollout_batch_timeout = rollout_batch_timeout
 
@@ -104,6 +144,15 @@ class APO(BaseAlgorithm, Generic[T_task]):
         self._history_best_score: float = float("-inf")
 
     def get_seed_prompt_template(self) -> Tuple[str, PromptTemplate]:
+        """
+        Extract the initial prompt template from the algorithm's resources.
+
+        Returns:
+            A tuple of (resource_name, prompt_template) representing the seed prompt.
+
+        Raises:
+            ValueError: If initial_resources is not set or no PromptTemplate is found.
+        """
         initial_resources = self.get_initial_resources()
         if initial_resources is None:
             raise ValueError(
@@ -116,12 +165,30 @@ class APO(BaseAlgorithm, Generic[T_task]):
         raise ValueError("No prompt template resource found in initial_resources")
 
     def get_adapter(self) -> TraceMessagesAdapter:
+        """
+        Get the adapter for converting spans to messages.
+
+        Returns:
+            The TraceMessagesAdapter instance for this algorithm.
+
+        Raises:
+            ValueError: If the adapter is not a TraceMessagesAdapter.
+        """
         adapter = super().get_adapter()
         if not isinstance(adapter, TraceMessagesAdapter):
             raise ValueError("Adapter must be a TraceMessagesAdapter for APO algorithm")
         return adapter
 
     def get_best_prompt(self) -> PromptTemplate:
+        """
+        Retrieve the best prompt discovered during optimization.
+
+        Returns:
+            The prompt template with the highest validation score found so far.
+
+        Raises:
+            ValueError: If no best prompt has been found yet (run() not called).
+        """
         if self._history_best_prompt is None:
             raise ValueError("No best prompt found")
         return self._history_best_prompt
@@ -132,7 +199,17 @@ class APO(BaseAlgorithm, Generic[T_task]):
         rollout_results: List[RolloutResultForAPO],
     ) -> Optional[str]:
         """
-        Compute critique from spans + outputs.
+        Compute a textual gradient (critique) for the current prompt based on rollout results.
+
+        This method samples rollout results, sends them to an LLM along with the current prompt,
+        and generates a critique describing how the prompt could be improved.
+
+        Args:
+            current_prompt: The prompt template to critique.
+            rollout_results: List of rollout results containing spans, messages, and rewards.
+
+        Returns:
+            A textual critique generated by the LLM, or None if generation fails.
         """
         tg_template = random.choice(GRADIENT_PROMPT_FILES)
 
@@ -156,7 +233,7 @@ class APO(BaseAlgorithm, Generic[T_task]):
             },
             format="openai_chat",
         )
-        logger.debug(f"Gradient computed with{self.gradient_model} prompt: {tg_msg}")
+        logger.debug(f"Gradient computed with {self.gradient_model} prompt: {tg_msg}")
         critique_response = await self.async_openai_client.chat.completions.create(
             model=self.gradient_model,
             messages=tg_msg["messages"],  # type: ignore
@@ -173,7 +250,18 @@ class APO(BaseAlgorithm, Generic[T_task]):
         rollout: List[RolloutResultForAPO],
     ) -> Optional[str]:
         """
-        Compute critique from spans + outputs, then rewrite the prompt.
+        Generate an improved prompt by computing a textual gradient and applying an edit.
+
+        This is the main optimization step that:
+        1. Computes a critique (textual gradient) based on rollout performance
+        2. Uses another LLM to apply the critique and generate an improved prompt
+
+        Args:
+            current_prompt: The current prompt template to improve.
+            rollout: List of rollout results to base the critique on.
+
+        Returns:
+            The improved prompt text, or the original prompt if gradient computation fails.
         """
         # 1) Critique
         critique_text = await self._compute_textual_gradient(current_prompt, rollout)
@@ -204,6 +292,18 @@ class APO(BaseAlgorithm, Generic[T_task]):
         return new_prompt
 
     async def get_rollout_results(self, rollout: List[RolloutV2]) -> List[RolloutResultForAPO]:
+        """
+        Convert completed rollouts to APO-compatible result format.
+
+        Fetches spans for each rollout, adapts them to messages, and packages them
+        with rewards and status information for gradient computation.
+
+        Args:
+            rollout: List of completed rollout metadata.
+
+        Returns:
+            List of rollout results formatted for APO processing.
+        """
         rollout_results: List[RolloutResultForAPO] = []
         store = self.get_store()
         adapter = self.get_adapter()
@@ -232,8 +332,23 @@ class APO(BaseAlgorithm, Generic[T_task]):
         mode: RolloutMode,
     ) -> Tuple[List[RolloutResultForAPO], float]:
         """
-        Enqueue one rollout per example. Aggregate mean reward.
-        Return average reward and per-example spans+reward for gradient steps.
+        Evaluate a prompt on a batch of tasks by running rollouts and computing average reward.
+
+        This method:
+        1. Adds the prompt as a named resource to the store
+        2. Enqueues rollouts for each task in the dataset
+        3. Waits for rollouts to complete (with timeout)
+        4. Computes and returns the average reward
+
+        Args:
+            prompt: The prompt template string to evaluate.
+            resource_name: The name to register the prompt under in the store.
+            dataset: Sequence of tasks to evaluate the prompt on.
+            mode: Rollout mode ("train" or "val") for logging/tracking.
+
+        Returns:
+            A tuple of (rollout_results, average_reward) where rollout_results contains
+            detailed information for each rollout and average_reward is the mean final reward.
         """
         store = self.get_store()
         logger.info(f'Evaluating prompt "{prompt[:50]}..." on {len(dataset)} tasks in {mode} mode')
@@ -268,6 +383,22 @@ class APO(BaseAlgorithm, Generic[T_task]):
         train_dataset: Optional[Dataset[T_task]] = None,
         val_dataset: Optional[Dataset[T_task]] = None,
     ) -> None:
+        """
+        Execute the APO algorithm to optimize prompts through beam search with textual gradients.
+
+        The algorithm performs iterative prompt optimization over multiple rounds:
+        - Each round: samples parent prompts, generates new candidates via textual gradients,
+          evaluates all candidates on validation data, and keeps the top performers
+        - Tracks the historically best prompt across all rounds
+        - Uses different training data samples for each gradient computation to ensure diversity
+
+        Args:
+            train_dataset: Dataset of tasks for computing textual gradients. Required.
+            val_dataset: Dataset of tasks for evaluating and selecting prompts. Required.
+
+        Raises:
+            ValueError: If train_dataset or val_dataset is None, or if resources are not set.
+        """
         # Get the initial prompt template
         resource_name, seed_prompt = self.get_seed_prompt_template()
 
@@ -296,13 +427,13 @@ class APO(BaseAlgorithm, Generic[T_task]):
 
             next_beam: List[PromptTemplate] = [*beam]
 
-            # When computing gradienst, use a different subset data for each iteration
+            # When computing gradients, use a different subset data for each iteration
             logger.info(
-                f"[Round {rnd + 1}] Applying {self.search_width} edits to each of "
+                f"[Round {rnd + 1}] Applying {self.branch_factor} edits to each of "
                 f"the {len(parent_prompts)} parents on training dataset"
             )
             for prompt in parent_prompts:
-                for _ in range(self.search_width):
+                for _ in range(self.branch_factor):
                     grad_samples = next(grad_dataset_iterator)
                     rollout_results, _ = await self.evaluate_prompt_on_batch(
                         prompt.template, resource_name, grad_samples, mode="train"
