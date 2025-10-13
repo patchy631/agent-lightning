@@ -193,7 +193,7 @@ class APO(BaseAlgorithm, Generic[T_task]):
             raise ValueError("No best prompt found")
         return self._history_best_prompt
 
-    async def _compute_textual_gradient(
+    async def compute_textual_gradient(
         self,
         current_prompt: str,
         rollout_results: List[RolloutResultForAPO],
@@ -264,7 +264,7 @@ class APO(BaseAlgorithm, Generic[T_task]):
             The improved prompt text, or the original prompt if gradient computation fails.
         """
         # 1) Critique
-        critique_text = await self._compute_textual_gradient(current_prompt, rollout)
+        critique_text = await self.compute_textual_gradient(current_prompt, rollout)
         if not critique_text:
             logger.error(f"Failed to compute critique for prompt.")
             return current_prompt
@@ -378,6 +378,181 @@ class APO(BaseAlgorithm, Generic[T_task]):
         logger.info(f"Evaluated {len(rollout_results)} rollouts. Rewards: {final_rewards}. Average reward: {avg}")
         return rollout_results, avg
 
+    def _initialize_beam(
+        self,
+        train_dataset: Optional[Dataset[T_task]],
+        val_dataset: Optional[Dataset[T_task]],
+    ) -> Tuple[str, PromptTemplate, Iterator[Sequence[T_task]], Iterator[Sequence[T_task]]]:
+        """
+        Initialize the beam search with seed prompt and dataset iterators.
+
+        Args:
+            train_dataset: Dataset for computing gradients.
+            val_dataset: Dataset for evaluating prompts.
+
+        Returns:
+            Tuple of (resource_name, seed_prompt, grad_iterator, val_iterator).
+
+        Raises:
+            ValueError: If either dataset is None.
+        """
+        resource_name, seed_prompt = self.get_seed_prompt_template()
+
+        if train_dataset is None:
+            raise ValueError("train_dataset is required for APO algorithm")
+        if val_dataset is None:
+            raise ValueError("val_dataset is required for APO algorithm")
+
+        grad_dataset_iterator = batch_iter_over_dataset(train_dataset, self.gradient_batch_size)
+        val_dataset_iterator = batch_iter_over_dataset(val_dataset, self.val_batch_size)
+
+        # Initialize history tracking
+        self._history_best_prompt = seed_prompt
+        self._history_best_score = float("-inf")
+
+        return resource_name, seed_prompt, grad_dataset_iterator, val_dataset_iterator
+
+    def _sample_parent_prompts(self, beam: List[PromptTemplate], round_num: int) -> List[PromptTemplate]:
+        """
+        Sample parent prompts from the current beam for generating new candidates.
+
+        If the beam has fewer prompts than beam_width, replicates existing prompts.
+        Otherwise, randomly samples beam_width prompts.
+
+        Args:
+            beam: Current list of prompt templates in the beam.
+            round_num: Current round number (for logging, 0-indexed).
+
+        Returns:
+            List of parent prompts to generate children from.
+        """
+        if len(beam) < self.beam_width:
+            logger.warning(
+                f"[Round {round_num + 1}] Beam width is currently {self.beam_width}, but only {len(beam)} prompts in beam. "
+                "Replicating all prompts."
+            )
+            return [beam[i % len(beam)] for i in range(self.beam_width)]
+        else:
+            return random.sample(beam, self.beam_width)
+
+    async def _generate_candidate_prompts(
+        self,
+        parent_prompts: List[PromptTemplate],
+        resource_name: str,
+        grad_dataset_iterator: Iterator[Sequence[T_task]],
+        round_num: int,
+    ) -> List[PromptTemplate]:
+        """
+        Generate new candidate prompts from parents using textual gradients.
+
+        For each parent prompt, generates branch_factor new candidates by:
+        1. Evaluating the parent on a training batch
+        2. Computing textual gradient
+        3. Applying edit to generate improved prompt
+
+        Args:
+            parent_prompts: List of parent prompts to generate children from.
+            resource_name: Name to register prompts under in the store.
+            grad_dataset_iterator: Iterator over training data batches.
+            round_num: Current round number (for logging, 0-indexed).
+
+        Returns:
+            List of newly generated prompt templates.
+        """
+        logger.info(
+            f"[Round {round_num + 1}] Applying {self.branch_factor} edits to each of "
+            f"the {len(parent_prompts)} parents on training dataset"
+        )
+
+        candidates: List[PromptTemplate] = []
+        for prompt in parent_prompts:
+            for _ in range(self.branch_factor):
+                grad_samples = next(grad_dataset_iterator)
+                rollout_results, _ = await self.evaluate_prompt_on_batch(
+                    prompt.template, resource_name, grad_samples, mode="train"
+                )
+                new_prompt = await self.textual_gradient_and_apply_edit(prompt.template, rollout_results)
+                if not new_prompt:
+                    logger.error(f"[Round {round_num + 1}] Failed to compute edit for prompt: {prompt.template}")
+                    continue
+                new_prompt_template = PromptTemplate(template=new_prompt, engine="f-string")
+                logger.info(f"[Round {round_num + 1}] New prompt template: {new_prompt_template}")
+                candidates.append(new_prompt_template)
+
+        return candidates
+
+    async def _evaluate_and_select_beam(
+        self,
+        candidates: List[PromptTemplate],
+        resource_name: str,
+        val_dataset_iterator: Iterator[Sequence[T_task]],
+        round_num: int,
+    ) -> List[PromptTemplate]:
+        """
+        Evaluate all candidate prompts on validation data and select top-k for the beam.
+
+        Args:
+            candidates: List of candidate prompts to evaluate.
+            resource_name: Name to register prompts under in the store.
+            val_dataset_iterator: Iterator over validation data batches.
+            round_num: Current round number (for logging, 0-indexed).
+
+        Returns:
+            List of top beam_width prompts sorted by validation score (best first).
+
+        Raises:
+            ValueError: If no candidates remain after evaluation.
+        """
+        logger.info(f"[Round {round_num + 1}] Evaluating {len(candidates)} candidates on validation dataset")
+
+        val_batch = next(val_dataset_iterator)
+        scores: List[Tuple[PromptTemplate, float]] = []
+
+        for idx, prompt in enumerate(candidates):
+            _, score = await self.evaluate_prompt_on_batch(prompt.template, resource_name, val_batch, mode="val")
+            scores.append((prompt, score))
+            logger.info(f"[Round {round_num + 1}] Candidate {idx} score: {score:.3f}")
+
+        # Sort by score (descending) and select top beam_width
+        sorted_prompts = [p for p, _ in sorted(scores, key=lambda x: x[1], reverse=True)][: self.beam_width]
+        logger.info(
+            f"[Round {round_num + 1}] Top {len(sorted_prompts)} candidates on validation dataset: {sorted_prompts}"
+        )
+
+        if len(sorted_prompts) == 0:
+            raise ValueError("No beam candidates any more")
+
+        return sorted_prompts
+
+    async def _update_best_prompt(
+        self,
+        beam: List[PromptTemplate],
+        resource_name: str,
+        val_dataset: Dataset[T_task],
+        round_num: int,
+    ) -> None:
+        """
+        Evaluate the best prompt in the beam on the full validation set and update history.
+
+        Args:
+            beam: Current beam of prompts (sorted, best first).
+            resource_name: Name to register prompts under in the store.
+            val_dataset: Full validation dataset.
+            round_num: Current round number (for logging, 0-indexed).
+        """
+        best_prompt = beam[0]
+        _, best_score = await self.evaluate_prompt_on_batch(
+            best_prompt.template, resource_name, cast(Sequence[T_task], val_dataset), mode="val"
+        )
+        logger.info(f"[Round {round_num + 1}] Best prompt {best_prompt} has score: {best_score:.3f}")
+
+        if best_score > self._history_best_score:
+            logger.info(
+                f"[Round {round_num + 1}] Best prompt updated. New best score: {best_score:.3f} (prev: {self._history_best_score:.3f})"
+            )
+            self._history_best_prompt = best_prompt
+            self._history_best_score = best_score
+
     async def run(
         self,
         train_dataset: Optional[Dataset[T_task]] = None,
@@ -399,79 +574,30 @@ class APO(BaseAlgorithm, Generic[T_task]):
         Raises:
             ValueError: If train_dataset or val_dataset is None, or if resources are not set.
         """
-        # Get the initial prompt template
-        resource_name, seed_prompt = self.get_seed_prompt_template()
+        # Initialize beam search
+        resource_name, seed_prompt, grad_iterator, val_iterator = self._initialize_beam(train_dataset, val_dataset)
 
-        if train_dataset is None:
-            raise ValueError("train_dataset is required for APO algorithm")
-        if val_dataset is None:
-            raise ValueError("val_dataset is required for APO algorithm")
+        # Validation datasets are guaranteed to be non-None after initialization
+        assert val_dataset is not None
 
-        grad_dataset_iterator = batch_iter_over_dataset(train_dataset, self.gradient_batch_size)
-        val_dataset_iterator = batch_iter_over_dataset(val_dataset, self.val_batch_size)
-
-        self._history_best_prompt = seed_prompt
-        self._history_best_score = float("-inf")
-
+        # Start with seed prompt in the beam
         beam: List[PromptTemplate] = [seed_prompt]
+
+        # Run beam search for specified number of rounds
         for rnd in range(self.beam_rounds):
             logger.info(f"[Round {rnd + 1}] Round {rnd + 1}/{self.beam_rounds}...")
-            if len(beam) < self.beam_width:
-                logger.warning(
-                    f"[Round {rnd + 1}] Beam width is currently {self.beam_width}, but only {len(beam)} prompts in beam. "
-                    "Replicating all prompts."
-                )
-                parent_prompts = [beam[i % len(beam)] for i in range(self.beam_width)]
-            else:
-                parent_prompts = random.sample(beam, self.beam_width)
 
-            next_beam: List[PromptTemplate] = [*beam]
+            # Sample parent prompts from current beam
+            parent_prompts = self._sample_parent_prompts(beam, rnd)
 
-            # When computing gradients, use a different subset data for each iteration
-            logger.info(
-                f"[Round {rnd + 1}] Applying {self.branch_factor} edits to each of "
-                f"the {len(parent_prompts)} parents on training dataset"
-            )
-            for prompt in parent_prompts:
-                for _ in range(self.branch_factor):
-                    grad_samples = next(grad_dataset_iterator)
-                    rollout_results, _ = await self.evaluate_prompt_on_batch(
-                        prompt.template, resource_name, grad_samples, mode="train"
-                    )
-                    new_prompt = await self.textual_gradient_and_apply_edit(prompt.template, rollout_results)
-                    if not new_prompt:
-                        logger.error(f"[Round {rnd + 1}] Failed to compute edit for prompt: {prompt.template}")
-                        continue
-                    new_prompt_template = PromptTemplate(template=new_prompt, engine="f-string")
-                    logger.info(f"[Round {rnd + 1}] New prompt template: {new_prompt_template}")
-                    next_beam.append(new_prompt_template)
+            # Generate new candidate prompts from parents
+            new_candidates = await self._generate_candidate_prompts(parent_prompts, resource_name, grad_iterator, rnd)
 
-            # Evaluate on candidates on VAL
-            logger.info(f"[Round {rnd + 1}] Evaluating {len(next_beam)} candidates on validation dataset")
-            val_batch = next(val_dataset_iterator)
-            scores: List[Tuple[PromptTemplate, float]] = []
-            for idx, prompt in enumerate(next_beam):
-                rollout_results, score = await self.evaluate_prompt_on_batch(
-                    prompt.template, resource_name, val_batch, mode="val"
-                )
-                scores.append((prompt, score))
-                logger.info(f"[Round {rnd + 1}] Candidate {idx} score: {score:.3f}")
-            # Sort the beam by score
-            next_beam = [p for p, _ in sorted(scores, key=lambda x: x[1], reverse=True)][: self.beam_width]
-            logger.info(f"[Round {rnd + 1}] Top {len(next_beam)} candidates on validation dataset: {next_beam}")
+            # Combine existing beam with new candidates
+            all_candidates = [*beam, *new_candidates]
 
-            # Add the best prompt to the history
-            if len(next_beam) == 0:
-                raise ValueError("No beam candidates any more")
-            best_prompt = next_beam[0]
-            _, best_score = await self.evaluate_prompt_on_batch(
-                best_prompt.template, resource_name, cast(Sequence[T_task], val_dataset), mode="val"
-            )
-            logger.info(f"[Round {rnd + 1}] Best prompt {best_prompt} has score: {best_score:.3f}")
+            # Evaluate and select top-k prompts for next beam
+            beam = await self._evaluate_and_select_beam(all_candidates, resource_name, val_iterator, rnd)
 
-            if best_score > self._history_best_score:
-                logger.info(
-                    f"[Round {rnd + 1}] Best prompt updated. New best score: {best_score:.3f} (prev: {self._history_best_score:.3f})"
-                )
-                self._history_best_prompt = best_prompt
-                self._history_best_score = best_score
+            # Update historically best prompt if improved
+            await self._update_best_prompt(beam, resource_name, val_dataset, rnd)
