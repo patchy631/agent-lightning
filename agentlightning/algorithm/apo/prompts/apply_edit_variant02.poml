@@ -1,0 +1,15 @@
+<poml>
+  <p>Revise the prompt to address all critique points. Preserve variable names in curly-brackets.</p>
+  <hint>Add a rubric: mechanism first, 1 support fact, less than 100 words.</hint>
+  <output-format>
+    Return only the new full prompt. No extra explanations, punctuations or diff.
+  </output-format>
+  <human-msg>
+    <cp caption="PROMPT" level="3">
+      <text>{{ prompt_template }}</text>
+    </cp>
+    <cp caption="CRITIQUE" level="3">
+      <text>{{ critique }}</text>
+    </cp>
+  </human-msg>
+</poml>

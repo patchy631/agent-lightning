@@ -8,10 +8,11 @@ from openai.types.chat.chat_completion_function_tool_param import ChatCompletion
 from openai.types.chat.chat_completion_message import ChatCompletionMessage
 from openai.types.chat.chat_completion_message_function_tool_call import ChatCompletionMessageFunctionToolCall, Function
 from openai.types.shared_params import FunctionDefinition
-from opentelemetry.sdk.trace import ReadableSpan
 from pydantic import BaseModel
 
-from .base import OtelTraceAdapter
+from agentlightning.types import Span
+
+from .base import TraceAdapter
 
 
 class OpenAIMessages(BaseModel):
@@ -161,7 +162,7 @@ def convert_to_openai_messages(
             yield OpenAIMessages(messages=messages, tools=tools)
 
 
-class TraceMessagesAdapter(OtelTraceAdapter[List[OpenAIMessages]]):
+class TraceMessagesAdapter(TraceAdapter[List[OpenAIMessages]]):
     """
     Adapter that converts OpenTelemetry trace spans into OpenAI-compatible message format.
 
@@ -180,14 +181,11 @@ class TraceMessagesAdapter(OtelTraceAdapter[List[OpenAIMessages]]):
         List[OpenAIMessages]: A list of structured message conversations with associated tools
     """
 
-    def adapt(self, source: List[ReadableSpan], /) -> List[OpenAIMessages]:
+    def adapt(self, source: List[Span], /) -> List[OpenAIMessages]:
         raw_tool_calls: List[Dict[str, Any]] = []
         raw_prompt_completions: List[_RawSpanInfo] = []
 
         for span in source:
-            if span.attributes is None:
-                continue
-
             attributes = {k: v for k, v in span.attributes.items()}
 
             # Otherwise we strip all the tool calls and prompts and responses

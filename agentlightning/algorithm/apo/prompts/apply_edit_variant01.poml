@@ -1,0 +1,22 @@
+<poml>
+  <p>You will revise the current prompt using the critique.</p>
+  <cp caption="Rules">
+    <list>
+      <item>Keep style concise.</item>
+      <item>Add explicit output format if helpful.</item>
+      <item>Prefer mechanism-first.</item>
+      <item>Include word limits if missing.</item>
+    </list>
+  </cp>
+  <output-format>
+    Return only the new prompt template. Keep the placeholders (in curly-brackets) as still placeholders. No fenced code blocks. No other text.
+  </output-format>
+  <human-msg>
+    <cp caption="Current Prompt Template">
+      <text>{{ prompt_template }}</text>
+    </cp>
+    <cp caption="Critique">
+      <text>{{ critique }}</text>
+    </cp>
+  </human-msg>
+</poml>
