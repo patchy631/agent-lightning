@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""
+"""Sample code that demonstrates an SQL agent using LangGraph and LangChain,
+trainable with Agent-lightning.
+
 Adapted from https://python.langchain.com/docs/tutorials/sql_qa/
 as well as https://langchain-ai.github.io/langgraph/tutorials/sql-agent/
 """
@@ -12,9 +14,9 @@ import re
 import shutil
 import tempfile
 import time
-from typing import Any, Dict, Literal, Optional, cast
+from typing import Any, Dict, List, Literal, Optional, cast
 
-import dotenv
+import pandas as pd
 import termcolor
 from langchain.chat_models import init_chat_model
 from langchain_community.tools.sql_database.tool import QuerySQLDatabaseTool
@@ -411,7 +413,7 @@ def evaluate_query(query: str, ground_truth: str, database: str, raise_on_error:
             return 0.0
 
 
-class LitSQLAgent(agl.LitAgent[Any]):
+class LitSQLAgent(agl.LitAgent[Dict[str, Any]]):
 
     def __init__(
         self,
@@ -430,7 +432,7 @@ class LitSQLAgent(agl.LitAgent[Any]):
 
     def rollout(
         self,
-        task: dict[str, Any],
+        task: Dict[str, Any],
         resources: agl.NamedResources,
         rollout: agl.Rollout,
     ) -> float | None:
@@ -518,35 +520,27 @@ class LitSQLAgent(agl.LitAgent[Any]):
         return reward
 
 
-def spider_dev_data():
-    # Read from dev.parquet
-    import pandas as pd
-
+def debug_sql_agent():
     spider_dev_data_path = os.path.join(os.environ.get("VERL_SPIDER_DATA_DIR", "data"), "dev.parquet")
     if not os.path.exists(spider_dev_data_path):
         raise FileNotFoundError(f"Spider dev data file {spider_dev_data_path} does not exist.")
-    df = pd.read_parquet(spider_dev_data_path)  # type: ignore
-    if "OPENAI_API_BASE" not in os.environ:
-        logger.warning(
-            "Environment variable OPENAI_API_BASE is not set. Using default value 'https://api.openai.com/v1'."
-        )
-        openai_api_base = "https://api.openai.com/v1"
-    else:
-        openai_api_base = os.environ["OPENAI_API_BASE"]
+    df = pd.read_parquet(spider_dev_data_path).head(10)  # type: ignore
+    df = cast(List[Dict[str, Any]], df.to_dict(orient="records"))  # type: ignore
+    print("Debug data:", df)
 
-    resource = {
-        "main_llm": agl.LLM(
-            model="gpt-4.1-nano",
-            endpoint=openai_api_base,
-            sampling_parameters={
-                "temperature": 0.0,
-            },
-        )
-    }
-    return agl.DevTaskLoader(df.head(10).to_dict(orient="records"), resource)  # type: ignore
+    trainer = agl.Trainer(
+        n_workers=1,
+        max_rollouts=5,
+        initial_resources={
+            "main_llm": agl.LLM(
+                endpoint=os.environ["OPENAI_API_BASE"],
+                model="gpt-4.1-nano",
+                sampling_parameters={"temperature": 0.7},
+            )
+        },
+    )
+    trainer.dev(LitSQLAgent(), df)
 
 
 if __name__ == "__main__":
-    dotenv.load_dotenv()
-    agent, trainer = agl.lightning_cli(LitSQLAgent, agl.Trainer)
-    trainer.fit_v0(agent, os.environ["VERL_API_BASE"], dev_data=spider_dev_data())
+    debug_sql_agent()
