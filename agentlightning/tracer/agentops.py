@@ -241,8 +241,8 @@ async def heartbeat(name="exporter-loop", period=0.5):
 import asyncio
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
-asyncio.get_event_loop().set_debug(True)
+# logging.basicConfig(level=logging.DEBUG)
+# asyncio.get_event_loop().set_debug(True)
 import time
 
 
@@ -303,6 +303,32 @@ class LightningSpanProcessor(SpanProcessor):
         # submit to the dedicated loop and wait synchronously
         if self._loop is None:
             raise RuntimeError("Loop is not initialized. This should not happen.")
+
+        # If already on the exporter loop thread, schedule and return immediately.
+        # ---------------------------------------------------------------------------
+        # WHY THIS CONDITIONAL EXISTS:
+        # In rare cases, span.end() is triggered from a LangchainCallbackHandler.__del__
+        # (or another finalizer) while the Python garbage collector is running on the
+        # *same thread* that owns our exporter event loop ("otel-loop").
+        #
+        # When that happens, on_end() executes on the exporter loop thread itself.
+        # If we were to call `asyncio.run_coroutine_threadsafe(...).result()` here,
+        # it would deadlock immediately — because the loop cannot both wait on and run
+        # the same coroutine. The Future stays pending forever and the loop stops
+        # processing scheduled callbacks.
+        #
+        # To avoid that self-deadlock, we detect when on_end() runs on the exporter
+        # loop thread. If so, we *schedule* the coroutine on the loop (fire-and-forget)
+        # instead of blocking with .result().
+        #
+        # This situation can occur because Python calls __del__ in whatever thread
+        # releases the last reference, which can easily be our loop thread if the
+        # object is dereferenced during loop._run_once().
+        # ---------------------------------------------------------------------------
+        if threading.current_thread() is self._loop_thread:
+            self._loop.call_soon_threadsafe(asyncio.create_task, coro)  # type: ignore
+            return None
+
         fut = asyncio.run_coroutine_threadsafe(coro, self._loop)  # type: ignore
         return fut.result(timeout=timeout)  # raises on error  # type: ignore
 
@@ -348,6 +374,10 @@ class LightningSpanProcessor(SpanProcessor):
         Args:
             span: The span that has ended.
         """
+        import traceback
+
+        # print("ON_END")
+        # print(traceback.format_stack())
         # Skip if span is not sampled
         if not span.context or not span.context.trace_flags.sampled:
             return
@@ -360,14 +390,22 @@ class LightningSpanProcessor(SpanProcessor):
                 print("Scheduled callbacks:", len(self._loop._scheduled))
                 if self._loop._scheduled:
                     print("First in the queue:", self._loop._scheduled[0])
-                self._await_in_loop(
-                    self._store.add_otel_span(self._rollout_id, self._attempt_id, span),
-                    timeout=30.0,
-                )
+                print("..... Current thread: ", threading.current_thread())
+                print("..... Loop thread: ", self._loop_thread)
+                if self._loop_thread.ident == threading.current_thread().ident:
+                    traceback.print_stack()
+                    print("Span content: ", span.attributes)
+                from opentelemetry.instrumentation.utils import suppress_instrumentation
+
+                with suppress_instrumentation():
+                    self._await_in_loop(
+                        self._store.add_otel_span(self._rollout_id, self._attempt_id, span),
+                        timeout=30.0,
+                    )
                 print("!!! after,")
                 print("All tasks")
                 print("Ready callbacks:", self._loop._ready)
-                print("Scheduled callbacks:", len(self._loop._scheduled))
+                print("Scheduled callbacks:", self._loop._scheduled)
             except Exception:
                 # log; on_end MUST NOT raise
                 logger.exception(f"Error adding span to store: {span.name}")

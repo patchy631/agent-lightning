@@ -335,10 +335,12 @@ class LightningStoreServer(LightningStore):
 
         @self.app.post("/add_span", response_model=Span)
         async def add_span(span: Span):  # pyright: ignore[reportUnusedFunction]
+            print("!!!!! add_span received")
             return await self.store.add_span(span)
 
         @self.app.get("/get_next_span_sequence_id/{rollout_id}/{attempt_id}", response_model=int)
         async def get_next_span_sequence_id(rollout_id: str, attempt_id: str):  # pyright: ignore[reportUnusedFunction]
+            print("!!!!! get_next_span_sequence_id received")
             return await self.store.get_next_span_sequence_id(rollout_id, attempt_id)
 
         @self.app.post("/wait_for_rollouts", response_model=List[Rollout])
@@ -491,6 +493,18 @@ class LightningStoreServer(LightningStore):
         )
 
 
+# def _make_trace():
+#     tc = aiohttp.TraceConfig()
+#     # async def log_evt(session, context, params):
+#     #     print(f"[TRACE] {context}: {params}")
+#     tc.on_dns_resolvehost_start.append(lambda *a, **k: print("[TRACE] dns_start", a[-1].host))
+#     tc.on_connection_create_start.append(lambda *a, **k: print("[TRACE] conn_start"))
+#     tc.on_request_start.append(lambda *a, **k: print("[TRACE] req_start", a[-1].method, a[-1].url))
+#     tc.on_request_end.append(lambda *a, **k: print("[TRACE] req_end", a[-1].method, a[-1].url))
+#     tc.on_request_exception.append(lambda *a, **k: print("[TRACE] req_exc", a[-1].method, a[-1].url))
+#     return tc
+
+
 class LightningStoreClient(LightningStore):
     """HTTP client that talks to a remote LightningStoreServer.
 
@@ -541,9 +555,15 @@ class LightningStoreClient(LightningStore):
 
         loop = asyncio.get_running_loop()
         key = id(loop)
+        print("!!!!! _get_session received %s", key)
         with self._lock:
+            print("!!!!! _get_session with lock")
             sess = self._sessions.get(key)
             if sess is None or sess.closed:
+                # connector = aiohttp.TCPConnector(
+                #     limit=64, limit_per_host=16, ttl_dns_cache=300, enable_cleanup_closed=True
+                # )
+                # sess = aiohttp.ClientSession(trace_configs=[_make_trace()])
                 sess = aiohttp.ClientSession()
                 self._sessions[key] = sess
         print(self._sessions)
@@ -592,6 +612,7 @@ class LightningStoreClient(LightningStore):
         """
         session = await self._get_session()
         url = f"{self.server_address}{path if path.startswith('/') else '/'+path}"
+        print("$$$$$$ session acquired", url)
 
         # attempt 0 is immediate, then follow retry schedule
         attempts = (0.0,) + self._retry_delays
@@ -603,16 +624,16 @@ class LightningStoreClient(LightningStore):
                 await asyncio.sleep(delay)
             try:
                 http_call = getattr(session, method)
-                import aiohttp
-
+                print("$$$$$$ http_call", http_call)
                 timeout = aiohttp.ClientTimeout(total=3.5, connect=1.0, sock_connect=1.0, sock_read=2.5)
                 async with http_call(url, json=json, timeout=timeout) as resp:
+                    print("$$$$$ resp", resp)
                     resp.raise_for_status()
                     return await resp.json()
             except aiohttp.ClientResponseError as cre:
                 # Respect app-level 4xx as final (server marks app faults as 400)
                 # 4xx => application issue; do not retry (except 408 which is transient)
-                logger.exception(f"ClientResponseError: {cre.status} {cre.message}")
+                logger.debug(f"ClientResponseError: {cre.status} {cre.message}", exc_info=True)
                 if 400 <= cre.status < 500 and cre.status != 408:
                     raise
                 # 5xx and others will be retried below if they raise
@@ -628,7 +649,7 @@ class LightningStoreClient(LightningStore):
                 asyncio.TimeoutError,
             ) as net_exc:
                 # Network/session issue: probe health before retrying
-                logger.exception(f"Network/session issue: {net_exc}")
+                logger.debug(f"Network/session issue: {net_exc}", exc_info=True)
                 last_exc = net_exc
                 logger.info(f"Network/session issue will be retried. Retrying the request {method}: {path}")
                 if not await self._wait_until_healthy(session):
@@ -836,6 +857,7 @@ class LightningStoreClient(LightningStore):
             return None
 
     async def add_span(self, span: Span) -> Span:
+        print("$$$$$$ add_span received")
         data = await self._request_json("post", "/add_span", json=span.model_dump(mode="json"))
         return Span.model_validate(data)
 
@@ -852,6 +874,7 @@ class LightningStoreClient(LightningStore):
         sequence_id: int | None = None,
     ) -> Span:
         # unchanged logic, now benefits from retries inside add_span/get_next_span_sequence_id
+        print("$$$$$$ add_otel_span received")
         if sequence_id is None:
             sequence_id = await self.get_next_span_sequence_id(rollout_id, attempt_id)
         span = Span.from_opentelemetry(
@@ -860,6 +883,7 @@ class LightningStoreClient(LightningStore):
             attempt_id=attempt_id,
             sequence_id=sequence_id,
         )
+        print("$$$$$$ span created")
         await self.add_span(span)
         return span
 
