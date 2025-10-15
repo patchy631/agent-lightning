@@ -546,6 +546,7 @@ class LightningStoreClient(LightningStore):
             if sess is None or sess.closed:
                 sess = aiohttp.ClientSession()
                 self._sessions[key] = sess
+        print(self._sessions)
         return sess
 
     async def _wait_until_healthy(self, session: aiohttp.ClientSession) -> bool:
@@ -602,7 +603,10 @@ class LightningStoreClient(LightningStore):
                 await asyncio.sleep(delay)
             try:
                 http_call = getattr(session, method)
-                async with http_call(url, json=json) as resp:
+                import aiohttp
+
+                timeout = aiohttp.ClientTimeout(total=3.5, connect=1.0, sock_connect=1.0, sock_read=2.5)
+                async with http_call(url, json=json, timeout=timeout) as resp:
                     resp.raise_for_status()
                     return await resp.json()
             except aiohttp.ClientResponseError as cre:

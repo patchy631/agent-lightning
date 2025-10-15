@@ -224,6 +224,41 @@ class AgentOpsTracer(BaseTracer):
     get_langchain_callback_handler = get_langchain_handler  # alias
 
 
+async def heartbeat(name="exporter-loop", period=0.5):
+    import asyncio
+    import time
+
+    last = time.perf_counter()
+    while True:
+        await asyncio.sleep(period)
+        now = time.perf_counter()
+        dt = now - last
+        last = now
+        if dt > period * 4:  # e.g., >2s if period=0.5s
+            print("!!!!!!! [%s] loop stall detected: slept %.3fs (expected %.3fs)" % (name, dt, period))
+
+
+import asyncio
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+asyncio.get_event_loop().set_debug(True)
+import time
+
+
+def debug_dump(loop):
+    while True:
+        try:
+            print("=== Pending tasks ===")
+            for t in asyncio.all_tasks(loop):
+                if not t.done():
+                    print(t, "awaiting", t.get_coro())
+                    t.print_stack()
+        except Exception:
+            pass
+        time.sleep(5)
+
+
 class LightningSpanProcessor(SpanProcessor):
     def __init__(self):
         self._spans: List[ReadableSpan] = []
@@ -244,8 +279,13 @@ class LightningSpanProcessor(SpanProcessor):
     def _loop_runner(self):
         loop = asyncio.new_event_loop()
         self._loop = loop
+        self._loop.set_debug(True)
         asyncio.set_event_loop(loop)
         self._loop_ready.set()
+
+        thread = threading.Thread(target=debug_dump, args=(loop,), daemon=True)
+        thread.start()
+        # asyncio.create_task(heartbeat())
         loop.run_forever()
         loop.close()
 
@@ -315,10 +355,19 @@ class LightningSpanProcessor(SpanProcessor):
         if self._store and self._rollout_id and self._attempt_id:
             try:
                 # Submit add_otel_span to the event loop and wait for it to complete
+                print("!!! before,")
+                print("Ready callbacks:", self._loop._ready)
+                print("Scheduled callbacks:", len(self._loop._scheduled))
+                if self._loop._scheduled:
+                    print("First in the queue:", self._loop._scheduled[0])
                 self._await_in_loop(
                     self._store.add_otel_span(self._rollout_id, self._attempt_id, span),
-                    timeout=5.0,
+                    timeout=30.0,
                 )
+                print("!!! after,")
+                print("All tasks")
+                print("Ready callbacks:", self._loop._ready)
+                print("Scheduled callbacks:", len(self._loop._scheduled))
             except Exception:
                 # log; on_end MUST NOT raise
                 logger.exception(f"Error adding span to store: {span.name}")

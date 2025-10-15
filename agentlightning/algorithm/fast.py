@@ -188,5 +188,6 @@ class Baseline(FastAlgorithm):
                     await asyncio.sleep(self.polling_interval)
 
             # Wait for all harvest tasks to complete
+            print(f"Waiting for {len(harvest_tasks)} harvest tasks to complete...")
             if len(harvest_tasks) > 0:
                 await asyncio.gather(*harvest_tasks)
