@@ -120,7 +120,10 @@ class LitAgent(Generic[T]):
         Returns:
             The BaseTracer instance associated with this agent.
         """
-        return self.trainer.tracer
+        if hasattr(self.runner, "tracer"):
+            return self.runner.tracer  # type: ignore
+        else:
+            return self.trainer.tracer
 
     @property
     def tracer(self) -> BaseTracer:

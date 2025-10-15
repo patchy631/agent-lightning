@@ -197,7 +197,7 @@ class AgentOpsTracer(BaseTracer):
             raise RuntimeError("LightningSpanProcessor is not initialized. Call init_worker() first.")
         return self._lightning_span_processor.spans()
 
-    def get_langchain_callback_handler(self, tags: List[str] | None = None) -> LangchainCallbackHandler:
+    def get_langchain_handler(self, tags: List[str] | None = None) -> LangchainCallbackHandler:
         """
         Get the Langchain callback handler for integrating with Langchain.
 
@@ -220,6 +220,8 @@ class AgentOpsTracer(BaseTracer):
                 "AgentOps client not initialized when creating LangchainCallbackHandler. API key may be missing."
             )
         return LangchainCallbackHandler(api_key=api_key, tags=tags)
+
+    get_langchain_callback_handler = get_langchain_handler  # alias
 
 
 class LightningSpanProcessor(SpanProcessor):
