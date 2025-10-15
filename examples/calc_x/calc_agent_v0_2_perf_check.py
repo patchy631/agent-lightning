@@ -43,16 +43,11 @@ async def calc_agent(task: Any, llm: LLM) -> Any:
 
 def main():
     rl_training_config = {
-        "agentlightning": {
-            "port": 9999,
-        },
         "algorithm": {
             "adv_estimator": "grpo",
             "use_kl_in_reward": False,
         },
         "data": {
-            "train_files": "data/train.parquet",
-            "val_files": "data/test.parquet",
             "train_batch_size": 32,
             "max_prompt_length": 4096,
             "max_response_length": 2048,
@@ -65,7 +60,7 @@ def main():
                 "log_prob_micro_batch_size_per_gpu": 4,
                 "multi_turn": {"format": "hermes"},
                 "name": "vllm",
-                "gpu_memory_utilization": 0.6,
+                "gpu_memory_utilization": 0.8,
             },
             "actor": {
                 "ppo_mini_batch_size": 32,
@@ -106,7 +101,7 @@ def main():
     }
 
     train_dataset = Dataset.from_parquet("data/train.parquet").to_list()  # type: ignore
-    val_dataset = Dataset.from_parquet("data/test_mini.parquet").to_list()  # type: ignore
+    val_dataset = Dataset.from_parquet("data/test.parquet").to_list()  # type: ignore
 
     print("First 5 rows of train dataset:")
     print(train_dataset[:5])  # type: ignore
