@@ -21,7 +21,15 @@
          <lastmod>2025-10-15</lastmod>
     </url>
     <url>
-         <loc>https://microsoft.github.io/agent-lightning/latest/deep-dive/server-client-architecture/</loc>
+         <loc>https://microsoft.github.io/agent-lightning/latest/deep-dive/store/</loc>
+         <lastmod>2025-10-15</lastmod>
+    </url>
+    <url>
+         <loc>https://microsoft.github.io/agent-lightning/latest/deep-dive/tracing/</loc>
+         <lastmod>2025-10-15</lastmod>
+    </url>
+    <url>
+         <loc>https://microsoft.github.io/agent-lightning/latest/how-to/train-first-agent/</loc>
          <lastmod>2025-10-15</lastmod>
     </url>
     <url>
@@ -29,11 +37,11 @@
          <lastmod>2025-10-15</lastmod>
     </url>
     <url>
-         <loc>https://microsoft.github.io/agent-lightning/latest/quickstart/getting-started/</loc>
+         <loc>https://microsoft.github.io/agent-lightning/latest/how-to/unsloth-sft/</loc>
          <lastmod>2025-10-15</lastmod>
     </url>
     <url>
-         <loc>https://microsoft.github.io/agent-lightning/latest/quickstart/installation/</loc>
+         <loc>https://microsoft.github.io/agent-lightning/latest/how-to/write-first-algorithm/</loc>
          <lastmod>2025-10-15</lastmod>
     </url>
     <url>
@@ -66,6 +74,22 @@
     </url>
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/reference/types/</loc>
+         <lastmod>2025-10-15</lastmod>
+    </url>
+    <url>
+         <loc>https://microsoft.github.io/agent-lightning/latest/tutorials/debug/</loc>
+         <lastmod>2025-10-15</lastmod>
+    </url>
+    <url>
+         <loc>https://microsoft.github.io/agent-lightning/latest/tutorials/installation/</loc>
+         <lastmod>2025-10-15</lastmod>
+    </url>
+    <url>
+         <loc>https://microsoft.github.io/agent-lightning/latest/tutorials/parallelize/</loc>
+         <lastmod>2025-10-15</lastmod>
+    </url>
+    <url>
+         <loc>https://microsoft.github.io/agent-lightning/latest/tutorials/write-agents/</loc>
          <lastmod>2025-10-15</lastmod>
     </url>
 </urlset>
