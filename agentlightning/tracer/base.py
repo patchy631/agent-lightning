@@ -1,5 +1,7 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+from __future__ import annotations
+
 import logging
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Iterator, List, Optional
