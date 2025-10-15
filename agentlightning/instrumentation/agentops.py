@@ -14,6 +14,13 @@ import setproctitle
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "instrument_agentops",
+    "uninstrument_agentops",
+    "agentops_local_server",
+    "AgentOpsServerManager",
+]
+
 # Module-level storage for originals
 _original_handle_chat_attributes: Callable[..., Any] | None = None
 _original_handle_response: Callable[..., Any] | None = None
@@ -38,6 +45,21 @@ def _patch_new_agentops():
             attributes["prompt_token_ids"] = list(return_value.prompt_token_ids)  # type: ignore
         if return_value is not None and hasattr(return_value, "response_token_ids"):  # type: ignore
             attributes["response_token_ids"] = list(return_value.response_token_ids[0])  # type: ignore
+
+        # For LiteLLM Proxy (v0.2) with vLLM return_token_ids, response_token_ids now lives in choices
+        if (
+            not attributes.get("response_token_ids")
+            and return_value is not None
+            and hasattr(return_value, "choices")  # type: ignore
+            and return_value.choices  # type: ignore
+            and isinstance(return_value.choices, list)  # type: ignore
+        ):
+            first_choice = return_value.choices[0]  # type: ignore
+            if hasattr(first_choice, "token_ids"):  # type: ignore
+                attributes["response_token_ids"] = list(first_choice.token_ids)  # type: ignore
+            # newer versions of OpenAI client SDK
+            elif hasattr(first_choice, "provider_specific_fields") and "token_ids" in first_choice.provider_specific_fields:  # type: ignore
+                attributes["response_token_ids"] = list(first_choice.provider_specific_fields["token_ids"])  # type: ignore
 
         # For LiteLLM, response is a openai._legacy_response.LegacyAPIResponse
         if (
@@ -141,6 +163,7 @@ def instrument_agentops():
 
 
 def uninstrument_agentops():
+    """Uninstrument agentops to stop capturing token IDs."""
     try:
         _unpatch_new_agentops()
     except Exception:
@@ -182,6 +205,8 @@ def _run_server(**kwargs: Any):  # type: ignore
 
 
 class AgentOpsServerManager:
+    """Manages a AgentOps local server to bypass the online service of AgentOps."""
+
     def __init__(self, daemon: bool = True, port: int | None = None):
         self.server_process: multiprocessing.Process | None = None
         self.server_port = port

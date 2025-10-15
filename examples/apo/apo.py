@@ -1,9 +1,6 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""This is the APO example written in the legacy client-server style (agent-lightning v0.1).
-
-New users should refer to the `examples/apo/apo.py` for the modern APO example.
-"""
+"""This is the APO sample with both rollout and algo in one file."""
 
 from typing import List, Optional
 
@@ -11,10 +8,10 @@ from openai import AsyncOpenAI
 from rich.console import Console
 
 from agentlightning import Trainer, configure_logger
-from agentlightning.algorithm.base import algo
+from agentlightning.algorithm import algo
 from agentlightning.litagent.decorator import rollout
 from agentlightning.reward import find_final_reward
-from agentlightning.store.base import LightningStore
+from agentlightning.store import LightningStore
 from agentlightning.types import NamedResources, PromptTemplate, Span
 
 console = Console()
@@ -130,4 +127,4 @@ Return only a number between 0 and 1. No text, punctuation, or explanation."""
 if __name__ == "__main__":
     configure_logger()
     trainer = Trainer(n_workers=1, algorithm=apo_algorithm)
-    trainer.fit_v2(apo_rollout)
+    trainer.fit(apo_rollout)

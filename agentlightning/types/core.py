@@ -12,6 +12,7 @@ from typing import (
     Literal,
     Optional,
     Protocol,
+    SupportsIndex,
     TypeVar,
     Union,
     cast,
@@ -29,12 +30,12 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Triplet",
-    "Rollout",
+    "RolloutLegacy",
     "Task",
     "TaskInput",
     "TaskIfAny",
+    "RolloutRawResultLegacy",
     "RolloutRawResult",
-    "RolloutRawResultV2",
     "RolloutMode",
     "GenericResponse",
     "ParallelWorkerBase",
@@ -42,7 +43,7 @@ __all__ = [
     "AttemptStatus",
     "RolloutStatus",
     "RolloutConfig",
-    "RolloutV2",
+    "Rollout",
     "Attempt",
     "AttemptedRollout",
     "Hook",
@@ -60,7 +61,7 @@ class Triplet(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
-class Rollout(BaseModel):
+class RolloutLegacy(BaseModel):
     """The standard reporting object from client to server."""
 
     rollout_id: str
@@ -141,7 +142,7 @@ class RolloutConfig(BaseModel):
     )  # list of statuses that should trigger a retry
 
 
-class RolloutV2(BaseModel):
+class Rollout(BaseModel):
     rollout_id: str
 
     # Inputs
@@ -163,7 +164,7 @@ class RolloutV2(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
-class AttemptedRollout(RolloutV2):
+class AttemptedRollout(Rollout):
     """A rollout along with its active attempt."""
 
     attempt: Attempt
@@ -176,10 +177,11 @@ class AttemptedRollout(RolloutV2):
 
 
 TaskInput = Any
+"""Task input type. Can be any type."""
 
 
 class Task(BaseModel):
-    """A task (rollout request) to be processed by the client agent."""
+    """A task (rollout request) to be processed by the client agent. Deprecated."""
 
     rollout_id: str
     input: TaskInput
@@ -201,9 +203,9 @@ class TaskIfAny(BaseModel):
     task: Optional[Task] = None
 
 
-RolloutRawResult = Union[None, float, List[Triplet], List[Dict[str, Any]], List[ReadableSpan], Rollout]
+RolloutRawResultLegacy = Union[None, float, List[Triplet], List[Dict[str, Any]], List[ReadableSpan], RolloutLegacy]
 
-RolloutRawResultV2 = Union[
+RolloutRawResult = Union[
     None,  # nothing (relies on tracer)
     float,  # only final reward
     List[ReadableSpan],  # constructed OTEL spans by user
@@ -264,7 +266,7 @@ class Dataset(Protocol, Generic[T_co]):
     You don't have to inherit from this class; you can use a simple list if you want to.
     """
 
-    def __getitem__(self, index: int) -> T_co: ...
+    def __getitem__(self, index: SupportsIndex, /) -> T_co: ...
 
     def __len__(self) -> int: ...
 
@@ -273,7 +275,7 @@ class Hook(ParallelWorkerBase):
     """Base class for defining hooks in the agent runner's lifecycle."""
 
     async def on_trace_start(
-        self, *, agent: LitAgent[Any], runner: BaseRunner[Any], tracer: BaseTracer, rollout: RolloutV2
+        self, *, agent: LitAgent[Any], runner: BaseRunner[Any], tracer: BaseTracer, rollout: Rollout
     ) -> None:
         """Hook called immediately after the tracer enters the trace context but before the rollout begins.
 
@@ -281,14 +283,14 @@ class Hook(ParallelWorkerBase):
             agent: The :class:`LitAgent` instance associated with the runner.
             runner: The :class:`BaseRunner` managing the rollout.
             tracer: The :class:`BaseTracer` instance associated with the runner.
-            rollout: The :class:`RolloutV2` object that will be processed.
+            rollout: The :class:`Rollout` object that will be processed.
 
         Subclasses can override this method to implement custom logic such as logging,
         metric collection, or resource setup. By default, this is a no-op.
         """
 
     async def on_trace_end(
-        self, *, agent: LitAgent[Any], runner: BaseRunner[Any], tracer: BaseTracer, rollout: RolloutV2
+        self, *, agent: LitAgent[Any], runner: BaseRunner[Any], tracer: BaseTracer, rollout: Rollout
     ) -> None:
         """Hook called immediately after the rollout completes but before the tracer exits the trace context.
 
@@ -296,19 +298,19 @@ class Hook(ParallelWorkerBase):
             agent: The :class:`LitAgent` instance associated with the runner.
             runner: The :class:`BaseRunner` managing the rollout.
             tracer: The :class:`BaseTracer` instance associated with the runner.
-            rollout: The :class:`RolloutV2` object that has been processed.
+            rollout: The :class:`Rollout` object that has been processed.
 
         Subclasses can override this method to implement custom logic such as logging,
         metric collection, or resource cleanup. By default, this is a no-op.
         """
 
-    async def on_rollout_start(self, *, agent: LitAgent[Any], runner: BaseRunner[Any], rollout: RolloutV2) -> None:
+    async def on_rollout_start(self, *, agent: LitAgent[Any], runner: BaseRunner[Any], rollout: Rollout) -> None:
         """Hook called immediately before a rollout *attempt* begins.
 
         Args:
             agent: The :class:`LitAgent` instance associated with the runner.
             runner: The :class:`BaseRunner` managing the rollout.
-            rollout: The :class:`RolloutV2` object that will be processed.
+            rollout: The :class:`Rollout` object that will be processed.
 
         Subclasses can override this method to implement custom logic such as
         logging, metric collection, or resource setup. By default, this is a
@@ -320,7 +322,7 @@ class Hook(ParallelWorkerBase):
         *,
         agent: LitAgent[Any],
         runner: BaseRunner[Any],
-        rollout: RolloutV2,
+        rollout: Rollout,
         spans: Union[List[ReadableSpan], List[Span]],
     ) -> None:
         """Hook called after a rollout *attempt* completes.
@@ -328,7 +330,7 @@ class Hook(ParallelWorkerBase):
         Args:
             agent: The :class:`LitAgent` instance associated with the runner.
             runner: The :class:`BaseRunner` managing the rollout.
-            rollout: The :class:`RolloutV2` object that has been processed.
+            rollout: The :class:`Rollout` object that has been processed.
             spans: The spans that have been added to the store.
 
         Subclasses can override this method for cleanup or additional

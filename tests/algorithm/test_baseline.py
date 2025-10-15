@@ -4,16 +4,15 @@ import asyncio
 import logging
 from contextlib import suppress
 from dataclasses import dataclass
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 import pytest
 
 from agentlightning.adapter import TraceAdapter
-from agentlightning.algorithm.mock import MockAlgorithm
+from agentlightning.algorithm import Baseline
 from agentlightning.store.memory import InMemoryLightningStore
 from agentlightning.types import (
     LLM,
-    Dataset,
     NamedResources,
     Resource,
     Span,
@@ -21,7 +20,7 @@ from agentlightning.types import (
     TraceStatus,
 )
 
-LOGGER_NAME = "agentlightning.algorithm.mock"
+LOGGER_NAME = "agentlightning.algorithm.fast"
 
 
 class _AdapterStub(TraceAdapter[Dict[str, Any]]):
@@ -113,7 +112,7 @@ async def _mock_runner(
 async def test_mock_algorithm_collects_rollout_logs(caplog: pytest.LogCaptureFixture) -> None:
     store = InMemoryLightningStore()
     await store.update_resources("default", _make_resources())
-    algorithm = MockAlgorithm(polling_interval=0.01)
+    algorithm = Baseline(polling_interval=0.01)
     algorithm.set_store(store)
     adapter = _AdapterStub()
     algorithm.set_adapter(adapter)
@@ -126,7 +125,7 @@ async def test_mock_algorithm_collects_rollout_logs(caplog: pytest.LogCaptureFix
 
     runner_task = asyncio.create_task(_mock_runner(store=store, expected=expected_rollouts, artifacts=artifacts))
     try:
-        await algorithm.run(train_dataset=cast(Dataset[Any], train_dataset))
+        await algorithm.run(train_dataset=train_dataset)
         await asyncio.wait_for(runner_task, timeout=2)
     finally:
         if not runner_task.done():
