@@ -8,28 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://microsoft.github.io/agent-lightning/latest/deep-dive/server-client-architecture/">
+        <link rel="canonical" href="https://microsoft.github.io/agent-lightning/latest/algorithm-zoo/">
       
       
-        <link rel="prev" href="../birds-eye-view/">
+        <link rel="prev" href="../how-to/train-sql-agent/">
       
       
-        <link rel="next" href="../../reference/agent/">
+        <link rel="next" href="apo/">
       
       
-      <link rel="icon" href="../../assets/favicon.svg">
+      <link rel="icon" href="../assets/favicon.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.21">
     
     
       
-        <title>Server-Client Architecture (Legacy) - Agent Lightning</title>
+        <title>Overview - Agent Lightning</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.2a3383ac.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.2a3383ac.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,13 +48,13 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../../css/timeago.css">
+      <link rel="stylesheet" href="../css/timeago.css">
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#server-client-architecture" class="md-skip">
+        <a href="#algorithm-zoo" class="md-skip">
           Skip to content
         </a>
       
@@ -100,9 +100,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Agent Lightning" class="md-header__button md-logo" aria-label="Agent Lightning" data-md-component="logo">
+    <a href=".." title="Agent Lightning" class="md-header__button md-logo" aria-label="Agent Lightning" data-md-component="logo">
       
-  <img src="../../assets/favicon-white.svg" alt="logo">
+  <img src="../assets/favicon-white.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Server-Client Architecture (Legacy)
+              Overview
             
           </span>
         </div>
@@ -237,9 +237,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Agent Lightning" class="md-nav__button md-logo" aria-label="Agent Lightning" data-md-component="logo">
+    <a href=".." title="Agent Lightning" class="md-nav__button md-logo" aria-label="Agent Lightning" data-md-component="logo">
       
-  <img src="../../assets/favicon-white.svg" alt="logo">
+  <img src="../assets/favicon-white.svg" alt="logo">
 
     </a>
     Agent Lightning
@@ -266,7 +266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -333,7 +333,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../quickstart/installation/" class="md-nav__link">
+      <a href="../quickstart/installation/" class="md-nav__link">
         
   
   
@@ -356,7 +356,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../quickstart/getting-started/" class="md-nav__link">
+      <a href="../quickstart/getting-started/" class="md-nav__link">
         
   
   
@@ -431,133 +431,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/train-sql-agent/" class="md-nav__link">
+      <a href="../how-to/train-sql-agent/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     Train SQL Agent
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-        
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    Algorithm Zoo
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
-            <span class="md-nav__icon md-icon"></span>
-            Algorithm Zoo
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../algorithm-zoo/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Overview
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../algorithm-zoo/apo/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    APO
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../algorithm-zoo/verl/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    VERL
     
   </span>
   
@@ -597,15 +476,15 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
   <span class="md-ellipsis">
-    Deep Dive
+    Algorithm Zoo
     
   </span>
   
@@ -613,35 +492,12 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            Deep Dive
+            Algorithm Zoo
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../birds-eye-view/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Bird's Eye View
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
             
               
                 
@@ -664,13 +520,157 @@
   
   
   <span class="md-ellipsis">
-    Server-Client Architecture (Legacy)
+    Overview
     
   </span>
   
 
       </a>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="apo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    APO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="verl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    VERL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Deep Dive
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Deep Dive
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-dive/birds-eye-view/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bird's Eye View
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-dive/server-client-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Server-Client Architecture (Legacy)
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -735,7 +735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/agent/" class="md-nav__link">
+      <a href="../reference/agent/" class="md-nav__link">
         
   
   
@@ -758,7 +758,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/algorithm/" class="md-nav__link">
+      <a href="../reference/algorithm/" class="md-nav__link">
         
   
   
@@ -781,7 +781,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
+      <a href="../reference/cli/" class="md-nav__link">
         
   
   
@@ -804,7 +804,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/instrumentation/" class="md-nav__link">
+      <a href="../reference/instrumentation/" class="md-nav__link">
         
   
   
@@ -827,7 +827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/runner/" class="md-nav__link">
+      <a href="../reference/runner/" class="md-nav__link">
         
   
   
@@ -850,7 +850,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/store/" class="md-nav__link">
+      <a href="../reference/store/" class="md-nav__link">
         
   
   
@@ -873,7 +873,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/trainer/" class="md-nav__link">
+      <a href="../reference/trainer/" class="md-nav__link">
         
   
   
@@ -896,7 +896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/types/" class="md-nav__link">
+      <a href="../reference/types/" class="md-nav__link">
         
   
   
@@ -961,33 +961,30 @@
   
 
 
-<h1 id="server-client-architecture">Server-client Architecture<a class="headerlink" href="#server-client-architecture" title="Permanent link">&para;</a></h1>
-<p>Article to be written.</p>
-<pre class="mermaid"><code>sequenceDiagram
-    participant RL as RL Framework
-    participant TS as Training Server
-    participant AC as Agent Client
-    participant AG as Agent
-
-    AC-&gt;&gt;TS: Upload Dataset (1)
-    RL-&gt;&gt;TS: Start RL Server (2)
-    TS-&gt;&gt;RL: Latest Model (3)
-
-    loop for each batch of tasks
-        loop for each task in the batch
-            AC-&gt;&gt;TS: Request Task (4)
-            TS-&gt;&gt;AC: Send Task &amp; Model API (5)
-            AC-&gt;&gt;AG: Run Agent with Task &amp; Model API (6)
-            loop for each LLM call
-                AC-&gt;&gt;AG: Prompt (7)
-                AG-&gt;&gt;AC: Response (8)
-            end
-            AG-&gt;&gt;AC: Rewarded Trace (9)
-            AC-&gt;&gt;TS: Send Rewarded Trace (10)
-        end
-        TS-&gt;&gt;RL: Send Batch of Traces (11)
-        RL-&gt;&gt;TS: Return Updated Model (12)
-    end</code></pre>
+<h1 id="algorithm-zoo">Algorithm Zoo<a class="headerlink" href="#algorithm-zoo" title="Permanent link">&para;</a></h1>
+<p>AgentLightning includes several popular and frequently requested algorithms in its built-in library, allowing agent developers to use them directly. These algorithms are designed to be compatible with most agent scenarios.</p>
+<p>For customizing algorithms, see <a href="../reference/algorithm/">Algorithm-side References</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Optimizing Resources</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="apo/">APO</a></td>
+<td><a class="autorefs autorefs-internal" title="            agentlightning.PromptTemplate" href="../reference/types/#agentlightning.PromptTemplate">PromptTemplate</a></td>
+<td>Automatic Prompt Optimization (APO) algorithm using textual gradients and beam search.</td>
+</tr>
+<tr>
+<td><a href="verl/">VERL</a></td>
+<td><a class="autorefs autorefs-internal" title="            agentlightning.LLM" href="../reference/types/#agentlightning.LLM">LLM</a></td>
+<td>Reinforcement Learning with <a href="https://github.com/volcengine/verl">VERL framework</a>.</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -1010,7 +1007,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="September 20, 2025 07:20:14 UTC"><span class="timeago" datetime="2025-09-20T07:20:14+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 20, 2025 07:20:14 UTC">2025-09-20</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 15, 2025 05:37:44 UTC"><span class="timeago" datetime="2025-10-15T05:37:44+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 15, 2025 05:37:44 UTC">2025-10-15</span>
   </span>
 
     
@@ -1020,7 +1017,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="August 10, 2025 06:44:00 UTC"><span class="timeago" datetime="2025-08-10T06:44:00+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="August 10, 2025 06:44:00 UTC">2025-08-10</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 15, 2025 05:37:44 UTC"><span class="timeago" datetime="2025-10-15T05:37:44+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 15, 2025 05:37:44 UTC">2025-10-15</span>
   </span>
 
     
@@ -1090,15 +1087,15 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
   
-      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
-        <script src="../../js/timeago.min.js"></script>
+        <script src="../js/timeago.min.js"></script>
       
-        <script src="../../js/timeago_mkdocs_material.js"></script>
+        <script src="../js/timeago_mkdocs_material.js"></script>
       
         <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
       
