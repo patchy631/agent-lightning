@@ -2947,14 +2947,14 @@ You don't have to inherit from this class; you can use a simple list if you want
 <a id="__codelineno-0-275" name="__codelineno-0-275"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for defining hooks in the agent runner&#39;s lifecycle.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-276" name="__codelineno-0-276"></a>
 <a id="__codelineno-0-277" name="__codelineno-0-277"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_trace_start</span><span class="p">(</span>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">BaseRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">BaseTracer</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a>        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span>
 <a id="__codelineno-0-279" name="__codelineno-0-279"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called immediately after the tracer enters the trace context but before the rollout begins.</span>
 <a id="__codelineno-0-281" name="__codelineno-0-281"></a>
 <a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">        Args:</span>
 <a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">            agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">            runner: The :class:`BaseRunner` managing the rollout.</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">            tracer: The :class:`BaseTracer` instance associated with the runner.</span>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">            tracer: The :class:`Tracer` instance associated with the runner.</span>
 <a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">            rollout: The :class:`Rollout` object that will be processed.</span>
 <a id="__codelineno-0-287" name="__codelineno-0-287"></a>
 <a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">        Subclasses can override this method to implement custom logic such as logging,</span>
@@ -2962,26 +2962,26 @@ You don't have to inherit from this class; you can use a simple list if you want
 <a id="__codelineno-0-290" name="__codelineno-0-290"></a><span class="sd">        &quot;&quot;&quot;</span>
 <a id="__codelineno-0-291" name="__codelineno-0-291"></a>
 <a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_trace_end</span><span class="p">(</span>
-<a id="__codelineno-0-293" name="__codelineno-0-293"></a>        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">BaseRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">BaseTracer</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span>
 <a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-295" name="__codelineno-0-295"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called immediately after the rollout completes but before the tracer exits the trace context.</span>
 <a id="__codelineno-0-296" name="__codelineno-0-296"></a>
 <a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="sd">        Args:</span>
 <a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="sd">            agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">            runner: The :class:`BaseRunner` managing the rollout.</span>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">            tracer: The :class:`BaseTracer` instance associated with the runner.</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">            tracer: The :class:`Tracer` instance associated with the runner.</span>
 <a id="__codelineno-0-301" name="__codelineno-0-301"></a><span class="sd">            rollout: The :class:`Rollout` object that has been processed.</span>
 <a id="__codelineno-0-302" name="__codelineno-0-302"></a>
 <a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">        Subclasses can override this method to implement custom logic such as logging,</span>
 <a id="__codelineno-0-304" name="__codelineno-0-304"></a><span class="sd">        metric collection, or resource cleanup. By default, this is a no-op.</span>
 <a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="sd">        &quot;&quot;&quot;</span>
 <a id="__codelineno-0-306" name="__codelineno-0-306"></a>
-<a id="__codelineno-0-307" name="__codelineno-0-307"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">BaseRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-307" name="__codelineno-0-307"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-308" name="__codelineno-0-308"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called immediately before a rollout *attempt* begins.</span>
 <a id="__codelineno-0-309" name="__codelineno-0-309"></a>
 <a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">        Args:</span>
 <a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">            agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">            runner: The :class:`BaseRunner` managing the rollout.</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
 <a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">            rollout: The :class:`Rollout` object that will be processed.</span>
 <a id="__codelineno-0-314" name="__codelineno-0-314"></a>
 <a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">        Subclasses can override this method to implement custom logic such as</span>
@@ -2993,7 +2993,7 @@ You don't have to inherit from this class; you can use a simple list if you want
 <a id="__codelineno-0-321" name="__codelineno-0-321"></a>        <span class="bp">self</span><span class="p">,</span>
 <a id="__codelineno-0-322" name="__codelineno-0-322"></a>        <span class="o">*</span><span class="p">,</span>
 <a id="__codelineno-0-323" name="__codelineno-0-323"></a>        <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>        <span class="n">runner</span><span class="p">:</span> <span class="n">BaseRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a>        <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
 <a id="__codelineno-0-325" name="__codelineno-0-325"></a>        <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">,</span>
 <a id="__codelineno-0-326" name="__codelineno-0-326"></a>        <span class="n">spans</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">ReadableSpan</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Span</span><span class="p">]],</span>
 <a id="__codelineno-0-327" name="__codelineno-0-327"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -3001,7 +3001,7 @@ You don't have to inherit from this class; you can use a simple list if you want
 <a id="__codelineno-0-329" name="__codelineno-0-329"></a>
 <a id="__codelineno-0-330" name="__codelineno-0-330"></a><span class="sd">        Args:</span>
 <a id="__codelineno-0-331" name="__codelineno-0-331"></a><span class="sd">            agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a><span class="sd">            runner: The :class:`BaseRunner` managing the rollout.</span>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
 <a id="__codelineno-0-333" name="__codelineno-0-333"></a><span class="sd">            rollout: The :class:`Rollout` object that has been processed.</span>
 <a id="__codelineno-0-334" name="__codelineno-0-334"></a><span class="sd">            spans: The spans that have been added to the store.</span>
 <a id="__codelineno-0-335" name="__codelineno-0-335"></a>
@@ -3074,11 +3074,11 @@ You don't have to inherit from this class; you can use a simple list if you want
                 <code>runner</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="            agentlightning.BaseRunner (agentlightning.runner.base.BaseRunner)" href="../runner/#agentlightning.BaseRunner">BaseRunner</a>[<span title="typing.Any">Any</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="            agentlightning.Runner (agentlightning.runner.base.Runner)" href="../runner/#agentlightning.Runner">Runner</a>[<span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>BaseRunner</code> managing the rollout.</p>
+                <p>The :class:<code>Runner</code> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -3147,7 +3147,7 @@ logging. By default, this is a no-op.</p>
 <a id="__codelineno-0-321" name="__codelineno-0-321"></a>    <span class="bp">self</span><span class="p">,</span>
 <a id="__codelineno-0-322" name="__codelineno-0-322"></a>    <span class="o">*</span><span class="p">,</span>
 <a id="__codelineno-0-323" name="__codelineno-0-323"></a>    <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>    <span class="n">runner</span><span class="p">:</span> <span class="n">BaseRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a>    <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
 <a id="__codelineno-0-325" name="__codelineno-0-325"></a>    <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">,</span>
 <a id="__codelineno-0-326" name="__codelineno-0-326"></a>    <span class="n">spans</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">ReadableSpan</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Span</span><span class="p">]],</span>
 <a id="__codelineno-0-327" name="__codelineno-0-327"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -3155,7 +3155,7 @@ logging. By default, this is a no-op.</p>
 <a id="__codelineno-0-329" name="__codelineno-0-329"></a>
 <a id="__codelineno-0-330" name="__codelineno-0-330"></a><span class="sd">    Args:</span>
 <a id="__codelineno-0-331" name="__codelineno-0-331"></a><span class="sd">        agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a><span class="sd">        runner: The :class:`BaseRunner` managing the rollout.</span>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
 <a id="__codelineno-0-333" name="__codelineno-0-333"></a><span class="sd">        rollout: The :class:`Rollout` object that has been processed.</span>
 <a id="__codelineno-0-334" name="__codelineno-0-334"></a><span class="sd">        spans: The spans that have been added to the store.</span>
 <a id="__codelineno-0-335" name="__codelineno-0-335"></a>
@@ -3218,11 +3218,11 @@ logging. By default, this is a no-op.</p>
                 <code>runner</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="            agentlightning.BaseRunner (agentlightning.runner.base.BaseRunner)" href="../runner/#agentlightning.BaseRunner">BaseRunner</a>[<span title="typing.Any">Any</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="            agentlightning.Runner (agentlightning.runner.base.Runner)" href="../runner/#agentlightning.Runner">Runner</a>[<span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>BaseRunner</code> managing the rollout.</p>
+                <p>The :class:<code>Runner</code> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -3265,12 +3265,12 @@ no-op.</p>
 <span class="normal"><a href="#__codelineno-0-315">315</a></span>
 <span class="normal"><a href="#__codelineno-0-316">316</a></span>
 <span class="normal"><a href="#__codelineno-0-317">317</a></span>
-<span class="normal"><a href="#__codelineno-0-318">318</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-307" name="__codelineno-0-307"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">BaseRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-318">318</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-307" name="__codelineno-0-307"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-308" name="__codelineno-0-308"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called immediately before a rollout *attempt* begins.</span>
 <a id="__codelineno-0-309" name="__codelineno-0-309"></a>
 <a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">    Args:</span>
 <a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">        agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">        runner: The :class:`BaseRunner` managing the rollout.</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
 <a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">        rollout: The :class:`Rollout` object that will be processed.</span>
 <a id="__codelineno-0-314" name="__codelineno-0-314"></a>
 <a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">    Subclasses can override this method to implement custom logic such as</span>
@@ -3333,11 +3333,11 @@ no-op.</p>
                 <code>runner</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="            agentlightning.BaseRunner (agentlightning.runner.base.BaseRunner)" href="../runner/#agentlightning.BaseRunner">BaseRunner</a>[<span title="typing.Any">Any</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="            agentlightning.Runner (agentlightning.runner.base.Runner)" href="../runner/#agentlightning.Runner">Runner</a>[<span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>BaseRunner</code> managing the rollout.</p>
+                <p>The :class:<code>Runner</code> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -3349,11 +3349,11 @@ no-op.</p>
                 <code>tracer</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="            agentlightning.BaseTracer (agentlightning.tracer.base.BaseTracer)" href="../runner/#agentlightning.BaseTracer">BaseTracer</a></code>
+                  <code><a class="autorefs autorefs-internal" title="            agentlightning.Tracer (agentlightning.tracer.base.Tracer)" href="../runner/#agentlightning.Tracer">Tracer</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>BaseTracer</code> instance associated with the runner.</p>
+                <p>The :class:<code>Tracer</code> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -3398,14 +3398,14 @@ metric collection, or resource cleanup. By default, this is a no-op.</p>
 <span class="normal"><a href="#__codelineno-0-303">303</a></span>
 <span class="normal"><a href="#__codelineno-0-304">304</a></span>
 <span class="normal"><a href="#__codelineno-0-305">305</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-292" name="__codelineno-0-292"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_trace_end</span><span class="p">(</span>
-<a id="__codelineno-0-293" name="__codelineno-0-293"></a>    <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">BaseRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">BaseTracer</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>    <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span>
 <a id="__codelineno-0-294" name="__codelineno-0-294"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-295" name="__codelineno-0-295"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called immediately after the rollout completes but before the tracer exits the trace context.</span>
 <a id="__codelineno-0-296" name="__codelineno-0-296"></a>
 <a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="sd">    Args:</span>
 <a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="sd">        agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">        runner: The :class:`BaseRunner` managing the rollout.</span>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">        tracer: The :class:`BaseTracer` instance associated with the runner.</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">        tracer: The :class:`Tracer` instance associated with the runner.</span>
 <a id="__codelineno-0-301" name="__codelineno-0-301"></a><span class="sd">        rollout: The :class:`Rollout` object that has been processed.</span>
 <a id="__codelineno-0-302" name="__codelineno-0-302"></a>
 <a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">    Subclasses can override this method to implement custom logic such as logging,</span>
@@ -3467,11 +3467,11 @@ metric collection, or resource cleanup. By default, this is a no-op.</p>
                 <code>runner</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="            agentlightning.BaseRunner (agentlightning.runner.base.BaseRunner)" href="../runner/#agentlightning.BaseRunner">BaseRunner</a>[<span title="typing.Any">Any</span>]</code>
+                  <code><a class="autorefs autorefs-internal" title="            agentlightning.Runner (agentlightning.runner.base.Runner)" href="../runner/#agentlightning.Runner">Runner</a>[<span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>BaseRunner</code> managing the rollout.</p>
+                <p>The :class:<code>Runner</code> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -3483,11 +3483,11 @@ metric collection, or resource cleanup. By default, this is a no-op.</p>
                 <code>tracer</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="            agentlightning.BaseTracer (agentlightning.tracer.base.BaseTracer)" href="../runner/#agentlightning.BaseTracer">BaseTracer</a></code>
+                  <code><a class="autorefs autorefs-internal" title="            agentlightning.Tracer (agentlightning.tracer.base.Tracer)" href="../runner/#agentlightning.Tracer">Tracer</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>BaseTracer</code> instance associated with the runner.</p>
+                <p>The :class:<code>Tracer</code> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -3532,14 +3532,14 @@ metric collection, or resource setup. By default, this is a no-op.</p>
 <span class="normal"><a href="#__codelineno-0-288">288</a></span>
 <span class="normal"><a href="#__codelineno-0-289">289</a></span>
 <span class="normal"><a href="#__codelineno-0-290">290</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-277" name="__codelineno-0-277"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_trace_start</span><span class="p">(</span>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>    <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">BaseRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">BaseTracer</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a>    <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span>
 <a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called immediately after the tracer enters the trace context but before the rollout begins.</span>
 <a id="__codelineno-0-281" name="__codelineno-0-281"></a>
 <a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">    Args:</span>
 <a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">        agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">        runner: The :class:`BaseRunner` managing the rollout.</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">        tracer: The :class:`BaseTracer` instance associated with the runner.</span>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">        tracer: The :class:`Tracer` instance associated with the runner.</span>
 <a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">        rollout: The :class:`Rollout` object that will be processed.</span>
 <a id="__codelineno-0-287" name="__codelineno-0-287"></a>
 <a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">    Subclasses can override this method to implement custom logic such as logging,</span>
