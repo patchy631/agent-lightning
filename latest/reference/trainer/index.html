@@ -2108,7 +2108,13 @@ Note that not all algorithms support seeding resources.</p>
 <span class="normal"><a href="#__codelineno-0-435">435</a></span>
 <span class="normal"><a href="#__codelineno-0-436">436</a></span>
 <span class="normal"><a href="#__codelineno-0-437">437</a></span>
-<span class="normal"><a href="#__codelineno-0-438">438</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="k">class</span><span class="w"> </span><span class="nc">Trainer</span><span class="p">(</span><span class="n">TrainerLegacy</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-438">438</a></span>
+<span class="normal"><a href="#__codelineno-0-439">439</a></span>
+<span class="normal"><a href="#__codelineno-0-440">440</a></span>
+<span class="normal"><a href="#__codelineno-0-441">441</a></span>
+<span class="normal"><a href="#__codelineno-0-442">442</a></span>
+<span class="normal"><a href="#__codelineno-0-443">443</a></span>
+<span class="normal"><a href="#__codelineno-0-444">444</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="k">class</span><span class="w"> </span><span class="nc">Trainer</span><span class="p">(</span><span class="n">TrainerLegacy</span><span class="p">):</span>
 <a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestrates the distributed execution of agent rollouts.</span>
 <a id="__codelineno-0-38" name="__codelineno-0-38"></a>
 <a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">    The Trainer is responsible for launching one or more worker processes</span>
@@ -2391,126 +2397,132 @@ Note that not all algorithms support seeding resources.</p>
 <a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="sd">            train_dataset: The dataset to train on.</span>
 <a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">            val_dataset: The dataset to validate on.</span>
 <a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>        <span class="n">agent</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>        <span class="n">algorithm_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm_bundle</span><span class="p">,</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a>            <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>            <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>            <span class="n">algorithm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>        <span class="p">)</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>        <span class="n">runner_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runner_bundle</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algorithm_bundle</span><span class="p">,</span> <span class="n">runner_bundle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
-<a id="__codelineno-0-330" name="__codelineno-0-330"></a>
-<a id="__codelineno-0-331" name="__codelineno-0-331"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">dev</span><span class="p">(</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-333" name="__codelineno-0-333"></a>        <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">T_co</span><span class="p">],</span>
-<a id="__codelineno-0-334" name="__codelineno-0-334"></a>        <span class="n">train_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>        <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-336" name="__codelineno-0-336"></a>        <span class="n">val_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-337" name="__codelineno-0-337"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Dry run the training loop with a FastAlgorithm and the real runner.</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-341" name="__codelineno-0-341"></a><span class="sd">            agent: The LitAgent instance to be trained on.</span>
-<a id="__codelineno-0-342" name="__codelineno-0-342"></a><span class="sd">            train_dataset: The dataset to train on.</span>
-<a id="__codelineno-0-343" name="__codelineno-0-343"></a><span class="sd">            val_dataset: The dataset to validate on.</span>
-<a id="__codelineno-0-344" name="__codelineno-0-344"></a>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a><span class="sd">        Raises:</span>
-<a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="sd">            TypeError: If the configured algorithm is not a :class:`FastAlgorithm`.</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-348" name="__codelineno-0-348"></a>        <span class="n">agent</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-<a id="__codelineno-0-349" name="__codelineno-0-349"></a>
-<a id="__codelineno-0-350" name="__codelineno-0-350"></a>        <span class="c1"># Sanity check</span>
-<a id="__codelineno-0-351" name="__codelineno-0-351"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-352" name="__codelineno-0-352"></a>            <span class="n">algorithm</span> <span class="o">=</span> <span class="n">Baseline</span><span class="p">()</span>
-<a id="__codelineno-0-353" name="__codelineno-0-353"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-354" name="__codelineno-0-354"></a>            <span class="n">algorithm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a>                <span class="s2">&quot;Trainer.fit no longer accepts a string URL as of v0.2. &quot;</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>                <span class="s2">&quot;To continue using a string URL, please use Trainer.fit_v0 instead. &quot;</span>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a>                <span class="s2">&quot;See documentation for how to migrate to latest version: https://microsoft.github.io/agent-lightning/stable/&quot;</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a>            <span class="p">)</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a>        <span class="n">agent</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a>        <span class="n">algorithm_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+<a id="__codelineno-0-328" name="__codelineno-0-328"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm_bundle</span><span class="p">,</span>
+<a id="__codelineno-0-329" name="__codelineno-0-329"></a>            <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-330" name="__codelineno-0-330"></a>            <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-331" name="__codelineno-0-331"></a>            <span class="n">algorithm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a>        <span class="p">)</span>
+<a id="__codelineno-0-333" name="__codelineno-0-333"></a>        <span class="n">runner_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runner_bundle</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
+<a id="__codelineno-0-334" name="__codelineno-0-334"></a>
+<a id="__codelineno-0-335" name="__codelineno-0-335"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algorithm_bundle</span><span class="p">,</span> <span class="n">runner_bundle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
+<a id="__codelineno-0-336" name="__codelineno-0-336"></a>
+<a id="__codelineno-0-337" name="__codelineno-0-337"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">dev</span><span class="p">(</span>
+<a id="__codelineno-0-338" name="__codelineno-0-338"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-339" name="__codelineno-0-339"></a>        <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">T_co</span><span class="p">],</span>
+<a id="__codelineno-0-340" name="__codelineno-0-340"></a>        <span class="n">train_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-341" name="__codelineno-0-341"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-342" name="__codelineno-0-342"></a>        <span class="n">val_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-343" name="__codelineno-0-343"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-344" name="__codelineno-0-344"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Dry run the training loop with a FastAlgorithm and the real runner.</span>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a>
+<a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="sd">            agent: The LitAgent instance to be trained on.</span>
+<a id="__codelineno-0-348" name="__codelineno-0-348"></a><span class="sd">            train_dataset: The dataset to train on.</span>
+<a id="__codelineno-0-349" name="__codelineno-0-349"></a><span class="sd">            val_dataset: The dataset to validate on.</span>
+<a id="__codelineno-0-350" name="__codelineno-0-350"></a>
+<a id="__codelineno-0-351" name="__codelineno-0-351"></a><span class="sd">        Raises:</span>
+<a id="__codelineno-0-352" name="__codelineno-0-352"></a><span class="sd">            TypeError: If the configured algorithm is not a :class:`FastAlgorithm`.</span>
+<a id="__codelineno-0-353" name="__codelineno-0-353"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-354" name="__codelineno-0-354"></a>        <span class="n">agent</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 <a id="__codelineno-0-355" name="__codelineno-0-355"></a>
-<a id="__codelineno-0-356" name="__codelineno-0-356"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">FastAlgorithm</span><span class="p">):</span>
-<a id="__codelineno-0-357" name="__codelineno-0-357"></a>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-<a id="__codelineno-0-358" name="__codelineno-0-358"></a>                <span class="s2">&quot;Trainer.dev() requires an algorithm that inherits from FastAlgorithm. &quot;</span>
-<a id="__codelineno-0-359" name="__codelineno-0-359"></a>                <span class="sa">f</span><span class="s2">&quot;Received </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
-<a id="__codelineno-0-360" name="__codelineno-0-360"></a>            <span class="p">)</span>
+<a id="__codelineno-0-356" name="__codelineno-0-356"></a>        <span class="c1"># Sanity check</span>
+<a id="__codelineno-0-357" name="__codelineno-0-357"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-358" name="__codelineno-0-358"></a>            <span class="n">algorithm</span> <span class="o">=</span> <span class="n">Baseline</span><span class="p">()</span>
+<a id="__codelineno-0-359" name="__codelineno-0-359"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-360" name="__codelineno-0-360"></a>            <span class="n">algorithm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span>
 <a id="__codelineno-0-361" name="__codelineno-0-361"></a>
-<a id="__codelineno-0-362" name="__codelineno-0-362"></a>        <span class="n">algorithm_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
-<a id="__codelineno-0-363" name="__codelineno-0-363"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm_bundle</span><span class="p">,</span>
-<a id="__codelineno-0-364" name="__codelineno-0-364"></a>            <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-365" name="__codelineno-0-365"></a>            <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-366" name="__codelineno-0-366"></a>            <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
-<a id="__codelineno-0-367" name="__codelineno-0-367"></a>        <span class="p">)</span>
-<a id="__codelineno-0-368" name="__codelineno-0-368"></a>        <span class="n">runner_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runner_bundle</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
-<a id="__codelineno-0-369" name="__codelineno-0-369"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algorithm_bundle</span><span class="p">,</span> <span class="n">runner_bundle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
-<a id="__codelineno-0-370" name="__codelineno-0-370"></a>
-<a id="__codelineno-0-371" name="__codelineno-0-371"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_algorithm_bundle</span><span class="p">(</span>
-<a id="__codelineno-0-372" name="__codelineno-0-372"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-373" name="__codelineno-0-373"></a>        <span class="n">store</span><span class="p">:</span> <span class="n">LightningStore</span><span class="p">,</span>
-<a id="__codelineno-0-374" name="__codelineno-0-374"></a>        <span class="n">event</span><span class="p">:</span> <span class="n">ExecutionEvent</span><span class="p">,</span>
-<a id="__codelineno-0-375" name="__codelineno-0-375"></a>        <span class="n">train_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]],</span>
-<a id="__codelineno-0-376" name="__codelineno-0-376"></a>        <span class="n">val_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]],</span>
-<a id="__codelineno-0-377" name="__codelineno-0-377"></a>        <span class="n">algorithm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Algorithm</span><span class="p">],</span>
-<a id="__codelineno-0-378" name="__codelineno-0-378"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-379" name="__codelineno-0-379"></a>        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-380" name="__codelineno-0-380"></a>            <span class="n">algorithm</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-<a id="__codelineno-0-381" name="__codelineno-0-381"></a>            <span class="n">algorithm</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
-<a id="__codelineno-0-382" name="__codelineno-0-382"></a>            <span class="n">algorithm</span><span class="o">.</span><span class="n">set_adapter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter</span><span class="p">)</span>
-<a id="__codelineno-0-383" name="__codelineno-0-383"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-384" name="__codelineno-0-384"></a>                <span class="n">algorithm</span><span class="o">.</span><span class="n">set_initial_resources</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_resources</span><span class="p">)</span>
-<a id="__codelineno-0-385" name="__codelineno-0-385"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm_proxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-386" name="__codelineno-0-386"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">llm_proxy</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
-<a id="__codelineno-0-387" name="__codelineno-0-387"></a>                <span class="n">algorithm</span><span class="o">.</span><span class="n">set_llm_proxy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">llm_proxy</span><span class="p">)</span>
-<a id="__codelineno-0-388" name="__codelineno-0-388"></a>
-<a id="__codelineno-0-389" name="__codelineno-0-389"></a>        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-390" name="__codelineno-0-390"></a>            <span class="k">while</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
-<a id="__codelineno-0-391" name="__codelineno-0-391"></a>                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
-<a id="__codelineno-0-392" name="__codelineno-0-392"></a>            <span class="k">return</span>
-<a id="__codelineno-0-393" name="__codelineno-0-393"></a>        <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-394" name="__codelineno-0-394"></a>            <span class="k">if</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">is_async</span><span class="p">():</span>
-<a id="__codelineno-0-395" name="__codelineno-0-395"></a>                <span class="k">await</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
-<a id="__codelineno-0-396" name="__codelineno-0-396"></a>                    <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-397" name="__codelineno-0-397"></a>                    <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-398" name="__codelineno-0-398"></a>                <span class="p">)</span>
-<a id="__codelineno-0-399" name="__codelineno-0-399"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-400" name="__codelineno-0-400"></a>                <span class="c1"># This will block the event loop to maximize the debugging experience</span>
-<a id="__codelineno-0-401" name="__codelineno-0-401"></a>                <span class="c1"># It&#39;s the responsibility of the execution strategy to enable async execution</span>
-<a id="__codelineno-0-402" name="__codelineno-0-402"></a>                <span class="n">algorithm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-<a id="__codelineno-0-403" name="__codelineno-0-403"></a>                    <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-404" name="__codelineno-0-404"></a>                    <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-405" name="__codelineno-0-405"></a>                <span class="p">)</span>
-<a id="__codelineno-0-406" name="__codelineno-0-406"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-<a id="__codelineno-0-407" name="__codelineno-0-407"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Algorithm bundle encountered an error.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-408" name="__codelineno-0-408"></a>            <span class="k">raise</span>
-<a id="__codelineno-0-409" name="__codelineno-0-409"></a>
-<a id="__codelineno-0-410" name="__codelineno-0-410"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_runner_bundle</span><span class="p">(</span>
-<a id="__codelineno-0-411" name="__codelineno-0-411"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">:</span> <span class="n">LightningStore</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">ExecutionEvent</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">T_co</span><span class="p">]</span>
-<a id="__codelineno-0-412" name="__codelineno-0-412"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-413" name="__codelineno-0-413"></a>        <span class="n">runner_instance</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-414" name="__codelineno-0-414"></a>        <span class="n">runner_initialized</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-415" name="__codelineno-0-415"></a>        <span class="n">worker_initialized</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-416" name="__codelineno-0-416"></a>        <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-417" name="__codelineno-0-417"></a>            <span class="c1"># If not using shm execution strategy, we are already in the forked process</span>
-<a id="__codelineno-0-418" name="__codelineno-0-418"></a>            <span class="n">runner_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runner</span>
-<a id="__codelineno-0-419" name="__codelineno-0-419"></a>            <span class="n">runner_instance</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">hooks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">)</span>
-<a id="__codelineno-0-420" name="__codelineno-0-420"></a>            <span class="n">runner_initialized</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-421" name="__codelineno-0-421"></a>            <span class="n">runner_instance</span><span class="o">.</span><span class="n">init_worker</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="n">store</span><span class="p">)</span>
-<a id="__codelineno-0-422" name="__codelineno-0-422"></a>            <span class="n">worker_initialized</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-423" name="__codelineno-0-423"></a>            <span class="k">await</span> <span class="n">runner_instance</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">)</span>
-<a id="__codelineno-0-424" name="__codelineno-0-424"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-<a id="__codelineno-0-425" name="__codelineno-0-425"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Runner bundle encountered an error (worker_id=</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">)</span>
-<a id="__codelineno-0-426" name="__codelineno-0-426"></a>            <span class="k">raise</span>
-<a id="__codelineno-0-427" name="__codelineno-0-427"></a>        <span class="k">finally</span><span class="p">:</span>
-<a id="__codelineno-0-428" name="__codelineno-0-428"></a>            <span class="k">if</span> <span class="n">runner_instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-429" name="__codelineno-0-429"></a>                <span class="k">if</span> <span class="n">worker_initialized</span><span class="p">:</span>
-<a id="__codelineno-0-430" name="__codelineno-0-430"></a>                    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-431" name="__codelineno-0-431"></a>                        <span class="n">runner_instance</span><span class="o">.</span><span class="n">teardown_worker</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
-<a id="__codelineno-0-432" name="__codelineno-0-432"></a>                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-<a id="__codelineno-0-433" name="__codelineno-0-433"></a>                        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error during runner worker teardown (worker_id=</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">)</span>
-<a id="__codelineno-0-434" name="__codelineno-0-434"></a>                <span class="k">if</span> <span class="n">runner_initialized</span><span class="p">:</span>
-<a id="__codelineno-0-435" name="__codelineno-0-435"></a>                    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-436" name="__codelineno-0-436"></a>                        <span class="n">runner_instance</span><span class="o">.</span><span class="n">teardown</span><span class="p">()</span>
-<a id="__codelineno-0-437" name="__codelineno-0-437"></a>                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-<a id="__codelineno-0-438" name="__codelineno-0-438"></a>                        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error during runner teardown (worker_id=</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">)</span>
+<a id="__codelineno-0-362" name="__codelineno-0-362"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">FastAlgorithm</span><span class="p">):</span>
+<a id="__codelineno-0-363" name="__codelineno-0-363"></a>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+<a id="__codelineno-0-364" name="__codelineno-0-364"></a>                <span class="s2">&quot;Trainer.dev() requires an algorithm that inherits from FastAlgorithm. &quot;</span>
+<a id="__codelineno-0-365" name="__codelineno-0-365"></a>                <span class="sa">f</span><span class="s2">&quot;Received </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+<a id="__codelineno-0-366" name="__codelineno-0-366"></a>            <span class="p">)</span>
+<a id="__codelineno-0-367" name="__codelineno-0-367"></a>
+<a id="__codelineno-0-368" name="__codelineno-0-368"></a>        <span class="n">algorithm_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+<a id="__codelineno-0-369" name="__codelineno-0-369"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm_bundle</span><span class="p">,</span>
+<a id="__codelineno-0-370" name="__codelineno-0-370"></a>            <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-371" name="__codelineno-0-371"></a>            <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-372" name="__codelineno-0-372"></a>            <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
+<a id="__codelineno-0-373" name="__codelineno-0-373"></a>        <span class="p">)</span>
+<a id="__codelineno-0-374" name="__codelineno-0-374"></a>        <span class="n">runner_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runner_bundle</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
+<a id="__codelineno-0-375" name="__codelineno-0-375"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algorithm_bundle</span><span class="p">,</span> <span class="n">runner_bundle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
+<a id="__codelineno-0-376" name="__codelineno-0-376"></a>
+<a id="__codelineno-0-377" name="__codelineno-0-377"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_algorithm_bundle</span><span class="p">(</span>
+<a id="__codelineno-0-378" name="__codelineno-0-378"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-379" name="__codelineno-0-379"></a>        <span class="n">store</span><span class="p">:</span> <span class="n">LightningStore</span><span class="p">,</span>
+<a id="__codelineno-0-380" name="__codelineno-0-380"></a>        <span class="n">event</span><span class="p">:</span> <span class="n">ExecutionEvent</span><span class="p">,</span>
+<a id="__codelineno-0-381" name="__codelineno-0-381"></a>        <span class="n">train_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]],</span>
+<a id="__codelineno-0-382" name="__codelineno-0-382"></a>        <span class="n">val_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]],</span>
+<a id="__codelineno-0-383" name="__codelineno-0-383"></a>        <span class="n">algorithm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Algorithm</span><span class="p">],</span>
+<a id="__codelineno-0-384" name="__codelineno-0-384"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-385" name="__codelineno-0-385"></a>        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-386" name="__codelineno-0-386"></a>            <span class="n">algorithm</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<a id="__codelineno-0-387" name="__codelineno-0-387"></a>            <span class="n">algorithm</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
+<a id="__codelineno-0-388" name="__codelineno-0-388"></a>            <span class="n">algorithm</span><span class="o">.</span><span class="n">set_adapter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter</span><span class="p">)</span>
+<a id="__codelineno-0-389" name="__codelineno-0-389"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-390" name="__codelineno-0-390"></a>                <span class="n">algorithm</span><span class="o">.</span><span class="n">set_initial_resources</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_resources</span><span class="p">)</span>
+<a id="__codelineno-0-391" name="__codelineno-0-391"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm_proxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-392" name="__codelineno-0-392"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">llm_proxy</span><span class="o">.</span><span class="n">set_store</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
+<a id="__codelineno-0-393" name="__codelineno-0-393"></a>                <span class="n">algorithm</span><span class="o">.</span><span class="n">set_llm_proxy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">llm_proxy</span><span class="p">)</span>
+<a id="__codelineno-0-394" name="__codelineno-0-394"></a>
+<a id="__codelineno-0-395" name="__codelineno-0-395"></a>        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-396" name="__codelineno-0-396"></a>            <span class="k">while</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+<a id="__codelineno-0-397" name="__codelineno-0-397"></a>                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<a id="__codelineno-0-398" name="__codelineno-0-398"></a>            <span class="k">return</span>
+<a id="__codelineno-0-399" name="__codelineno-0-399"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-400" name="__codelineno-0-400"></a>            <span class="k">if</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">is_async</span><span class="p">():</span>
+<a id="__codelineno-0-401" name="__codelineno-0-401"></a>                <span class="k">await</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-402" name="__codelineno-0-402"></a>                    <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-403" name="__codelineno-0-403"></a>                    <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-404" name="__codelineno-0-404"></a>                <span class="p">)</span>
+<a id="__codelineno-0-405" name="__codelineno-0-405"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-406" name="__codelineno-0-406"></a>                <span class="c1"># This will block the event loop to maximize the debugging experience</span>
+<a id="__codelineno-0-407" name="__codelineno-0-407"></a>                <span class="c1"># It&#39;s the responsibility of the execution strategy to enable async execution</span>
+<a id="__codelineno-0-408" name="__codelineno-0-408"></a>                <span class="n">algorithm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+<a id="__codelineno-0-409" name="__codelineno-0-409"></a>                    <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-410" name="__codelineno-0-410"></a>                    <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-411" name="__codelineno-0-411"></a>                <span class="p">)</span>
+<a id="__codelineno-0-412" name="__codelineno-0-412"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-413" name="__codelineno-0-413"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Algorithm bundle encountered an error.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-414" name="__codelineno-0-414"></a>            <span class="k">raise</span>
+<a id="__codelineno-0-415" name="__codelineno-0-415"></a>
+<a id="__codelineno-0-416" name="__codelineno-0-416"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_runner_bundle</span><span class="p">(</span>
+<a id="__codelineno-0-417" name="__codelineno-0-417"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">:</span> <span class="n">LightningStore</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">ExecutionEvent</span><span class="p">,</span> <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">T_co</span><span class="p">]</span>
+<a id="__codelineno-0-418" name="__codelineno-0-418"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-419" name="__codelineno-0-419"></a>        <span class="n">runner_instance</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-420" name="__codelineno-0-420"></a>        <span class="n">runner_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-421" name="__codelineno-0-421"></a>        <span class="n">worker_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-422" name="__codelineno-0-422"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-423" name="__codelineno-0-423"></a>            <span class="c1"># If not using shm execution strategy, we are already in the forked process</span>
+<a id="__codelineno-0-424" name="__codelineno-0-424"></a>            <span class="n">runner_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runner</span>
+<a id="__codelineno-0-425" name="__codelineno-0-425"></a>            <span class="n">runner_instance</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">hooks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">)</span>
+<a id="__codelineno-0-426" name="__codelineno-0-426"></a>            <span class="n">runner_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-427" name="__codelineno-0-427"></a>            <span class="n">runner_instance</span><span class="o">.</span><span class="n">init_worker</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="n">store</span><span class="p">)</span>
+<a id="__codelineno-0-428" name="__codelineno-0-428"></a>            <span class="n">worker_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-429" name="__codelineno-0-429"></a>            <span class="k">await</span> <span class="n">runner_instance</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">)</span>
+<a id="__codelineno-0-430" name="__codelineno-0-430"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-431" name="__codelineno-0-431"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Runner bundle encountered an error (worker_id=</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">)</span>
+<a id="__codelineno-0-432" name="__codelineno-0-432"></a>            <span class="k">raise</span>
+<a id="__codelineno-0-433" name="__codelineno-0-433"></a>        <span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-0-434" name="__codelineno-0-434"></a>            <span class="k">if</span> <span class="n">runner_instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-435" name="__codelineno-0-435"></a>                <span class="k">if</span> <span class="n">worker_initialized</span><span class="p">:</span>
+<a id="__codelineno-0-436" name="__codelineno-0-436"></a>                    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-437" name="__codelineno-0-437"></a>                        <span class="n">runner_instance</span><span class="o">.</span><span class="n">teardown_worker</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
+<a id="__codelineno-0-438" name="__codelineno-0-438"></a>                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-439" name="__codelineno-0-439"></a>                        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error during runner worker teardown (worker_id=</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">)</span>
+<a id="__codelineno-0-440" name="__codelineno-0-440"></a>                <span class="k">if</span> <span class="n">runner_initialized</span><span class="p">:</span>
+<a id="__codelineno-0-441" name="__codelineno-0-441"></a>                    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-442" name="__codelineno-0-442"></a>                        <span class="n">runner_instance</span><span class="o">.</span><span class="n">teardown</span><span class="p">()</span>
+<a id="__codelineno-0-443" name="__codelineno-0-443"></a>                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+<a id="__codelineno-0-444" name="__codelineno-0-444"></a>                        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error during runner teardown (worker_id=</span><span class="si">%s</span><span class="s2">).&quot;</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2629,13 +2641,7 @@ Note that not all algorithms support seeding resources.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/trainer/trainer.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-331">331</a></span>
-<span class="normal"><a href="#__codelineno-0-332">332</a></span>
-<span class="normal"><a href="#__codelineno-0-333">333</a></span>
-<span class="normal"><a href="#__codelineno-0-334">334</a></span>
-<span class="normal"><a href="#__codelineno-0-335">335</a></span>
-<span class="normal"><a href="#__codelineno-0-336">336</a></span>
-<span class="normal"><a href="#__codelineno-0-337">337</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-337">337</a></span>
 <span class="normal"><a href="#__codelineno-0-338">338</a></span>
 <span class="normal"><a href="#__codelineno-0-339">339</a></span>
 <span class="normal"><a href="#__codelineno-0-340">340</a></span>
@@ -2667,45 +2673,51 @@ Note that not all algorithms support seeding resources.</p>
 <span class="normal"><a href="#__codelineno-0-366">366</a></span>
 <span class="normal"><a href="#__codelineno-0-367">367</a></span>
 <span class="normal"><a href="#__codelineno-0-368">368</a></span>
-<span class="normal"><a href="#__codelineno-0-369">369</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-331" name="__codelineno-0-331"></a><span class="k">def</span><span class="w"> </span><span class="nf">dev</span><span class="p">(</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-333" name="__codelineno-0-333"></a>    <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">T_co</span><span class="p">],</span>
-<a id="__codelineno-0-334" name="__codelineno-0-334"></a>    <span class="n">train_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-336" name="__codelineno-0-336"></a>    <span class="n">val_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-337" name="__codelineno-0-337"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Dry run the training loop with a FastAlgorithm and the real runner.</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-341" name="__codelineno-0-341"></a><span class="sd">        agent: The LitAgent instance to be trained on.</span>
-<a id="__codelineno-0-342" name="__codelineno-0-342"></a><span class="sd">        train_dataset: The dataset to train on.</span>
-<a id="__codelineno-0-343" name="__codelineno-0-343"></a><span class="sd">        val_dataset: The dataset to validate on.</span>
-<a id="__codelineno-0-344" name="__codelineno-0-344"></a>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a><span class="sd">    Raises:</span>
-<a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="sd">        TypeError: If the configured algorithm is not a :class:`FastAlgorithm`.</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-348" name="__codelineno-0-348"></a>    <span class="n">agent</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-<a id="__codelineno-0-349" name="__codelineno-0-349"></a>
-<a id="__codelineno-0-350" name="__codelineno-0-350"></a>    <span class="c1"># Sanity check</span>
-<a id="__codelineno-0-351" name="__codelineno-0-351"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-352" name="__codelineno-0-352"></a>        <span class="n">algorithm</span> <span class="o">=</span> <span class="n">Baseline</span><span class="p">()</span>
-<a id="__codelineno-0-353" name="__codelineno-0-353"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-354" name="__codelineno-0-354"></a>        <span class="n">algorithm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span>
+<span class="normal"><a href="#__codelineno-0-369">369</a></span>
+<span class="normal"><a href="#__codelineno-0-370">370</a></span>
+<span class="normal"><a href="#__codelineno-0-371">371</a></span>
+<span class="normal"><a href="#__codelineno-0-372">372</a></span>
+<span class="normal"><a href="#__codelineno-0-373">373</a></span>
+<span class="normal"><a href="#__codelineno-0-374">374</a></span>
+<span class="normal"><a href="#__codelineno-0-375">375</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-337" name="__codelineno-0-337"></a><span class="k">def</span><span class="w"> </span><span class="nf">dev</span><span class="p">(</span>
+<a id="__codelineno-0-338" name="__codelineno-0-338"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-339" name="__codelineno-0-339"></a>    <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">T_co</span><span class="p">],</span>
+<a id="__codelineno-0-340" name="__codelineno-0-340"></a>    <span class="n">train_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-341" name="__codelineno-0-341"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-342" name="__codelineno-0-342"></a>    <span class="n">val_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-343" name="__codelineno-0-343"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-344" name="__codelineno-0-344"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Dry run the training loop with a FastAlgorithm and the real runner.</span>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a>
+<a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="sd">        agent: The LitAgent instance to be trained on.</span>
+<a id="__codelineno-0-348" name="__codelineno-0-348"></a><span class="sd">        train_dataset: The dataset to train on.</span>
+<a id="__codelineno-0-349" name="__codelineno-0-349"></a><span class="sd">        val_dataset: The dataset to validate on.</span>
+<a id="__codelineno-0-350" name="__codelineno-0-350"></a>
+<a id="__codelineno-0-351" name="__codelineno-0-351"></a><span class="sd">    Raises:</span>
+<a id="__codelineno-0-352" name="__codelineno-0-352"></a><span class="sd">        TypeError: If the configured algorithm is not a :class:`FastAlgorithm`.</span>
+<a id="__codelineno-0-353" name="__codelineno-0-353"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-354" name="__codelineno-0-354"></a>    <span class="n">agent</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 <a id="__codelineno-0-355" name="__codelineno-0-355"></a>
-<a id="__codelineno-0-356" name="__codelineno-0-356"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">FastAlgorithm</span><span class="p">):</span>
-<a id="__codelineno-0-357" name="__codelineno-0-357"></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-<a id="__codelineno-0-358" name="__codelineno-0-358"></a>            <span class="s2">&quot;Trainer.dev() requires an algorithm that inherits from FastAlgorithm. &quot;</span>
-<a id="__codelineno-0-359" name="__codelineno-0-359"></a>            <span class="sa">f</span><span class="s2">&quot;Received </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
-<a id="__codelineno-0-360" name="__codelineno-0-360"></a>        <span class="p">)</span>
+<a id="__codelineno-0-356" name="__codelineno-0-356"></a>    <span class="c1"># Sanity check</span>
+<a id="__codelineno-0-357" name="__codelineno-0-357"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-358" name="__codelineno-0-358"></a>        <span class="n">algorithm</span> <span class="o">=</span> <span class="n">Baseline</span><span class="p">()</span>
+<a id="__codelineno-0-359" name="__codelineno-0-359"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-360" name="__codelineno-0-360"></a>        <span class="n">algorithm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span>
 <a id="__codelineno-0-361" name="__codelineno-0-361"></a>
-<a id="__codelineno-0-362" name="__codelineno-0-362"></a>    <span class="n">algorithm_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
-<a id="__codelineno-0-363" name="__codelineno-0-363"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm_bundle</span><span class="p">,</span>
-<a id="__codelineno-0-364" name="__codelineno-0-364"></a>        <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-365" name="__codelineno-0-365"></a>        <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-366" name="__codelineno-0-366"></a>        <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
-<a id="__codelineno-0-367" name="__codelineno-0-367"></a>    <span class="p">)</span>
-<a id="__codelineno-0-368" name="__codelineno-0-368"></a>    <span class="n">runner_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runner_bundle</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
-<a id="__codelineno-0-369" name="__codelineno-0-369"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algorithm_bundle</span><span class="p">,</span> <span class="n">runner_bundle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
+<a id="__codelineno-0-362" name="__codelineno-0-362"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">FastAlgorithm</span><span class="p">):</span>
+<a id="__codelineno-0-363" name="__codelineno-0-363"></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+<a id="__codelineno-0-364" name="__codelineno-0-364"></a>            <span class="s2">&quot;Trainer.dev() requires an algorithm that inherits from FastAlgorithm. &quot;</span>
+<a id="__codelineno-0-365" name="__codelineno-0-365"></a>            <span class="sa">f</span><span class="s2">&quot;Received </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+<a id="__codelineno-0-366" name="__codelineno-0-366"></a>        <span class="p">)</span>
+<a id="__codelineno-0-367" name="__codelineno-0-367"></a>
+<a id="__codelineno-0-368" name="__codelineno-0-368"></a>    <span class="n">algorithm_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+<a id="__codelineno-0-369" name="__codelineno-0-369"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm_bundle</span><span class="p">,</span>
+<a id="__codelineno-0-370" name="__codelineno-0-370"></a>        <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-371" name="__codelineno-0-371"></a>        <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-372" name="__codelineno-0-372"></a>        <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
+<a id="__codelineno-0-373" name="__codelineno-0-373"></a>    <span class="p">)</span>
+<a id="__codelineno-0-374" name="__codelineno-0-374"></a>    <span class="n">runner_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runner_bundle</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
+<a id="__codelineno-0-375" name="__codelineno-0-375"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algorithm_bundle</span><span class="p">,</span> <span class="n">runner_bundle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2815,7 +2827,13 @@ Note that not all algorithms support seeding resources.</p>
 <span class="normal"><a href="#__codelineno-0-326">326</a></span>
 <span class="normal"><a href="#__codelineno-0-327">327</a></span>
 <span class="normal"><a href="#__codelineno-0-328">328</a></span>
-<span class="normal"><a href="#__codelineno-0-329">329</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-329">329</a></span>
+<span class="normal"><a href="#__codelineno-0-330">330</a></span>
+<span class="normal"><a href="#__codelineno-0-331">331</a></span>
+<span class="normal"><a href="#__codelineno-0-332">332</a></span>
+<span class="normal"><a href="#__codelineno-0-333">333</a></span>
+<span class="normal"><a href="#__codelineno-0-334">334</a></span>
+<span class="normal"><a href="#__codelineno-0-335">335</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
 <a id="__codelineno-0-306" name="__codelineno-0-306"></a>    <span class="bp">self</span><span class="p">,</span>
 <a id="__codelineno-0-307" name="__codelineno-0-307"></a>    <span class="n">agent</span><span class="p">:</span> <span class="n">LitAgent</span><span class="p">[</span><span class="n">T_co</span><span class="p">],</span>
 <a id="__codelineno-0-308" name="__codelineno-0-308"></a>    <span class="n">train_dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">T_co</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2829,17 +2847,23 @@ Note that not all algorithms support seeding resources.</p>
 <a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="sd">        train_dataset: The dataset to train on.</span>
 <a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">        val_dataset: The dataset to validate on.</span>
 <a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>    <span class="n">agent</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>    <span class="n">algorithm_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm_bundle</span><span class="p">,</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a>        <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>        <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>        <span class="n">algorithm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>    <span class="p">)</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>    <span class="n">runner_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runner_bundle</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algorithm_bundle</span><span class="p">,</span> <span class="n">runner_bundle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a>            <span class="s2">&quot;Trainer.fit no longer accepts a string URL as of v0.2. &quot;</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>            <span class="s2">&quot;To continue using a string URL, please use Trainer.fit_v0 instead. &quot;</span>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a>            <span class="s2">&quot;See documentation for how to migrate to latest version: https://microsoft.github.io/agent-lightning/stable/&quot;</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a>        <span class="p">)</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a>    <span class="n">agent</span><span class="o">.</span><span class="n">set_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a>    <span class="n">algorithm_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+<a id="__codelineno-0-328" name="__codelineno-0-328"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_algorithm_bundle</span><span class="p">,</span>
+<a id="__codelineno-0-329" name="__codelineno-0-329"></a>        <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-330" name="__codelineno-0-330"></a>        <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">,</span>
+<a id="__codelineno-0-331" name="__codelineno-0-331"></a>        <span class="n">algorithm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a>    <span class="p">)</span>
+<a id="__codelineno-0-333" name="__codelineno-0-333"></a>    <span class="n">runner_bundle</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_runner_bundle</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
+<a id="__codelineno-0-334" name="__codelineno-0-334"></a>
+<a id="__codelineno-0-335" name="__codelineno-0-335"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">algorithm_bundle</span><span class="p">,</span> <span class="n">runner_bundle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
