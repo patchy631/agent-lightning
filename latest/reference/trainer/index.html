@@ -5803,10 +5803,7 @@ Optionally accepts a multiprocessing context for custom process start methods.</
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/config.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-312">312</a></span>
-<span class="normal"><a href="#__codelineno-0-313">313</a></span>
-<span class="normal"><a href="#__codelineno-0-314">314</a></span>
-<span class="normal"><a href="#__codelineno-0-315">315</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-315">315</a></span>
 <span class="normal"><a href="#__codelineno-0-316">316</a></span>
 <span class="normal"><a href="#__codelineno-0-317">317</a></span>
 <span class="normal"><a href="#__codelineno-0-318">318</a></span>
@@ -5831,35 +5828,38 @@ Optionally accepts a multiprocessing context for custom process start methods.</
 <span class="normal"><a href="#__codelineno-0-337">337</a></span>
 <span class="normal"><a href="#__codelineno-0-338">338</a></span>
 <span class="normal"><a href="#__codelineno-0-339">339</a></span>
-<span class="normal"><a href="#__codelineno-0-340">340</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="k">def</span><span class="w"> </span><span class="nf">lightning_cli</span><span class="p">(</span><span class="o">*</span><span class="n">classes</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">CliConfigurable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">CliConfigurable</span> <span class="o">|</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">CliConfigurable</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">    Parses command-line arguments to configure and instantiate provided CliConfigurable classes.</span>
-<a id="__codelineno-0-315" name="__codelineno-0-315"></a>
-<a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">        *classes: One or more classes that inherit from CliConfigurable. Each class&#39;s</span>
-<a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="sd">                  __init__ parameters will be exposed as command-line arguments.</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a><span class="sd">        A tuple of instantiated objects, corresponding to the input classes in order.</span>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">classes</span><span class="p">:</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>        <span class="k">return</span> <span class="nb">tuple</span><span class="p">()</span>  <span class="c1"># Return an empty tuple if no classes are provided</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>    <span class="n">parser</span> <span class="o">=</span> <span class="n">_create_argument_parser</span><span class="p">()</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>    <span class="c1"># This map will store {cls: {init_param_name: argparse_dest_name}}</span>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>    <span class="n">class_arg_configs_maps</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CliConfigurable</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="normal"><a href="#__codelineno-0-340">340</a></span>
+<span class="normal"><a href="#__codelineno-0-341">341</a></span>
+<span class="normal"><a href="#__codelineno-0-342">342</a></span>
+<span class="normal"><a href="#__codelineno-0-343">343</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="k">def</span><span class="w"> </span><span class="nf">lightning_cli</span><span class="p">(</span><span class="o">*</span><span class="n">classes</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">CliConfigurable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">CliConfigurable</span> <span class="o">|</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">CliConfigurable</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">    Parses command-line arguments to configure and instantiate provided CliConfigurable classes.</span>
+<a id="__codelineno-0-318" name="__codelineno-0-318"></a>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a><span class="sd">        *classes: One or more classes that inherit from CliConfigurable. Each class&#39;s</span>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a><span class="sd">                  __init__ parameters will be exposed as command-line arguments.</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a><span class="sd">        A tuple of instantiated objects, corresponding to the input classes in order.</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">classes</span><span class="p">:</span>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a>        <span class="k">return</span> <span class="nb">tuple</span><span class="p">()</span>  <span class="c1"># Return an empty tuple if no classes are provided</span>
+<a id="__codelineno-0-328" name="__codelineno-0-328"></a>
+<a id="__codelineno-0-329" name="__codelineno-0-329"></a>    <span class="n">parser</span> <span class="o">=</span> <span class="n">_create_argument_parser</span><span class="p">()</span>
 <a id="__codelineno-0-330" name="__codelineno-0-330"></a>
-<a id="__codelineno-0-331" name="__codelineno-0-331"></a>    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a>        <span class="n">_add_arguments_for_class</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="bp">cls</span><span class="p">,</span> <span class="n">class_arg_configs_maps</span><span class="p">)</span>
+<a id="__codelineno-0-331" name="__codelineno-0-331"></a>    <span class="c1"># This map will store {cls: {init_param_name: argparse_dest_name}}</span>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a>    <span class="n">class_arg_configs_maps</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CliConfigurable</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 <a id="__codelineno-0-333" name="__codelineno-0-333"></a>
-<a id="__codelineno-0-334" name="__codelineno-0-334"></a>    <span class="n">parsed_args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>  <span class="c1"># Uses sys.argv[1:] by default</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>
-<a id="__codelineno-0-336" name="__codelineno-0-336"></a>    <span class="c1"># Correctly handle single class case for return type matching overloads</span>
-<a id="__codelineno-0-337" name="__codelineno-0-337"></a>    <span class="n">instances</span> <span class="o">=</span> <span class="n">_instantiate_classes</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">classes</span><span class="p">,</span> <span class="n">class_arg_configs_maps</span><span class="p">)</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a>        <span class="k">return</span> <span class="n">instances</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a>    <span class="k">return</span> <span class="n">instances</span>
+<a id="__codelineno-0-334" name="__codelineno-0-334"></a>    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+<a id="__codelineno-0-335" name="__codelineno-0-335"></a>        <span class="n">_add_arguments_for_class</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="bp">cls</span><span class="p">,</span> <span class="n">class_arg_configs_maps</span><span class="p">)</span>
+<a id="__codelineno-0-336" name="__codelineno-0-336"></a>
+<a id="__codelineno-0-337" name="__codelineno-0-337"></a>    <span class="n">parsed_args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>  <span class="c1"># Uses sys.argv[1:] by default</span>
+<a id="__codelineno-0-338" name="__codelineno-0-338"></a>
+<a id="__codelineno-0-339" name="__codelineno-0-339"></a>    <span class="c1"># Correctly handle single class case for return type matching overloads</span>
+<a id="__codelineno-0-340" name="__codelineno-0-340"></a>    <span class="n">instances</span> <span class="o">=</span> <span class="n">_instantiate_classes</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">classes</span><span class="p">,</span> <span class="n">class_arg_configs_maps</span><span class="p">)</span>
+<a id="__codelineno-0-341" name="__codelineno-0-341"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-342" name="__codelineno-0-342"></a>        <span class="k">return</span> <span class="n">instances</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-343" name="__codelineno-0-343"></a>    <span class="k">return</span> <span class="n">instances</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
