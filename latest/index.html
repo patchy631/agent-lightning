@@ -692,6 +692,29 @@
   
   
     <li class="md-nav__item">
+      <a href="tutorials/traces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Working with Traces
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="tutorials/parallelize/" class="md-nav__link">
         
   
@@ -934,12 +957,12 @@
   
   
     <li class="md-nav__item">
-      <a href="deep-dive/tracing/" class="md-nav__link">
+      <a href="deep-dive/serving-llm/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Understanding Tracing
+    Serving LLM
     
   </span>
   
@@ -1290,55 +1313,25 @@
     <a href="https://microsoft.github.io/agent-lightning/stable/">https://microsoft.github.io/agent-lightning/stable/</a>
   </div>
   
-                  
+                  <!-- Copied and modified from https://github.com/squidfunk/mkdocs-material/blob/master/src/templates/partials/content.html -->
 
+<!-- Tags -->
+
+
+
+<!-- Actions -->
 
   
   
 
 
-<h1 id="agent-lightning">Agent Lightning<a class="headerlink" href="#agent-lightning" title="Permanent link">&para;</a></h1>
-<p>Agent Lightning is the absolute trainer to light up AI agents.</p>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Turn your agent into an optimizable beast with <strong>ZERO CODE CHANGE</strong> (almost)! 💤</li>
-<li>Build with <strong>ANY</strong> agent framework (LangChain, OpenAI Agent SDK, AutoGen, CrewAI, ...); or even WITHOUT agent framework (Python OpenAI). You name it! 🤖</li>
-<li><strong>Selectively</strong> optimize one or more agents in a multi-agent system. 🎯</li>
-<li>Embraces Reinforcement Learning, Automatic Prompt Optimization and more <strong>algorithms</strong>. 🤗</li>
-</ul>
-<h2 id="quick-links">Quick Links<a class="headerlink" href="#quick-links" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="tutorials/installation/">Installation</a> - Get started with Agent Lightning</li>
-<li><a href="how-to/train-first-agent/">Train First Agent with APO</a> - Learn the fundamentals of Agent Lightning</li>
-<li><a href="how-to/train-sql-agent/">Train SQL Agent with RL</a> - A practical example of training a SQL agent</li>
-<li><a href="https://discord.gg/RYk7CdvDR7">Join our Discord community</a> - Connect with other users and contributors</li>
-</ul>
-<h2 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h2>
-<ul>
-<li>8/11/2025 <a href="https://medium.com/@yugez/training-ai-agents-to-write-and-self-correct-sql-with-reinforcement-learning-571ed31281ad">Training AI Agents to Write and Self-correct SQL with Reinforcement Learning</a> Medium.</li>
-<li>8/5/2025 <a href="https://arxiv.org/abs/2508.03680">Agent Lightning: Train ANY AI Agents with Reinforcement Learning</a> arXiv paper.</li>
-<li>7/26/2025 <a href="https://www.reddit.com/r/LocalLLaMA/comments/1m9m670/we_discovered_an_approach_to_train_any_ai_agent/">We discovered an approach to train any AI agent with RL, with (almost) zero code changes.</a> Reddit.</li>
-<li>6/6/2025 <a href="https://www.microsoft.com/en-us/research/project/agent-lightning/">Agent Lightning - Microsoft Research</a> Project page.</li>
-</ul>
-<h2 id="community-projects">Community Projects<a class="headerlink" href="#community-projects" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="https://github.com/af-74413592/DeepWerewolf">DeepWerewolf</a> — A case study of agent RL training for the Chinese Werewolf game built with AgentScope and Agent Lightning.</li>
-<li><a href="https://agentflow.stanford.edu/">AgentFlow</a> — A modular multi-agent framework that combines planner, executor, verifier, and generator agents with the Flow-GRPO algorithm to tackle long-horizon, sparse-reward tasks.</li>
-</ul>
-<h2 id="citation">Citation<a class="headerlink" href="#citation" title="Permanent link">&para;</a></h2>
-<p>If you find Agent Lightning useful in your research or projects, please cite our paper:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nc">@misc</span><span class="p">{</span><span class="nl">luo2025agentlightningtrainai</span><span class="p">,</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">      </span><span class="na">title</span><span class="p">=</span><span class="s">{Agent Lightning: Train ANY AI Agents with Reinforcement Learning}</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">      </span><span class="na">author</span><span class="p">=</span><span class="s">{Xufang Luo and Yuge Zhang and Zhiyuan He and Zilong Wang and Siyun Zhao and Dongsheng Li and Luna K. Qiu and Yuqing Yang}</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">      </span><span class="na">year</span><span class="p">=</span><span class="s">{2025}</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="na">eprint</span><span class="p">=</span><span class="s">{2508.03680}</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="na">archivePrefix</span><span class="p">=</span><span class="s">{arXiv}</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="na">primaryClass</span><span class="p">=</span><span class="s">{cs.AI}</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="na">url</span><span class="p">=</span><span class="s">{https://arxiv.org/abs/2508.03680}</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
-<p>See the <a href="https://github.com/microsoft/agent-lightning/blob/main/LICENSE">LICENSE</a> file for details.</p>
+<!--
+  Hack: check whether the content contains a h1 headline. If it doesn't, the
+  page title (or respectively site name) is used as the main headline.
+-->
+
+
+<!-- Source file information -->
 
 
 
@@ -1395,8 +1388,56 @@
   </aside>
 
 
+<!-- Page content -->
+<h1 id="agent-lightning">Agent Lightning<a class="headerlink" href="#agent-lightning" title="Permanent link">&para;</a></h1>
+<p>Agent Lightning is the absolute trainer to light up AI agents.</p>
+<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Turn your agent into an optimizable beast with <strong>ZERO CODE CHANGE</strong> (almost)! 💤</li>
+<li>Build with <strong>ANY</strong> agent framework (LangChain, OpenAI Agent SDK, AutoGen, CrewAI, ...); or even WITHOUT agent framework (Python OpenAI). You name it! 🤖</li>
+<li><strong>Selectively</strong> optimize one or more agents in a multi-agent system. 🎯</li>
+<li>Embraces Reinforcement Learning, Automatic Prompt Optimization and more <strong>algorithms</strong>. 🤗</li>
+</ul>
+<h2 id="quick-links">Quick Links<a class="headerlink" href="#quick-links" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="tutorials/installation/">Installation</a> - Get started with Agent Lightning</li>
+<li><a href="how-to/train-first-agent/">Train First Agent with APO</a> - Learn the fundamentals of Agent Lightning</li>
+<li><a href="how-to/train-sql-agent/">Train SQL Agent with RL</a> - A practical example of training a SQL agent</li>
+<li><a href="https://discord.gg/RYk7CdvDR7">Join our Discord community</a> - Connect with other users and contributors</li>
+</ul>
+<h2 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li>8/11/2025 <a href="https://medium.com/@yugez/training-ai-agents-to-write-and-self-correct-sql-with-reinforcement-learning-571ed31281ad">Training AI Agents to Write and Self-correct SQL with Reinforcement Learning</a> Medium.</li>
+<li>8/5/2025 <a href="https://arxiv.org/abs/2508.03680">Agent Lightning: Train ANY AI Agents with Reinforcement Learning</a> arXiv paper.</li>
+<li>7/26/2025 <a href="https://www.reddit.com/r/LocalLLaMA/comments/1m9m670/we_discovered_an_approach_to_train_any_ai_agent/">We discovered an approach to train any AI agent with RL, with (almost) zero code changes.</a> Reddit.</li>
+<li>6/6/2025 <a href="https://www.microsoft.com/en-us/research/project/agent-lightning/">Agent Lightning - Microsoft Research</a> Project page.</li>
+</ul>
+<h2 id="community-projects">Community Projects<a class="headerlink" href="#community-projects" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://github.com/af-74413592/DeepWerewolf">DeepWerewolf</a> — A case study of agent RL training for the Chinese Werewolf game built with AgentScope and Agent Lightning.</li>
+<li><a href="https://agentflow.stanford.edu/">AgentFlow</a> — A modular multi-agent framework that combines planner, executor, verifier, and generator agents with the Flow-GRPO algorithm to tackle long-horizon, sparse-reward tasks.</li>
+</ul>
+<h2 id="citation">Citation<a class="headerlink" href="#citation" title="Permanent link">&para;</a></h2>
+<p>If you find Agent Lightning useful in your research or projects, please cite our paper:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nc">@misc</span><span class="p">{</span><span class="nl">luo2025agentlightningtrainai</span><span class="p">,</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">      </span><span class="na">title</span><span class="p">=</span><span class="s">{Agent Lightning: Train ANY AI Agents with Reinforcement Learning}</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">      </span><span class="na">author</span><span class="p">=</span><span class="s">{Xufang Luo and Yuge Zhang and Zhiyuan He and Zilong Wang and Siyun Zhao and Dongsheng Li and Luna K. Qiu and Yuqing Yang}</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">      </span><span class="na">year</span><span class="p">=</span><span class="s">{2025}</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="na">eprint</span><span class="p">=</span><span class="s">{2508.03680}</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="na">archivePrefix</span><span class="p">=</span><span class="s">{arXiv}</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="na">primaryClass</span><span class="p">=</span><span class="s">{cs.AI}</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="na">url</span><span class="p">=</span><span class="s">{https://arxiv.org/abs/2508.03680}</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">}</span>
+</code></pre></div>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>See the <a href="https://github.com/microsoft/agent-lightning/blob/main/LICENSE">LICENSE</a> file for details.</p>
+
+<!-- Was this page helpful? -->
 
 
+
+
+<!-- Comment system -->
 
                 
 
@@ -1452,6 +1493,12 @@
         <script src="js/timeago_mkdocs_material.js"></script>
       
         <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+      
+        <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+      
+        <script src="javascripts/charts.js"></script>
+      
+        <script src="javascripts/move-source-file.js"></script>
       
     
   <script>

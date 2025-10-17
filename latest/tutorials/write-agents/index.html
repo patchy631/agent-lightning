@@ -691,6 +691,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../traces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Working with Traces
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../parallelize/" class="md-nav__link">
         
   
@@ -933,12 +956,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deep-dive/tracing/" class="md-nav__link">
+      <a href="../../deep-dive/serving-llm/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Understanding Tracing
+    Serving LLM
     
   </span>
   
@@ -1286,13 +1309,82 @@
     <a href="https://microsoft.github.io/agent-lightning/stable/">https://microsoft.github.io/agent-lightning/stable/</a>
   </div>
   
-                  
+                  <!-- Copied and modified from https://github.com/squidfunk/mkdocs-material/blob/master/src/templates/partials/content.html -->
 
+<!-- Tags -->
+
+
+
+<!-- Actions -->
 
   
   
 
 
+<!--
+  Hack: check whether the content contains a h1 headline. If it doesn't, the
+  page title (or respectively site name) is used as the main headline.
+-->
+
+
+<!-- Source file information -->
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 17, 2025 18:24:27 UTC"><span class="timeago" datetime="2025-10-17T18:24:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 17, 2025 18:24:27 UTC">2025-10-17</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 15, 2025 10:01:09 UTC"><span class="timeago" datetime="2025-10-15T10:01:09+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 15, 2025 10:01:09 UTC">2025-10-15</span>
+  </span>
+
+    
+    
+      
+  
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Contributors">
+      
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4"/></svg>
+      
+    </span>
+    <nav>
+      
+        <a href="mailto:yuge.zhang@microsoft.com">Yuge Zhang</a>
+    </nav>
+  </span>
+
+    
+    
+  </aside>
+
+
+<!-- Page content -->
 <h1 id="writing-agents">Writing Agents<a class="headerlink" href="#writing-agents" title="Permanent link">&para;</a></h1>
 <p>This tutorial will focus on the heart of the system: the agent itself, guiding you through the different ways to define an agent's logic in Agent-lightning.</p>
 <p>The basic requirements for any agent are:</p>
@@ -1405,11 +1497,13 @@
 <h2 id="class-based-agents">Class-based Agents<a class="headerlink" href="#class-based-agents" title="Permanent link">&para;</a></h2>
 <p>For more complex agents that require state, helper methods, or distinct logic for training versus validation, you can create a class that inherits from <code>LitAgent</code>. This object-oriented approach provides more structure and control over the agent's lifecycle.</p>
 <p>To create a class-based agent, you subclass <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../../reference/agent/#agentlightning.LitAgent">agentlightning.LitAgent</a> and implement its <code>rollout</code> method.</p>
-<p>Here's how the <code>room_selector</code> could be implemented as a class. The rollout method has a slightly different signature than the function-based agent, mainly in how it handles the resources. Algorithms send <a class="autorefs autorefs-internal" title="            agentlightning.NamedResources = Dict[str, ResourceUnion]
+<p><a href="" id="introduction-to-named-resources"></a></p>
+<p>Here's how the <code>room_selector</code> could be implemented as a class. The rollout method has a slightly different signature than the function-based agent, mainly in how it handles the resources. Putting it simply, algorithms do not just send a <a class="autorefs autorefs-internal" title="            agentlightning.PromptTemplate" href="../../reference/types/#agentlightning.PromptTemplate">PromptTemplate</a> to the agents, they instead send <a class="autorefs autorefs-internal" title="            agentlightning.NamedResources = Dict[str, ResourceUnion]
 
   
       module-attribute
-  " href="../../reference/types/#agentlightning.NamedResources">NamedResources</a> (which is a mapping from resource key to <a class="autorefs autorefs-internal" title="            agentlightning.Resource" href="../../reference/types/#agentlightning.Resource">Resource</a>) to agent. With <a class="autorefs autorefs-internal" title="            agentlightning.rollout(func)" href="../../reference/agent/#agentlightning.rollout"><code>@rollout</code></a> decorator, the resource with correctly matched type will be automatically injected into the rollout method. However, when you use a class-based agent, you need to manually access the resource from the <code>resources</code> dictionary. Built-in algorithms listed their resource key naming conventions <a href="../../algorithm-zoo/">here</a>.</p>
+  " href="../../reference/types/#agentlightning.NamedResources">NamedResources</a>, which is a mapping from resource key to <a class="autorefs autorefs-internal" title="            agentlightning.Resource" href="../../reference/types/#agentlightning.Resource">Resource</a>. This design is to allow for more advanced features like multi-resource tuning.</p>
+<p>With <a class="autorefs autorefs-internal" title="            agentlightning.rollout(func)" href="../../reference/agent/#agentlightning.rollout"><code>@rollout</code></a> decorator, the resource with correctly matched type will be automatically injected into the rollout method. However, when you use a class-based agent, you need to manually access the resource from the <code>resources</code> dictionary. Built-in algorithms listed their resource key naming conventions <a href="../../algorithm-zoo/">here</a>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">agentlightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">agl</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">RoomSelectorAgent</span><span class="p">(</span><span class="n">agl</span><span class="o">.</span><span class="n">LitAgent</span><span class="p">[</span><span class="n">RoomSelectionTask</span><span class="p">]):</span>
@@ -1520,63 +1614,12 @@
 </code></pre></div>
 <p>By using the emitter, you create a rich, detailed trace of your agent's execution. This data can be invaluable for debugging and is essential for advanced algorithms that can learn from more than just a single final score.</p>
 
+<!-- Was this page helpful? -->
 
 
 
 
-
-
-  
-    
-  
-  
-    
-  
-
-
-  <aside class="md-source-file">
-    
-      
-  <span class="md-source-file__fact">
-    <span class="md-icon" title="Last update">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
-    </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 16, 2025 07:01:39 UTC"><span class="timeago" datetime="2025-10-16T07:01:39+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 16, 2025 07:01:39 UTC">2025-10-16</span>
-  </span>
-
-    
-    
-      
-  <span class="md-source-file__fact">
-    <span class="md-icon" title="Created">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
-    </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 15, 2025 10:01:09 UTC"><span class="timeago" datetime="2025-10-15T10:01:09+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 15, 2025 10:01:09 UTC">2025-10-15</span>
-  </span>
-
-    
-    
-      
-  
-  <span class="md-source-file__fact">
-    <span class="md-icon" title="Contributors">
-      
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4"/></svg>
-      
-    </span>
-    <nav>
-      
-        <a href="mailto:yuge.zhang@microsoft.com">Yuge Zhang</a>
-    </nav>
-  </span>
-
-    
-    
-  </aside>
-
-
-
-
+<!-- Comment system -->
 
                 
 
@@ -1632,6 +1675,12 @@
         <script src="../../js/timeago_mkdocs_material.js"></script>
       
         <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+      
+        <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+      
+        <script src="../../javascripts/charts.js"></script>
+      
+        <script src="../../javascripts/move-source-file.js"></script>
       
     
   <script>

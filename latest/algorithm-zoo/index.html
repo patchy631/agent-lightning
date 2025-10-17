@@ -598,6 +598,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../tutorials/traces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Working with Traces
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../tutorials/parallelize/" class="md-nav__link">
         
   
@@ -850,12 +873,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../deep-dive/tracing/" class="md-nav__link">
+      <a href="../deep-dive/serving-llm/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Understanding Tracing
+    Serving LLM
     
   </span>
   
@@ -1144,37 +1167,25 @@
     <a href="https://microsoft.github.io/agent-lightning/stable/">https://microsoft.github.io/agent-lightning/stable/</a>
   </div>
   
-                  
+                  <!-- Copied and modified from https://github.com/squidfunk/mkdocs-material/blob/master/src/templates/partials/content.html -->
 
+<!-- Tags -->
+
+
+
+<!-- Actions -->
 
   
   
 
 
-<h1 id="algorithm-zoo">Algorithm Zoo<a class="headerlink" href="#algorithm-zoo" title="Permanent link">&para;</a></h1>
-<p>AgentLightning includes several popular and frequently requested algorithms in its built-in library, allowing agent developers to use them directly. These algorithms are designed to be compatible with most agent scenarios.</p>
-<p>For customizing algorithms, see <a href="../reference/algorithm/">Algorithm-side References</a>.</p>
-<table>
-<thead>
-<tr>
-<th>Algorithm</th>
-<th>Optimizing Resources</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="apo/">APO</a></td>
-<td><code>{&lt;initial_prompt_key&gt;: [PromptTemplate][agentlightning.PromptTemplate]}</code></td>
-<td>Automatic Prompt Optimization (APO) algorithm using textual gradients and beam search.</td>
-</tr>
-<tr>
-<td><a href="verl/">VERL</a></td>
-<td><code>{"main_llm": [LLM][agentlightning.LLM]}</code></td>
-<td>Reinforcement Learning with <a href="https://github.com/volcengine/verl">VERL framework</a>.</td>
-</tr>
-</tbody>
-</table>
+<!--
+  Hack: check whether the content contains a h1 headline. If it doesn't, the
+  page title (or respectively site name) is used as the main headline.
+-->
+
+
+<!-- Source file information -->
 
 
 
@@ -1231,8 +1242,38 @@
   </aside>
 
 
+<!-- Page content -->
+<h1 id="algorithm-zoo">Algorithm Zoo<a class="headerlink" href="#algorithm-zoo" title="Permanent link">&para;</a></h1>
+<p>AgentLightning includes several popular and frequently requested algorithms in its built-in library, allowing agent developers to use them directly. These algorithms are designed to be compatible with most agent scenarios.</p>
+<p>For customizing algorithms, see <a href="../reference/algorithm/">Algorithm-side References</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Optimizing Resources</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="apo/">APO</a></td>
+<td><code>{&lt;initial_prompt_key&gt;: [PromptTemplate][agentlightning.PromptTemplate]}</code></td>
+<td>Automatic Prompt Optimization (APO) algorithm using textual gradients and beam search.</td>
+</tr>
+<tr>
+<td><a href="verl/">VERL</a></td>
+<td><code>{"main_llm": [LLM][agentlightning.LLM]}</code></td>
+<td>Reinforcement Learning with <a href="https://github.com/volcengine/verl">VERL framework</a>.</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Was this page helpful? -->
 
 
+
+
+<!-- Comment system -->
 
                 
 
@@ -1288,6 +1329,12 @@
         <script src="../js/timeago_mkdocs_material.js"></script>
       
         <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+      
+        <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+      
+        <script src="../javascripts/charts.js"></script>
+      
+        <script src="../javascripts/move-source-file.js"></script>
       
     
   <script>

@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#sql-agent-with-agent-lightning" class="md-skip">
+        <a href="#train-sql-agent-with-agent-lightning-and-verl" class="md-skip">
           Skip to content
         </a>
       
@@ -527,73 +527,109 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#sql-agent-implementation" class="md-nav__link">
+  <a href="#sql-agent-architecture" class="md-nav__link">
     <span class="md-ellipsis">
-      SQL Agent Implementation
+      SQL Agent Architecture
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#client-server-training-with-agent-lightning" class="md-nav__link">
+  <a href="#bridging-langgraph-and-agent-lightning" class="md-nav__link">
     <span class="md-ellipsis">
-      Client-Server Training with Agent Lightning
+      Bridging LangGraph and Agent-lightning
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#running-the-example" class="md-nav__link">
+  <a href="#reward-signal-and-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
-      Running the Example
+      Reward Signal and Evaluation
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#debug-the-agent-without-verl" class="md-nav__link">
+  <a href="#configuring-verl-for-reinforcement-learning" class="md-nav__link">
     <span class="md-ellipsis">
-      Debug the Agent without verl
+      Configuring VERL for Reinforcement Learning
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#evaluation" class="md-nav__link">
+  <a href="#orchestrating-training-with-trainer" class="md-nav__link">
     <span class="md-ellipsis">
-      Evaluation
+      Orchestrating Training with Trainer
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Evaluation">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dry-run-the-pipeline-with-trainerdev" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dry-Run the Pipeline with Trainer.dev
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-sample-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running the Sample Code
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running the Sample Code">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#wb-report" class="md-nav__link">
+  <a href="#dataset" class="md-nav__link">
     <span class="md-ellipsis">
-      W&amp;B Report
+      Dataset
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#performance-metrics" class="md-nav__link">
+  <a href="#dependencies" class="md-nav__link">
     <span class="md-ellipsis">
-      Performance Metrics
+      Dependencies
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#efficiency-metrics" class="md-nav__link">
+  <a href="#launch-training" class="md-nav__link">
     <span class="md-ellipsis">
-      Efficiency Metrics
+      Launch Training
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-the-agent-without-verl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging the Agent without VERL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Evaluation
     </span>
   </a>
   
@@ -701,6 +737,29 @@
   
   <span class="md-ellipsis">
     Debugging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/traces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Working with Traces
     
   </span>
   
@@ -960,12 +1019,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deep-dive/tracing/" class="md-nav__link">
+      <a href="../../deep-dive/serving-llm/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Understanding Tracing
+    Serving LLM
     
   </span>
   
@@ -1246,73 +1305,109 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#sql-agent-implementation" class="md-nav__link">
+  <a href="#sql-agent-architecture" class="md-nav__link">
     <span class="md-ellipsis">
-      SQL Agent Implementation
+      SQL Agent Architecture
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#client-server-training-with-agent-lightning" class="md-nav__link">
+  <a href="#bridging-langgraph-and-agent-lightning" class="md-nav__link">
     <span class="md-ellipsis">
-      Client-Server Training with Agent Lightning
+      Bridging LangGraph and Agent-lightning
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#running-the-example" class="md-nav__link">
+  <a href="#reward-signal-and-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
-      Running the Example
+      Reward Signal and Evaluation
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#debug-the-agent-without-verl" class="md-nav__link">
+  <a href="#configuring-verl-for-reinforcement-learning" class="md-nav__link">
     <span class="md-ellipsis">
-      Debug the Agent without verl
+      Configuring VERL for Reinforcement Learning
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#evaluation" class="md-nav__link">
+  <a href="#orchestrating-training-with-trainer" class="md-nav__link">
     <span class="md-ellipsis">
-      Evaluation
+      Orchestrating Training with Trainer
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Evaluation">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dry-run-the-pipeline-with-trainerdev" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dry-Run the Pipeline with Trainer.dev
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-sample-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running the Sample Code
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running the Sample Code">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#wb-report" class="md-nav__link">
+  <a href="#dataset" class="md-nav__link">
     <span class="md-ellipsis">
-      W&amp;B Report
+      Dataset
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#performance-metrics" class="md-nav__link">
+  <a href="#dependencies" class="md-nav__link">
     <span class="md-ellipsis">
-      Performance Metrics
+      Dependencies
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#efficiency-metrics" class="md-nav__link">
+  <a href="#launch-training" class="md-nav__link">
     <span class="md-ellipsis">
-      Efficiency Metrics
+      Launch Training
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-the-agent-without-verl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging the Agent without VERL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Evaluation
     </span>
   </a>
   
@@ -1340,256 +1435,25 @@
     <a href="https://microsoft.github.io/agent-lightning/stable/">https://microsoft.github.io/agent-lightning/stable/</a>
   </div>
   
-                  
+                  <!-- Copied and modified from https://github.com/squidfunk/mkdocs-material/blob/master/src/templates/partials/content.html -->
 
+<!-- Tags -->
+
+
+
+<!-- Actions -->
 
   
   
 
 
-<h1 id="sql-agent-with-agent-lightning">SQL Agent with Agent Lightning<a class="headerlink" href="#sql-agent-with-agent-lightning" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p>This tutorial is tested with <code>verl==0.5.0</code> and <code>vllm==0.10.0</code>.</p>
-</blockquote>
-<p>This example demonstrates how to build and train a self-correcting SQL agent. It leverages <a href="https://github.com/microsoft/agent-lightning">Agent Lightning</a> and the <code>verl</code> framework for Reinforcement Learning (RL) based training, and LangGraph to define the agent's complex, cyclical reasoning workflow. The goal is to fine-tune a Large Language Model (LLM) to accurately convert natural language questions into executable SQL queries.</p>
-<h2 id="sql-agent-implementation">SQL Agent Implementation<a class="headerlink" href="#sql-agent-implementation" title="Permanent link">&para;</a></h2>
-<p>The design of Agent-lightning <strong>allows flexible integration with various agent frameworks</strong>, including AutoGen, CrewAI, OpenAI Agent SDK, LangGraph, and more. It can also work without agent frameworks, allowing you to train an agent built from scratch with Python code. See <a href="https://github.com/microsoft/agent-lightning/tree/fcb2a0811ec2cfb1bd36c107a47db74ec27c5624/examples">our example gallery</a> for more details.</p>
-<p>The core of the agent is a state machine built with LangGraph, which allows for a robust and transparent workflow. The agent's logic, as visualized below, starts by writing a query, executes it, and then enters a refinement loop where it checks and rewrites the query until it is deemed correct or a turn limit is reached.</p>
-<pre class="mermaid"><code>---
-config:
-  flowchart:
-    curve: linear
----
-graph LR;
-        __start__([&lt;p&gt;__start__&lt;/p&gt;]):::first
-        write_query(write_query)
-        execute_query(execute_query)
-        check_query(check_query)
-        rewrite_query(rewrite_query)
-        __end__([&lt;p&gt;__end__&lt;/p&gt;]):::last
-        __start__ --&gt; write_query;
-        check_query -.-&gt; __end__;
-        check_query -.-&gt; rewrite_query;
-        execute_query --&gt; check_query;
-        rewrite_query --&gt; execute_query;
-        write_query --&gt; execute_query;
-        classDef default fill:#f2f2f2,line-height:1.2
-        classDef first fill-opacity:0
-        classDef last fill:#cccccc</code></pre>
-<p>This workflow is implemented in the <code>SQLAgent</code> class within <code>sql_agent.py</code>. It consists of the following key steps:</p>
-<ol>
-<li><strong>write_query</strong>: Given a user's question and database schema, the agent makes an initial attempt to write a SQL query.</li>
-<li><strong>execute_query</strong>: The generated query is run against the target database.</li>
-<li><strong>check_query</strong>: The agent analyzes the original query and its execution result (or error) to check for mistakes. It uses a specific prompt (<code>CHECK_QUERY_PROMPT</code>) to determine if the query is correct.</li>
-<li><strong>rewrite_query</strong>: If the <code>check_query</code> step finds errors, the agent enters this step. It uses the feedback from the previous step to generate a corrected SQL query. The process then loops back to <code>check_query</code> for re-evaluation.</li>
-<li><strong>END</strong>: The loop terminates when <code>check_query</code> confirms the query is correct or the maximum number of turns (<code>max_turns</code>) is exceeded. One turn corresponds to a complete cycle of <code>write_query</code> (if first round), <code>execute_query</code>, <code>check_query</code>, and potentially <code>rewrite_query</code>.</li>
-</ol>
-<p>We aim to train <strong>write_query</strong> and <strong>rewrite_query</strong> step in the setup of this example. The <strong>check_query</strong> step is not trained but will share the same LLM weights as the other steps.</p>
-<h2 id="client-server-training-with-agent-lightning">Client-Server Training with Agent Lightning<a class="headerlink" href="#client-server-training-with-agent-lightning" title="Permanent link">&para;</a></h2>
-<p>The training process uses a distributed client-server architecture designed by Agent Lightning to efficiently fine-tune the underlying LLM. This separation allows for scalable data generation across multiple clients while centralizing the computationally intensive model training on a dedicated server with GPUs, and also provides opportunities for customizing algorithms and training strategies (like <a href="https://github.com/microsoft/agent-lightning/tree/fcb2a0811ec2cfb1bd36c107a47db74ec27c5624/examples/apo">prompt optimization</a>) with minimal code changes.</p>
-<ul>
-<li><strong>Training Server (<code>agentlightning.verl</code>)</strong>: The server, launched with the first command below, manages the core training loop. It runs an RL algorithm (with <code>verl</code> of course) and hosts an OpenAI-compatible LLM endpoint (with <code>verl</code>'s async server). The server's sole purpose is to receive interaction data from clients and update the LLM's weights to improve its performance. <a href="https://github.com/microsoft/agent-lightning/tree/fcb2a0811ec2cfb1bd36c107a47db74ec27c5624/agentlightning/verl">This link</a> points to the implementation of the server, which is built upon <code>verl</code>.</li>
-<li><strong>Agent Clients (<code>sql_agent.py</code>)</strong>: The clients run the LangGraph agent logic described above. They connect to the server to fetch tasks (natural language questions) and use the server's <strong>OpenAI-compatible endpoint</strong> for all generation steps (<code>write_query</code>, <code>check_query</code>, <code>rewrite_query</code>). After completing a task, the client exports its interaction traces (traced by <a href="https://www.agentops.ai/">AgentOps</a> and filtered by trace hierarchy), evaluates its correctness to calculate a reward, and sends the entire interaction history (the "trajectory") back to the server for training. To adapt any agent to an "agent client", you do not need to change the agent logic, but only need to invoke the client's <code>run</code> method with <code>agentlightning.trainer</code>.</li>
-</ul>
-<p><img alt="Difference between the original agent and modified agent client" src="../../assets/sql-agent-diff.png" /></p>
-<h2 id="running-the-example">Running the Example<a class="headerlink" href="#running-the-example" title="Permanent link">&para;</a></h2>
-<ol>
-<li>
-<p>Prepare the dataset: download from <a href="https://drive.google.com/file/d/1oi9J1jZP9TyM35L85CL3qeGWl2jqlnL6/view">here</a> and unzip it to the <code>data</code> folder. It's basically a <a href="https://yale-lily.github.io/spider">Spider V1</a> dataset converted to Parquet format. The dataset contains about 8000 training samples and about 2000 test samples, from which we sampled 500 samples for evaluation.
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>gdown
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gdown<span class="w"> </span>--fuzzy<span class="w"> </span>https://drive.google.com/file/d/1oi9J1jZP9TyM35L85CL3qeGWl2jqlnL6/view
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>unzip<span class="w"> </span>-q<span class="w"> </span>spider-data.zip<span class="w"> </span>-d<span class="w"> </span>data
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>rm<span class="w"> </span>spider-data.zip
-</code></pre></div></p>
-</li>
-<li>
-<p>Install the required dependencies:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-</code></pre></div></p>
-</li>
-<li>
-<p>Launch the training server:
-   <code>bash
-   python -m agentlightning.verl \
-       agentlightning.port=9997 \
-       algorithm.adv_estimator=grpo \
-       data.train_files=data/train_spider.parquet \
-       data.val_files=data/test_dev_500.parquet \
-       actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
-       trainer.n_gpus_per_node=1 \
-       data.train_batch_size=32 \
-       actor_rollout_ref.rollout.n=4 \
-       actor_rollout_ref.actor.ppo_mini_batch_size=32 \
-       actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=4 \
-       actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=4 \
-       actor_rollout_ref.rollout.multi_turn.format=hermes \
-       actor_rollout_ref.model.path=meta-llama/Llama-3.2-3B-Instruct \
-       data.max_prompt_length=4096 \
-       data.max_response_length=2048 \
-       data.truncation='error' \
-       trainer.val_before_train=True \
-       actor_rollout_ref.actor.optim.lr=1e-6 \
-       actor_rollout_ref.model.use_remove_padding=True \
-       actor_rollout_ref.actor.use_kl_loss=False \
-       actor_rollout_ref.actor.kl_loss_coef=0.000 \
-       actor_rollout_ref.actor.entropy_coeff=0 \
-       actor_rollout_ref.actor.clip_ratio_low=0.2 \
-       actor_rollout_ref.actor.clip_ratio_high=0.3 \
-       actor_rollout_ref.model.enable_gradient_checkpointing=True \
-       actor_rollout_ref.actor.fsdp_config.param_offload=True \
-       actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
-       actor_rollout_ref.rollout.name=vllm \
-       actor_rollout_ref.rollout.gpu_memory_utilization=0.8 \
-       actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=8 \
-       actor_rollout_ref.ref.fsdp_config.param_offload=True \
-       algorithm.use_kl_in_reward=False \
-       trainer.critic_warmup=0 \
-       trainer.logger=['console','wandb'] \
-       trainer.project_name=AgentLightning \
-       trainer.experiment_name=train_sql_agent \
-       trainer.nnodes=1 \
-       trainer.save_freq=256 \
-       trainer.test_freq=32 \
-       trainer.total_epochs=2</code></p>
-</li>
-<li>
-<p>Launch agent clients that connect with the server:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">VERL_API_BASE</span><span class="o">=</span>http://localhost:9997/<span class="w">  </span><span class="c1"># Same as the server port. This is used for receiving tasks and sending results.</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>python<span class="w"> </span>sql_agent.py<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--litsqlagent.trained-agents<span class="w"> </span>write<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Will only train the write and rewrite agent.</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>--trainer.n-workers<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span>--litsqlagent.val-temperature<span class="w"> </span><span class="m">0</span>
-</code></pre></div></p>
-</li>
-</ol>
-<p>There is no hard requirement in the launching order of the server and clients. But remember to kill the long-running agent clients after the training is done.</p>
-<h2 id="debug-the-agent-without-verl">Debug the Agent without verl<a class="headerlink" href="#debug-the-agent-without-verl" title="Permanent link">&para;</a></h2>
-<p>You can run the agent client alone without the <code>verl</code> server. This is useful for debugging the agent logic and SQL execution.</p>
-<ol>
-<li>
-<p>Copy <code>.env.example</code> to <code>.env</code> and fill in your OpenAI API key. <code>VERL_API_BASE</code> does not really matter here because you are not connecting to the server end.</p>
-</li>
-<li>
-<p>Run the agent client:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>dotenv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>sql_agent.py<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--litsqlagent.trained-agents<span class="w"> </span>write<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Will only select the trajectories related to write and rewrite.</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>--trainer.n-workers<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># For debug, use single process.</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>--trainer.dev<span class="w"> </span><span class="nb">true</span><span class="w">  </span><span class="c1"># Enable the dev debug mode.</span>
-</code></pre></div></p>
-</li>
-</ol>
-<h2 id="evaluation">Evaluation<a class="headerlink" href="#evaluation" title="Permanent link">&para;</a></h2>
-<p>The example is evaluated using Llama-3.2-Instruct models. The models are trained on the Spider dataset for 2 epochs, with evaluation performed on a randomly selected subset of 500 test samples to compute held-out accuracy. The default setup for running agent clients during evaluation is as follows:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>sql_agent.py<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">   </span>--litsqlagent.trained-agents<span class="w"> </span>write<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">   </span>--trainer.n-workers<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">   </span>--trainer.daemon<span class="w"> </span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">   </span>--litsqlagent.val-temperature<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">   </span>--litsqlagent.max-turns<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">   </span>--litsqlagent.table-info-truncate<span class="w"> </span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">   </span>--litsqlagent.execution-truncate<span class="w"> </span><span class="m">2048</span>
-</code></pre></div>
-<p>The setup of training server is the same as the command above.</p>
-<h3 id="wb-report">W&amp;B Report<a class="headerlink" href="#wb-report" title="Permanent link">&para;</a></h3>
-<p><a href="https://api.wandb.ai/links/ultmaster/4cid500g">link</a></p>
-<h3 id="performance-metrics">Performance Metrics<a class="headerlink" href="#performance-metrics" title="Permanent link">&para;</a></h3>
-<p><img alt="" src="../../assets/sql-agent-val-reward-curve.png" /></p>
-<table>
-<thead>
-<tr>
-<th>Model</th>
-<th>Size</th>
-<th>Context</th>
-<th>Max Turns</th>
-<th>Agents</th>
-<th>Acc (Initial)</th>
-<th>Acc (Final)</th>
-<th>Transitions</th>
-<th>Prompt Length</th>
-<th>Response Length</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Llama3.2</td>
-<td>1B</td>
-<td>2048</td>
-<td>3</td>
-<td>write&#124;rewrite</td>
-<td>21</td>
-<td>49.6</td>
-<td>2.87 → 3.08</td>
-<td>821.2</td>
-<td>319.2 → 249.4</td>
-</tr>
-<tr>
-<td>Llama3.2</td>
-<td>3B</td>
-<td>2048</td>
-<td>3</td>
-<td>write&#124;rewrite</td>
-<td>51.8</td>
-<td>66.4</td>
-<td>2.20 → 2.72</td>
-<td>865.6</td>
-<td>116.2 → 314.3</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Notes:</strong></p>
-<ol>
-<li><strong>Context Length</strong>: Controlled via <code>--litsqlagent.table-info-truncate &lt;context-length&gt;</code> and <code>--litsqlagent.execution-truncate &lt;context-length&gt;</code></li>
-<li><strong>Max Turns</strong>: Set using <code>--litsqlagent.max-turns &lt;max-turns&gt;</code></li>
-<li><strong>Agents</strong>: Specified with <code>--litsqlagent.agents &lt;regex&gt;</code> (defaults to <code>write</code>, which matches both write and rewrite agents)</li>
-<li><strong>Transitions</strong>: Represents the number of prompt-response pairs traced (collected) during each rollout. Note that this differs from the turn count in the SQL agent workflow, where one turn may encompass 2-3 transitions in the check-rewrite cycle. The number of transitions is also related to which <em>agents</em> get involved in the training.</li>
-<li><strong>Prompt/Response Length</strong>: Average token count per <strong>traced</strong> prompt/transition response.</li>
-</ol>
-<h3 id="efficiency-metrics">Efficiency Metrics<a class="headerlink" href="#efficiency-metrics" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Model</th>
-<th>Size</th>
-<th>Context</th>
-<th>Max Turns</th>
-<th>Agents</th>
-<th># GPUs</th>
-<th># Steps</th>
-<th>Time (h)</th>
-<th>Time/Step (s)</th>
-<th>Rollout Time (%)</th>
-<th>Update Actor Time (%)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Llama3.2</td>
-<td>1B</td>
-<td>2048</td>
-<td>3</td>
-<td>write&#124;rewrite</td>
-<td>1</td>
-<td>436</td>
-<td>13.06</td>
-<td>98.9</td>
-<td>66.7</td>
-<td>25.2</td>
-</tr>
-<tr>
-<td>Llama3.2</td>
-<td>3B</td>
-<td>2048</td>
-<td>3</td>
-<td>write&#124;rewrite</td>
-<td>2</td>
-<td>436</td>
-<td>10.3</td>
-<td>181.3</td>
-<td>63.9</td>
-<td>27.9</td>
-</tr>
-</tbody>
-</table>
+<!--
+  Hack: check whether the content contains a h1 headline. If it doesn't, the
+  page title (or respectively site name) is used as the main headline.
+-->
+
+
+<!-- Source file information -->
 
 
 
@@ -1612,7 +1476,7 @@ graph LR;
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="August 10, 2025 06:44:00 UTC"><span class="timeago" datetime="2025-08-10T06:44:00+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="August 10, 2025 06:44:00 UTC">2025-08-10</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 17, 2025 18:24:27 UTC"><span class="timeago" datetime="2025-10-17T18:24:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 17, 2025 18:24:27 UTC">2025-10-17</span>
   </span>
 
     
@@ -1646,8 +1510,306 @@ graph LR;
   </aside>
 
 
+<!-- Page content -->
+<h1 id="train-sql-agent-with-agent-lightning-and-verl">Train SQL Agent with Agent-lightning and VERL<a class="headerlink" href="#train-sql-agent-with-agent-lightning-and-verl" title="Permanent link">&para;</a></h1>
+<p>This walkthrough builds upon the <strong>Agent-lightning v0.2 SQL Agent</strong> example and explains how the system components integrate: a <strong>LangGraph-based SQL agent</strong> wrapped as a <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../../reference/agent/#agentlightning.LitAgent"><code>LitAgent</code></a>, the <strong><a class="autorefs autorefs-internal" title="            VERL" href="../../algorithm-zoo/verl/#agentlightning.algorithm.verl.VERL"><code>VERL</code></a> reinforcement learning (RL) algorithm</strong>, and the <strong><a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>Trainer</code></a></strong>, which coordinates both training and debugging.</p>
+<p>The command-line interface in <a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/examples/spider/train_sql_agent.py"><code>examples/spider/train_sql_agent.py</code></a> provides a complete runnable example. However, this document focuses on understanding the underlying architecture so you can effectively adapt the workflow to your own agents.</p>
+<h2 id="sql-agent-architecture">SQL Agent Architecture<a class="headerlink" href="#sql-agent-architecture" title="Permanent link">&para;</a></h2>
+<p>Agent-lightning integrates seamlessly with various orchestration frameworks, including <a href="https://github.com/microsoft/agent-framework">Agent Framework</a>, <a href="https://github.com/microsoft/autogen">AutoGen</a>, <a href="https://www.crewai.com/">CrewAI</a>, <a href="https://github.com/langchain-ai/langgraph">LangGraph</a>, and the <a href="https://github.com/openai/openai-agents-python">OpenAI Agents SDK</a>. It can also interoperate with custom Python logic.</p>
+<p>In this example, <strong>LangGraph</strong> defines a cyclic workflow that mirrors an analyst’s iterative SQL development process. The following graph (rendered directly from <a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/examples/spider/sql_agent.py"><code>sql_agent.py</code></a>) illustrates how the agent drafts, executes, critiques, and refines queries until a satisfactory result is achieved.</p>
+<pre class="mermaid"><code>---
+config:
+  flowchart:
+    curve: linear
+---
+graph LR;
+        __start__([&lt;p&gt;__start__&lt;/p&gt;]):::first
+        write_query(write_query)
+        execute_query(execute_query)
+        check_query(check_query)
+        rewrite_query(rewrite_query)
+        __end__([&lt;p&gt;__end__&lt;/p&gt;]):::last
+        __start__ --&gt; write_query;
+        check_query -.-&gt; __end__;
+        check_query -.-&gt; rewrite_query;
+        execute_query --&gt; check_query;
+        rewrite_query --&gt; execute_query;
+        write_query --&gt; execute_query;
+        classDef default fill:#f2f2f2,line-height:1.2
+        classDef first fill-opacity:0
+        classDef last fill:#cccccc</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The workflow proceeds through the following stages:</p>
+<ol>
+<li><strong>write_query</strong> – Generates an initial SQL query from the user’s question and the database schema.</li>
+<li><strong>execute_query</strong> – Executes the generated query against the target database.</li>
+<li><strong>check_query</strong> – Evaluates the query and its results (or errors) using a specialized prompt (<code>CHECK_QUERY_PROMPT</code>) to detect issues.</li>
+<li><strong>rewrite_query</strong> – If issues are identified, the agent rewrites the query using feedback from the previous step and re-enters the loop.</li>
+<li><strong>END</strong> – The cycle terminates when the query is validated or the maximum iteration count (<code>max_turns</code>) is reached. Each <em>turn</em> consists of one full loop through the <code>write_query</code>, <code>execute_query</code>, <code>check_query</code>, and (if applicable) <code>rewrite_query</code> stages.</li>
+</ol>
+</div>
+<p>In this tutorial, <strong>reinforcement learning (RL)</strong> is used to optimize the <code>write_query</code> and <code>rewrite_query</code> stages. While the <code>check_query</code> step shares the same underlying LLM weights, its trace data is not used for learning.</p>
+<p>To keep the design modular and maintainable, it is recommended to define the LangGraph-based SQL Agent in a separate file and expose it via a builder function such as:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">build_langgraph_sql_agent</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">database_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">openai_base_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">sampling_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">max_turns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">truncate_length</span><span class="p">:</span> <span class="nb">int</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">):</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">builder</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">State</span><span class="p">)</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">write_query</span><span class="p">)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="o">...</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">builder</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">&quot;write_query&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="o">...</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span><span class="o">.</span><span class="n">graph</span><span class="p">()</span>
+</code></pre></div>
+<p>This approach isolates your LangGraph logic from Agent-lightning version changes, improving both readability and debuggability.</p>
+<h2 id="bridging-langgraph-and-agent-lightning">Bridging LangGraph and Agent-lightning<a class="headerlink" href="#bridging-langgraph-and-agent-lightning" title="Permanent link">&para;</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Keep <a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/examples/spider/sql_agent.py"><code>sql_agent.py</code></a> open on the side while reading this section. This will help you understand how the code snippets shown here work in practice.</p>
+</div>
+<p>The <strong><code>LitSQLAgent</code></strong> class defined in <a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/examples/spider/sql_agent.py"><code>sql_agent.py</code></a> acts as the bridge. It subclasses <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../../reference/agent/#agentlightning.LitAgent"><code>agl.LitAgent</code></a>, allowing the runner to provision shared resources (e.g., <a class="autorefs autorefs-internal" title="            agentlightning.LLM" href="../../reference/types/#agentlightning.LLM">LLMs</a>) for each rollout.</p>
+<p>Below is a simplified illustration of the key logic (note: this is conceptual pseudocode; the actual implementation includes dataset-specific details):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">LitSQLAgent</span><span class="p">(</span><span class="n">agl</span><span class="o">.</span><span class="n">LitAgent</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_turns</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">truncate_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="c1"># Every turn here refers to a full cycle of write/exe/check/rewrite</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">max_turns</span> <span class="o">=</span> <span class="n">max_turns</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">truncate_length</span> <span class="o">=</span> <span class="n">truncate_length</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">rollout</span><span class="p">(</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="n">task</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        <span class="n">resources</span><span class="p">:</span> <span class="n">agl</span><span class="o">.</span><span class="n">NamedResources</span><span class="p">,</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="n">rollout</span><span class="p">:</span> <span class="n">agl</span><span class="o">.</span><span class="n">Rollout</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="n">llm</span><span class="p">:</span> <span class="n">agl</span><span class="o">.</span><span class="n">LLM</span> <span class="o">=</span> <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;main_llm&quot;</span><span class="p">]</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        <span class="n">agent</span> <span class="o">=</span> <span class="n">build_langgraph_sql_agent</span><span class="p">(</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>            <span class="n">database_path</span><span class="o">=</span><span class="s2">&quot;sqlite:///&quot;</span> <span class="o">+</span> <span class="n">task</span><span class="p">[</span><span class="s2">&quot;db_id&quot;</span><span class="p">],</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>            <span class="n">max_turns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_turns</span><span class="p">,</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>            <span class="n">truncate_length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">truncate_length</span><span class="p">,</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>            <span class="n">openai_base_url</span><span class="o">=</span><span class="n">llm</span><span class="o">.</span><span class="n">get_base_url</span><span class="p">(</span><span class="n">rollout</span><span class="o">.</span><span class="n">rollout_id</span><span class="p">,</span> <span class="n">rollout</span><span class="o">.</span><span class="n">attempt</span><span class="o">.</span><span class="n">attempt_id</span><span class="p">),</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>            <span class="n">model</span><span class="o">=</span><span class="n">llm</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>            <span class="n">sampling_parameters</span><span class="o">=</span><span class="n">llm</span><span class="o">.</span><span class="n">sampling_parameters</span><span class="p">,</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>        <span class="p">)</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">question</span><span class="p">},</span> <span class="p">{</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>            <span class="s2">&quot;callbacks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tracer</span><span class="o">.</span><span class="n">get_langchain_handler</span><span class="p">()],</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>            <span class="s2">&quot;recursion_limit&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="p">})</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>        <span class="n">reward</span> <span class="o">=</span> <span class="n">evaluate_query</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">],</span> <span class="n">ground_truth</span><span class="p">,</span> <span class="n">db_path</span><span class="p">,</span> <span class="n">raise_on_error</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>        <span class="k">return</span> <span class="n">reward</span>
+</code></pre></div>
+<p>The <code>LitSQLAgent</code> serves as a lightweight wrapper around the LangGraph agent, providing the correct interface for the <a class="autorefs autorefs-internal" title="            rollout(task, resources, rollout)" href="../../reference/agent/#agentlightning.LitAgent.rollout"><code>rollout</code></a> method. It constructs the LangGraph agent, invokes it, and returns the evaluation result as a reward signal.</p>
+<p>The <code>"main_llm"</code> resource key is a convention between the agent and <a class="autorefs autorefs-internal" title="            VERL" href="../../algorithm-zoo/verl/#agentlightning.algorithm.verl.VERL">VERL</a>. It is used to inject an OpenAI-compatible endpoint from the <a class="autorefs autorefs-internal" title="            VERL" href="../../algorithm-zoo/verl/#agentlightning.algorithm.verl.VERL">VERL</a> algorithm during rollout. Two approaches are supported to use this <a class="autorefs autorefs-internal" title="            agentlightning.LLM" href="../../reference/types/#agentlightning.LLM">agentlightning.LLM</a> resource:</p>
+<ol>
+<li><strong>Direct access</strong> – Use <a class="autorefs autorefs-internal" title="            endpoint
+
+  
+      instance-attribute
+  " href="../../reference/types/#agentlightning.LLM.endpoint"><code>llm.endpoint</code></a> for a simple integration (identical to the v0.1 example).</li>
+<li><strong>Context-aware access</strong> – Use <a class="autorefs autorefs-internal" title="            get_base_url(rollout_id, attempt_id)" href="../../reference/types/#agentlightning.ProxyLLM.get_base_url"><code>get_base_url</code></a> with <a class="autorefs autorefs-internal" title="            rollout_id
+
+  
+      instance-attribute
+  " href="../../reference/types/#agentlightning.Rollout.rollout_id"><code>rollout.rollout_id</code></a> and <a class="autorefs autorefs-internal" title="            attempt_id
+
+  
+      instance-attribute
+  " href="../../reference/types/#agentlightning.Attempt.attempt_id"><code>rollout.attempt.attempt_id</code></a>.
+   This approach enables per-caller trace attribution, improving trace collection per rollout or attempt when runner-side tracers are unavailable. For details, see <a href="../../tutorials/traces/">Working with Traces</a>.</li>
+</ol>
+<h2 id="reward-signal-and-evaluation">Reward Signal and Evaluation<a class="headerlink" href="#reward-signal-and-evaluation" title="Permanent link">&para;</a></h2>
+<p>The <code>evaluate_query</code> function provides the reward mechanism for RL training. In agent training, obtaining a consistent and meaningful reward signal is often challenging. Fortunately, this is simplified when using the <a href="https://yale-lily.github.io/spider"><strong>Spider dataset</strong></a>. The dataset includes ~8k samples containing natural-language questions, database schemas, and ground-truth SQL queries.</p>
+<p>Using the <a href="https://github.com/taoyds/test-suite-sql-eval"><strong>Spider evaluator</strong></a>, the agent's generated query is executed and compared to the ground-truth query on the target database. The two queries are considered equivalent if they produce identical execution results.</p>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>The ground-truth queries must <strong>never</strong> be exposed to the agent during training to prevent data leakage.</p>
+</div>
+<p>In this setup, the reward is returned directly from the <a class="autorefs autorefs-internal" title="            rollout(task, resources, rollout)" href="../../reference/agent/#agentlightning.LitAgent.rollout"><code>rollout</code></a> method, enabling the runner to forward it back to the RL algorithm.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Avoid using <a class="autorefs autorefs-internal" title="            agentlightning.emit_reward(reward)" href="../../reference/agent/#agentlightning.emit_reward"><code>emit_reward</code></a> in conjunction with returning a reward value. Doing both will cause the algorithm to receive duplicate reward signals, leading to inconsistent training behavior.</p>
+</div>
+<h2 id="configuring-verl-for-reinforcement-learning">Configuring VERL for Reinforcement Learning<a class="headerlink" href="#configuring-verl-for-reinforcement-learning" title="Permanent link">&para;</a></h2>
+<p>View <a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/examples/spider/train_sql_agent.py"><code>examples/spider/train_sql_agent.py</code></a> for a full reinforcement learning configuration, which is a plain Python dictionary. It mirrors (and actually <em>is</em>) the <a href="https://verl.readthedocs.io/en/latest/index.html">shell arguments</a> used to launch training in the VERL framework but is easier to tweak programmatically:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">verl_config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;adv_estimator&quot;</span><span class="p">:</span> <span class="s2">&quot;grpo&quot;</span><span class="p">,</span> <span class="s2">&quot;use_kl_in_reward&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="c1"># train_files and val_files are no longer needed here</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="c1"># because data are read in agl.Trainer</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="o">...</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="c1"># Controls how many tasks are pooled per step</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="c1"># (multiplied by actor_rollout_ref.rollout.n)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="s2">&quot;train_batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="c1"># Prompt and responses larger than these lengths are truncated</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="s2">&quot;max_prompt_length&quot;</span><span class="p">:</span> <span class="mi">4096</span><span class="p">,</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="s2">&quot;max_response_length&quot;</span><span class="p">:</span> <span class="mi">2048</span><span class="p">,</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="p">},</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="s2">&quot;actor_rollout_ref&quot;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="s2">&quot;rollout&quot;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>            <span class="c1"># Only vLLM is supported currently</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;vllm&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>            <span class="c1"># Equals to group size of GRPO</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>            <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>            <span class="c1"># Used to enable tool call parser in vLLM</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>            <span class="s2">&quot;multi_turn&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;hermes&quot;</span><span class="p">},</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>            <span class="o">...</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>        <span class="p">},</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>        <span class="s2">&quot;actor&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;ppo_mini_batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span> <span class="s2">&quot;optim&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">},</span> <span class="o">...</span><span class="p">},</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>            <span class="c1"># Config your preferred LLM here</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;Qwen/Qwen2.5-Coder-1.5B-Instruct&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>            <span class="o">...</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>        <span class="p">},</span>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>    <span class="p">},</span>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>    <span class="s2">&quot;trainer&quot;</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>        <span class="s2">&quot;n_gpus_per_node&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>        <span class="c1"># Validation once before training starts</span>
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>        <span class="s2">&quot;val_before_train&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>        <span class="c1"># Validation every N training steps</span>
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a>        <span class="s2">&quot;test_freq&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>        <span class="c1"># Save checkpoints every N training steps</span>
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>        <span class="s2">&quot;save_freq&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a>        <span class="c1"># Go through the train dataset this many times</span>
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>        <span class="s2">&quot;total_epochs&quot;</span><span class="p">:</span> <span class="mi">2</span>
+<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a>    <span class="p">},</span>
+<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="p">}</span>
+</code></pre></div>
+<p>This is equivalent to the following CLI invocation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python3<span class="w"> </span>-m<span class="w"> </span>verl.trainer.main_ppo<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>algorithm.adv_estimator<span class="o">=</span>grpo<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>algorithm.use_kl_in_reward<span class="o">=</span>False<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>data.train_batch_size<span class="o">=</span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span>data.max_prompt_length<span class="o">=</span><span class="m">4096</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span>data.max_response_length<span class="o">=</span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span>actor_rollout_ref.rollout.name<span class="o">=</span>vllm<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span>actor_rollout_ref.rollout.n<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span>actor_rollout_ref.rollout.multi_turn.format<span class="o">=</span>hermes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span>actor_rollout_ref.actor.ppo_mini_batch_size<span class="o">=</span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span>actor_rollout_ref.actor.optim.lr<span class="o">=</span>1e-6<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span>actor_rollout_ref.model.path<span class="o">=</span>Qwen/Qwen2.5-Coder-1.5B-Instruct<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span>trainer.n_gpus_per_node<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span>trainer.val_before_train<span class="o">=</span>True<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span>trainer.test_freq<span class="o">=</span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span>trainer.save_freq<span class="o">=</span><span class="m">64</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span>trainer.total_epochs<span class="o">=</span><span class="m">2</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>We used to provide a CLI called <code>python -m agentlightning.verl</code> to launch training in v0.1. This is no longer the recommended approach. Instead, use <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>agl.Trainer</code></a> to run VERL and agent runners together, or follow the <a href="../../tutorials/debug/">debugging tutorial</a> if you want an isolated experience similar to v0.1.</p>
+</div>
+<h2 id="orchestrating-training-with-trainer">Orchestrating Training with <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>Trainer</code></a><a class="headerlink" href="#orchestrating-training-with-trainer" title="Permanent link">&para;</a></h2>
+<p><a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>Trainer</code></a> is the high-level orchestrator that integrates the agent, algorithm, dataset, and distributed runners. The key benefits of using the <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>Trainer</code></a> are:</p>
+<ol>
+<li>It allows you to launch everything with a single line of code: <code>trainer.fit(...)</code>.</li>
+<li>It exposes configuration options such as <code>n_runners</code> to control parallelism and <code>adapter</code> to define how algorithms interpret the trace data produced by the agent.</li>
+</ol>
+<p>An example usage is shown below:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">agentlightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">agl</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">LitSQLAgent</span><span class="p">()</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">algorithm</span> <span class="o">=</span> <span class="n">agl</span><span class="o">.</span><span class="n">VERL</span><span class="p">(</span><span class="n">verl_config</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">agl</span><span class="o">.</span><span class="n">Trainer</span><span class="p">(</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">n_runners</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">adapter</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;agent_match&quot;</span><span class="p">:</span> <span class="n">active_agent</span><span class="p">},</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">train_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">&quot;data/train_spider.parquet&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s2">&quot;records&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">val_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">&quot;data/test_dev_500.parquet&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s2">&quot;records&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_data</span><span class="p">,</span> <span class="n">val_dataset</span><span class="o">=</span><span class="n">val_data</span><span class="p">)</span>
+</code></pre></div>
+<p>First, <code>agl.VERL(verl_config)</code> launches the <a class="autorefs autorefs-internal" title="            VERL" href="../../algorithm-zoo/verl/#agentlightning.algorithm.verl.VERL"><code>VERL</code></a> algorithm and its OpenAI-compatible proxy. The <code>train_data</code> and <code>val_data</code> are passed into <a class="autorefs autorefs-internal" title="            VERL" href="../../algorithm-zoo/verl/#agentlightning.algorithm.verl.VERL"><code>VERL</code></a>, which enqueues tasks to a centralized task queue managed by the <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore"><code>LightningStore</code></a>, accessible to all runners.</p>
+<p>When <a class="autorefs autorefs-internal" title="            fit(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.fit"><code>Trainer.fit</code></a> is called, it launches 10 concurrent runners (as specified by <code>n_runners=10</code>). Each runner pulls tasks from the centralized task queue, executes the agent’s <a class="autorefs autorefs-internal" title="            rollout(task, resources, rollout)" href="../../reference/agent/#agentlightning.LitAgent.rollout"><code>rollout</code></a> method, collects traces, and returns rewards to VERL for training.</p>
+<p>The <a class="autorefs autorefs-internal" title="            agentlightning.Adapter" href="../../reference/algorithm/#agentlightning.Adapter"><code>Adapter</code></a>, as discussed earlier, is used at the algorithm side, and receives the traces emitted by the agent and runners. The <code>agent_match</code> parameter ensures <a class="autorefs autorefs-internal" title="            VERL" href="../../algorithm-zoo/verl/#agentlightning.algorithm.verl.VERL"><code>VERL</code></a> only ingests spans from the specific agent you want to optimize.
+In the example above, there are at least three agents—<code>write_query</code>, <code>rewrite_query</code>, and <code>check_query</code>. By setting <code>agent_match</code> to a regex like <code>"write"</code>, both <code>write_query</code> and <code>rewrite_query</code> agents are optimized simultaneously. You can also set it to <code>"write|check"</code> or <code>None</code> to include all agents if desired.</p>
+<h2 id="dry-run-the-pipeline-with-trainerdev">Dry-Run the Pipeline with <a class="autorefs autorefs-internal" title="            dev(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.dev"><code>Trainer.dev</code></a><a class="headerlink" href="#dry-run-the-pipeline-with-trainerdev" title="Permanent link">&para;</a></h2>
+<p>Before committing hours of GPU time, you can <strong>dry-run</strong> the agent with <a class="autorefs autorefs-internal" title="            dev(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.dev"><code>Trainer.dev()</code></a>. This method swaps in the lightweight <a class="autorefs autorefs-internal" title="            agentlightning.Baseline" href="../../reference/algorithm/#agentlightning.Baseline"><code>Baseline</code></a> algorithm, enqueues up to ten tasks, and prints every span emitted by the agent. Because it uses the same runner stack as full training, it’s ideal for verifying database connections and LangGraph control flow.</p>
+<p>To begin, the agent needs a valid OpenAI-compatible endpoint since VERL is not active in this mode. You can use OpenAI’s official API or your own local LLM endpoint. Wrap it as follows:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">agl</span><span class="o">.</span><span class="n">Trainer</span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">n_workers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">initial_resources</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="s2">&quot;main_llm&quot;</span><span class="p">:</span> <span class="n">agl</span><span class="o">.</span><span class="n">LLM</span><span class="p">(</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>            <span class="n">endpoint</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_BASE&quot;</span><span class="p">],</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>            <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4.1-nano&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>            <span class="n">sampling_parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="p">)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="p">},</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
+</code></pre></div>
+<p>Then, call <a class="autorefs autorefs-internal" title="            dev(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.dev"><code>trainer.dev(...)</code></a> with a small number of tasks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">dev_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">&quot;data/test_dev_500.parquet&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s2">&quot;records&quot;</span><span class="p">)[:</span><span class="mi">10</span><span class="p">]</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">trainer</span><span class="o">.</span><span class="n">dev</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">dev_dataset</span><span class="o">=</span><span class="n">dev_data</span><span class="p">)</span>
+</code></pre></div>
+<p>Run this in a Python session or adapt your script to include a <code>--dev</code> flag. Once the spans appear healthy and the rewards are non-zero, switch back to <a class="autorefs autorefs-internal" title="            fit(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.fit"><code>trainer.fit(...)</code></a> for full RL training.</p>
+<h2 id="running-the-sample-code">Running the Sample Code<a class="headerlink" href="#running-the-sample-code" title="Permanent link">&para;</a></h2>
+<p>The following tutorial explains how to run the complete example in <a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/examples/spider"><code>examples/spider</code></a>.</p>
+<h3 id="dataset">Dataset<a class="headerlink" href="#dataset" title="Permanent link">&para;</a></h3>
+<p>The trainer expects three Parquet files inside <code>examples/spider/data</code>:
+<code>train_spider.parquet</code>, <code>test_dev_500.parquet</code>, and <code>test_dev.parquet</code>.</p>
+<p>Download the curated dataset bundle provided with the repository:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span>examples/spider
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pip<span class="w"> </span>install<span class="w"> </span>gdown<span class="w">  </span><span class="c1"># included in the &#39;experiment&#39; optional dependency</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>gdown<span class="w"> </span>--fuzzy<span class="w"> </span>https://drive.google.com/file/d/1oi9J1jZP9TyM35L85CL3qeGWl2jqlnL6/view
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>unzip<span class="w"> </span>-q<span class="w"> </span>spider-data.zip<span class="w"> </span>-d<span class="w"> </span>data
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>rm<span class="w"> </span>spider-data.zip
+</code></pre></div>
+<p>If you prefer to generate the files yourself, download <a href="https://yale-lily.github.io/spider">Spider 1.0</a> and run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python<span class="w"> </span>spider_eval/convert_dataset.py
+</code></pre></div>
+<p>Set <code>VERL_SPIDER_DATA_DIR</code> if you store the dataset outside the default <code>data</code> directory.</p>
+<h3 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h3>
+<p>Create a clean virtual environment, activate it, and install Agent-lightning with the VERL extras required by <a href="../../tutorials/installation/">this tutorial</a>. Install LangChain-related dependencies as needed.</p>
+<p>For full training profiles, plan to use a GPU with at least <strong>40 GB</strong> of memory.</p>
+<h3 id="launch-training">Launch Training<a class="headerlink" href="#launch-training" title="Permanent link">&para;</a></h3>
+<p>From <a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/examples/spider"><code>examples/spider</code></a>, run one of the helper scripts depending on your model preference:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>train_sql_agent.py<span class="w"> </span>qwen<span class="w">   </span><span class="c1"># Default Qwen-2.5-Coder-1.5B run</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python<span class="w"> </span>train_sql_agent.py<span class="w"> </span>llama<span class="w">  </span><span class="c1"># LLaMA-3.2-1B with llama3_json tool parser</span>
+</code></pre></div>
+<p>The script instantiates <code>LitSQLAgent</code> and launches <a class="autorefs autorefs-internal" title="            fit(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.fit"><code>trainer.fit</code></a>.
+Provide <code>--active-agent my_agent_variant</code> if you only want to train one of the agents in the graph.</p>
+<p>For the LLaMA profile, export an <code>HF_TOKEN</code> before running so VERL can download the model weights.</p>
+<div class="admonition tip">
+<p class="admonition-title">Troubleshooting</p>
+<p>If you have got some Ray worker errors on either <code>WANDB_API_KEY</code> not set, or <code>HF_TOKEN</code> not set, or data not found, please try to restart the Ray cluster with the helper script: <a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/scripts/restart_ray.sh">scripts/restart_ray.sh</a>, which essentially stops the ray cluster if any, and starts a new one:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>env<span class="w"> </span><span class="nv">RAY_DEBUG</span><span class="o">=</span>legacy<span class="w"> </span><span class="nv">HYDRA_FULL_ERROR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">VLLM_USE_V1</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>ray<span class="w"> </span>start<span class="w"> </span>--head<span class="w"> </span>--dashboard-host<span class="o">=</span><span class="m">0</span>.0.0.0
+</code></pre></div>
+</div>
+<h3 id="debugging-the-agent-without-verl">Debugging the Agent without VERL<a class="headerlink" href="#debugging-the-agent-without-verl" title="Permanent link">&para;</a></h3>
+<p><a href="https://github.com/microsoft/agent-lightning/tree/c6298a96fd2fd799433362d37aace4eb7fa41026/examples/spider/sql_agent.py"><code>sql_agent.py</code></a> also provides a <code>debug_sql_agent()</code> helper to run the LangGraph workflow directly against a local or hosted OpenAI-compatible endpoint before using VERL.</p>
+<p>Set the following environment variables, then execute the file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_API_BASE</span><span class="o">=</span>&lt;your_api_base&gt;
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>&lt;your_api_key&gt;
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="nb">cd</span><span class="w"> </span>examples/spider
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>python<span class="w"> </span>sql_agent.py
+</code></pre></div>
+<p>This allows you to verify that the workflow and prompts behave as expected before reinforcement learning is introduced.</p>
+<h3 id="evaluation">Evaluation<a class="headerlink" href="#evaluation" title="Permanent link">&para;</a></h3>
+<p>The following results were obtained by running <code>python train_sql_agent.py qwen</code> on a single 80 GB GPU.
+Training completes in approximately <strong>12 hours</strong>.
+The training curves below are smoothed by aggregating every 16 steps for better visualization.</p>
+<p>Additional evaluation results were collected with a legacy version — Agent-lightning v0.1.1, <code>verl==0.5.0</code>, and <code>vllm==0.10.0</code>.
+You can find them in this write-up:
+<a href="https://medium.com/@yugez/training-ai-agents-to-write-and-self-correct-sql-with-reinforcement-learning-571ed31281ad">Training AI Agents to Write and Self-Correct SQL with Reinforcement Learning</a></p>
+<div style="height:400px">
+<canvas data-chart='{"type": "line", "data": {"labels": [0.0, 16.0, 32.0, 48.0, 64.0, 80.0, 96.0, 112.0, 128.0, 144.0, 160.0, 176.0, 192.0, 208.0, 224.0, 240.0, 256.0, 272.0, 288.0, 304.0, 320.0, 336.0, 352.0, 368.0, 384.0, 400.0, 416.0, 432.0], "datasets": [{"label": "Training", "data": [0.4609375, 0.5041666666666667, 0.5790441176470589, 0.6015625, 0.6070772058823529, 0.6208333333333333, 0.6668198529411765, 0.66875, 0.6709558823529411, 0.6708333333333333, 0.6847426470588235, 0.6791666666666667, 0.6819852941176471, 0.690625, 0.7008272058823529, 0.7453125, 0.7398897058823529, 0.7119791666666667, 0.7224264705882353, 0.7114583333333333, 0.7431066176470589, 0.7427083333333333, 0.75, 0.7302083333333333, 0.7247242647058824, 0.7390625, 0.7463235294117647, 0.7376302083333334], "spanGaps": true}, {"label": "Validation", "data": [0.342, null, 0.594, null, 0.642, null, 0.66, null, 0.676, null, 0.676, null, 0.694, null, 0.712, null, 0.702, null, 0.678, null, 0.702, null, 0.702, null, 0.674, null, 0.734, 0.722], "spanGaps": true}]}, "options": {"interaction": {"mode": "nearest", "intersect": false}, "plugins": {"legend": {"display": true, "position": "top"}, "title": {"display": true, "text": "SQL Agent Training Result (agent_match = write)"}}, "scales": {"x": {"title": {"display": true, "text": "Step (aggregated)"}}, "y": {"title": {"display": true, "text": "Accuracy"}}}}}'></canvas>
+</div>
+
+<div style="height:400px">
+<canvas data-chart='{"type": "line", "data": {"labels": [0.0, 16.0, 32.0, 48.0, 64.0, 80.0, 96.0, 112.0, 128.0, 144.0, 160.0, 176.0, 192.0, 208.0, 224.0, 240.0, 256.0, 272.0, 288.0, 304.0, 320.0, 336.0, 352.0, 368.0, 384.0, 400.0, 416.0, 432.0], "datasets": [{"label": "Training", "data": [0.4560546875, 0.578125, 0.6167279411764706, 0.6401041666666667, 0.6461397058823529, 0.6598958333333333, 0.6838235294117647, 0.69375, 0.6916360294117647, 0.6833333333333333, 0.6893382352941176, 0.6921875, 0.6838235294117647, 0.70625, 0.7045036764705882, 0.7442708333333333, 0.7288602941176471, 0.7317708333333334, 0.7311580882352942, 0.7286458333333333, 0.7316176470588235, 0.7359375, 0.7366727941176471, 0.7208333333333333, 0.7118566176470589, 0.7296875, 0.7389705882352942, 0.7350260416666666], "spanGaps": true}, {"label": "Validation", "data": [0.33, null, 0.62, null, 0.662, null, 0.682, null, 0.696, null, 0.7, null, 0.708, null, 0.692, null, 0.72, null, 0.7, null, 0.7, null, 0.702, null, 0.694, null, 0.702, 0.682], "spanGaps": true}]}, "options": {"interaction": {"mode": "nearest", "intersect": false}, "plugins": {"legend": {"display": true, "position": "top"}, "title": {"display": true, "text": "SQL Agent Training Result (agent_match = null)"}}, "scales": {"x": {"title": {"display": true, "text": "Step (aggregated)"}}, "y": {"title": {"display": true, "text": "Value"}}}}}'></canvas>
+</div>
+
+<!-- Was this page helpful? -->
 
 
+
+
+<!-- Comment system -->
 
                 
 
@@ -1703,6 +1865,12 @@ graph LR;
         <script src="../../js/timeago_mkdocs_material.js"></script>
       
         <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+      
+        <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+      
+        <script src="../../javascripts/charts.js"></script>
+      
+        <script src="../../javascripts/move-source-file.js"></script>
       
     
   <script>

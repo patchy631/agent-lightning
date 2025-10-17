@@ -21,11 +21,11 @@
          <lastmod>2025-10-17</lastmod>
     </url>
     <url>
-         <loc>https://microsoft.github.io/agent-lightning/latest/deep-dive/store/</loc>
+         <loc>https://microsoft.github.io/agent-lightning/latest/deep-dive/serving-llm/</loc>
          <lastmod>2025-10-17</lastmod>
     </url>
     <url>
-         <loc>https://microsoft.github.io/agent-lightning/latest/deep-dive/tracing/</loc>
+         <loc>https://microsoft.github.io/agent-lightning/latest/deep-dive/store/</loc>
          <lastmod>2025-10-17</lastmod>
     </url>
     <url>
@@ -86,6 +86,10 @@
     </url>
     <url>
          <loc>https://microsoft.github.io/agent-lightning/latest/tutorials/parallelize/</loc>
+         <lastmod>2025-10-17</lastmod>
+    </url>
+    <url>
+         <loc>https://microsoft.github.io/agent-lightning/latest/tutorials/traces/</loc>
          <lastmod>2025-10-17</lastmod>
     </url>
     <url>

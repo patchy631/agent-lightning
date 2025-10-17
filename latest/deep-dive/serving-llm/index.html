@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://microsoft.github.io/agent-lightning/latest/deep-dive/tracing/">
+        <link rel="canonical" href="https://microsoft.github.io/agent-lightning/latest/deep-dive/serving-llm/">
       
       
         <link rel="prev" href="../store/">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Understanding Tracing - Agent Lightning</title>
+        <title>Serving LLM - Agent Lightning</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#understanding-tracing" class="md-skip">
+        <a href="#serving-llms-under-agent-lightning" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Understanding Tracing
+              Serving LLM
             
           </span>
         </div>
@@ -598,6 +598,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../tutorials/traces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Working with Traces
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../tutorials/parallelize/" class="md-nav__link">
         
   
@@ -849,17 +872,76 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Serving LLM
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
-    Understanding Tracing
+    Serving LLM
     
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general-background-on-llm-serving" class="md-nav__link">
+    <span class="md-ellipsis">
+      General Background on LLM Serving
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      LLM Proxy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-ids-and-why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token IDs and Why it Matters
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1129,6 +1211,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general-background-on-llm-serving" class="md-nav__link">
+    <span class="md-ellipsis">
+      General Background on LLM Serving
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      LLM Proxy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-ids-and-why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token IDs and Why it Matters
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1144,14 +1261,25 @@
     <a href="https://microsoft.github.io/agent-lightning/stable/">https://microsoft.github.io/agent-lightning/stable/</a>
   </div>
   
-                  
+                  <!-- Copied and modified from https://github.com/squidfunk/mkdocs-material/blob/master/src/templates/partials/content.html -->
 
+<!-- Tags -->
+
+
+
+<!-- Actions -->
 
   
   
 
 
-<h1 id="understanding-tracing">Understanding Tracing<a class="headerlink" href="#understanding-tracing" title="Permanent link">&para;</a></h1>
+<!--
+  Hack: check whether the content contains a h1 headline. If it doesn't, the
+  page title (or respectively site name) is used as the main headline.
+-->
+
+
+<!-- Source file information -->
 
 
 
@@ -1174,7 +1302,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 15, 2025 10:01:09 UTC"><span class="timeago" datetime="2025-10-15T10:01:09+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 15, 2025 10:01:09 UTC">2025-10-15</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 17, 2025 18:24:27 UTC"><span class="timeago" datetime="2025-10-17T18:24:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 17, 2025 18:24:27 UTC">2025-10-17</span>
   </span>
 
     
@@ -1184,7 +1312,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 15, 2025 10:01:09 UTC"><span class="timeago" datetime="2025-10-15T10:01:09+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 15, 2025 10:01:09 UTC">2025-10-15</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 17, 2025 18:24:27 UTC"><span class="timeago" datetime="2025-10-17T18:24:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 17, 2025 18:24:27 UTC">2025-10-17</span>
   </span>
 
     
@@ -1208,8 +1336,19 @@
   </aside>
 
 
+<!-- Page content -->
+<h1 id="serving-llms-under-agent-lightning">Serving LLMs under Agent-lightning<a class="headerlink" href="#serving-llms-under-agent-lightning" title="Permanent link">&para;</a></h1>
+<p>Fine-tuning (the weights of) Large Language Models (LLMs) is a core functionality of Agent-lightning. Nevertheless, Agent-lightning is NEITHER a LLM inference engine NOR a model serving framework. In this deep dive, we discuss how to <em>"correctly"</em> serve a LLM under Agent-lightning and the surronding infrastructure Agent-lightning provides.</p>
+<h2 id="general-background-on-llm-serving">General Background on LLM Serving<a class="headerlink" href="#general-background-on-llm-serving" title="Permanent link">&para;</a></h2>
+<h2 id="llm-proxy">LLM Proxy<a class="headerlink" href="#llm-proxy" title="Permanent link">&para;</a></h2>
+<h2 id="token-ids-and-why-it-matters">Token IDs and Why it Matters<a class="headerlink" href="#token-ids-and-why-it-matters" title="Permanent link">&para;</a></h2>
+
+<!-- Was this page helpful? -->
 
 
+
+
+<!-- Comment system -->
 
                 
 
@@ -1265,6 +1404,12 @@
         <script src="../../js/timeago_mkdocs_material.js"></script>
       
         <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+      
+        <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+      
+        <script src="../../javascripts/charts.js"></script>
+      
+        <script src="../../javascripts/move-source-file.js"></script>
       
     
   <script>
