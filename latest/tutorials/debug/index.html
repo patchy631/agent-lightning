@@ -52,6 +52,8 @@
     
       <link rel="stylesheet" href="../../css/timeago.css">
     
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
       <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
@@ -1320,7 +1322,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 17, 2025 18:24:27 UTC"><span class="timeago" datetime="2025-10-17T18:24:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 17, 2025 18:24:27 UTC">2025-10-17</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 18, 2025 12:48:04 UTC"><span class="timeago" datetime="2025-10-18T12:48:04+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 18, 2025 12:48:04 UTC">2025-10-18</span>
   </span>
 
     
@@ -1356,7 +1358,7 @@
 
 <!-- Page content -->
 <h1 id="debugging-and-troubleshooting">Debugging and Troubleshooting<a class="headerlink" href="#debugging-and-troubleshooting" title="Permanent link">&para;</a></h1>
-<p>When you train your own agent with Agent-lightning, most failures surface because the agent logic is brittle or simply incorrect. Debugging becomes easier when you peel back the stack: start by driving the rollout logic on its own, dry-run the trainer loop, and only then bring the full algorithm and runner topology online. The <a href="https://github.com/microsoft/agent-lightning/tree/d31090e9ee20790876359075d904a64452148bcb/examples/apo/apo_debug.py"><code>examples/apo/apo_debug.py</code></a> script demonstrates these techniques; this guide expands on each approach and helps you decide when to reach for them.</p>
+<p>When you train your own agent with Agent-lightning, most failures surface because the agent logic is brittle or simply incorrect. Debugging becomes easier when you peel back the stack: start by driving the rollout logic on its own, dry-run the trainer loop, and only then bring the full algorithm and runner topology online. The <a href="https://github.com/microsoft/agent-lightning/tree/89a887d835ef7c3e35e7337a2555d27ed49e220e/examples/apo/apo_debug.py"><code>examples/apo/apo_debug.py</code></a> script demonstrates these techniques; this guide expands on each approach and helps you decide when to reach for them.</p>
 <h2 id="using-runner-in-isolation">Using <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner"><code>Runner</code></a> in Isolation<a class="headerlink" href="#using-runner-in-isolation" title="Permanent link">&para;</a></h2>
 <p><a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner"><code>Runner</code></a> is a long-lived worker that wraps your <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../../reference/agent/#agentlightning.LitAgent"><code>LitAgent</code></a>, coordinates tracing, and talks to the <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore"><code>LightningStore</code></a>. In typical training flows the trainer manages runners for you, but being able to spin one up manually is invaluable while debugging.</p>
 <p>If you define rollout logic with <a class="autorefs autorefs-internal" title="            agentlightning.rollout(func)" href="../../reference/agent/#agentlightning.rollout"><code>@rollout</code></a> or implement a <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../../reference/agent/#agentlightning.LitAgent"><code>LitAgent</code></a> directly, you will get a <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../../reference/agent/#agentlightning.LitAgent"><code>LitAgent</code></a> instance and you should be able to execute it with <a class="autorefs autorefs-internal" title="            agentlightning.LitAgentRunner" href="../../reference/runner/#agentlightning.LitAgentRunner"><code>LitAgentRunner</code></a>, which is a subclass of <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner"><code>Runner</code></a>. The runner needs but does not instantiate a <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../../reference/runner/#agentlightning.Tracer"><code>Tracer</code></a>, so supply one yourself. See <a href="../traces/">Working with Traces</a> for a walkthrough of tracer options.</p>
@@ -1449,7 +1451,7 @@
 <li>Inspecting the tracer instance after they are activated</li>
 <li>Logging rollout inputs before they are processed by the agent</li>
 </ul>
-<p>The <code>hook</code> mode in <a href="https://github.com/microsoft/agent-lightning/tree/d31090e9ee20790876359075d904a64452148bcb/examples/apo/apo_debug.py"><code>examples/apo/apo_debug.py</code></a> prints every span collected during a rollout:</p>
+<p>The <code>hook</code> mode in <a href="https://github.com/microsoft/agent-lightning/tree/89a887d835ef7c3e35e7337a2555d27ed49e220e/examples/apo/apo_debug.py"><code>examples/apo/apo_debug.py</code></a> prints every span collected during a rollout:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">agentlightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">agl</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># ... Same as previous example</span>
@@ -1523,13 +1525,14 @@
 </code></pre></div>
 <p>The only limitation is that resources remain static and components like <a class="autorefs autorefs-internal" title="            agentlightning.LLMProxy" href="../../reference/algorithm/#agentlightning.LLMProxy"><code>LLMProxy</code></a> are not wired in. For richer dry runs you can subclass <a class="autorefs autorefs-internal" title="            agentlightning.FastAlgorithm" href="../../reference/algorithm/#agentlightning.FastAlgorithm"><code>FastAlgorithm</code></a> and override the pieces you care about.</p>
 <h2 id="debug-the-algorithm-runner-boundary">Debug the Algorithm-Runner Boundary<a class="headerlink" href="#debug-the-algorithm-runner-boundary" title="Permanent link">&para;</a></h2>
+<p><a href="" id="debug-with-external-store"></a></p>
 <p>Debugging algorithms in Agent-Lightning is often more challenging than debugging agents. Algorithms are typically <strong>stateful</strong> and depend on several moving parts — runners, stores, and trainers — which makes it difficult to isolate and inspect their behavior. Even mocking an agent to cooperate with an algorithm can be costly and error-prone. To simplify this, Agent-Lightning provides a way to run algorithms in isolation so you can attach a debugger and inspect internal state without interference from other components.</p>
 <p>By default, <a class="autorefs autorefs-internal" title="            fit(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.fit"><code>Trainer.fit</code></a> runs the algorithm in the main process and thread, but its logs are interleaved with those from the store and runners, making it hard to follow what’s happening inside the algorithm itself. In <a href="../../how-to/write-first-algorithm/"><em>Write Your First Algorithm</em></a>, we covered how to stand up a store, algorithm, and runner in isolation for your own implementations. This section extends that approach to cover two common questions:</p>
 <ol>
 <li>How can I run built-in or class-based algorithms (inheriting from <a class="autorefs autorefs-internal" title="            agentlightning.Algorithm" href="../../reference/algorithm/#agentlightning.Algorithm"><code>Algorithm</code></a>) in isolation?</li>
 <li>How can I still use <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>Trainer</code></a> features like <code>n_runners</code>, <code>adapter</code>, or <code>llm_proxy</code> while debugging?</li>
 </ol>
-<p>The solution is to keep using a <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>Trainer</code></a> instance but <strong>manage the store yourself</strong>, running the algorithm and runner roles separately. This approach mirrors the internal process orchestration of <a class="autorefs autorefs-internal" title="            fit(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.fit"><code>Trainer.fit</code></a>, but with more visibility and control. Below, we show a step-by-step guide to achieve this with the <a href="https://github.com/microsoft/agent-lightning/tree/d31090e9ee20790876359075d904a64452148bcb/examples/calc_x/train_calc_agent.py"><code>calc_agent</code> example</a>.</p>
+<p>The solution is to keep using a <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>Trainer</code></a> instance but <strong>manage the store yourself</strong>, running the algorithm and runner roles separately. This approach mirrors the internal process orchestration of <a class="autorefs autorefs-internal" title="            fit(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.fit"><code>Trainer.fit</code></a>, but with more visibility and control. Below, we show a step-by-step guide to achieve this with the <a href="https://github.com/microsoft/agent-lightning/tree/89a887d835ef7c3e35e7337a2555d27ed49e220e/examples/calc_x/train_calc_agent.py"><code>calc_agent</code> example</a>.</p>
 <p><strong>1. Launch the store manually.</strong>
 In a separate terminal, start the store:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>agl<span class="w"> </span>store<span class="w"> </span>--port<span class="w"> </span><span class="m">4747</span>
@@ -1623,9 +1626,15 @@ You can continue using the same datasets, adapters, and proxies as usual. Becaus
       
         <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
       
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
         <script src="../../javascripts/charts.js"></script>
       
         <script src="../../javascripts/move-source-file.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
       
     
   <script>

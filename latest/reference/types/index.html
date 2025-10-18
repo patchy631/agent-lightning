@@ -50,6 +50,8 @@
     
       <link rel="stylesheet" href="../../css/timeago.css">
     
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
       <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
@@ -4561,10 +4563,10 @@ You don't have to inherit from this class; you can use a simple list if you want
 <a id="__codelineno-0-294" name="__codelineno-0-294"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called immediately after the tracer enters the trace context but before the rollout begins.</span>
 <a id="__codelineno-0-295" name="__codelineno-0-295"></a>
 <a id="__codelineno-0-296" name="__codelineno-0-296"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="sd">            agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">            tracer: The :class:`Tracer` instance associated with the runner.</span>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">            rollout: The :class:`Rollout` object that will be processed.</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="sd">            agent: The [`LitAgent`][agentlightning.LitAgent] instance associated with the runner.</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="sd">            runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">            tracer: The [`Tracer`][agentlightning.Tracer] instance associated with the runner.</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">            rollout: The [`Rollout`][agentlightning.Rollout] object that will be processed.</span>
 <a id="__codelineno-0-301" name="__codelineno-0-301"></a>
 <a id="__codelineno-0-302" name="__codelineno-0-302"></a><span class="sd">        Subclasses can override this method to implement custom logic such as logging,</span>
 <a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">        metric collection, or resource setup. By default, this is a no-op.</span>
@@ -4576,10 +4578,10 @@ You don't have to inherit from this class; you can use a simple list if you want
 <a id="__codelineno-0-309" name="__codelineno-0-309"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called immediately after the rollout completes but before the tracer exits the trace context.</span>
 <a id="__codelineno-0-310" name="__codelineno-0-310"></a>
 <a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">            agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">            tracer: The :class:`Tracer` instance associated with the runner.</span>
-<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">            rollout: The :class:`Rollout` object that has been processed.</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">            agent: The [`LitAgent`][agentlightning.LitAgent] instance associated with the runner.</span>
+<a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">            runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">            tracer: The [`Tracer`][agentlightning.Tracer] instance associated with the runner.</span>
+<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">            rollout: The [`Rollout`][agentlightning.Rollout] object that has been processed.</span>
 <a id="__codelineno-0-316" name="__codelineno-0-316"></a>
 <a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">        Subclasses can override this method to implement custom logic such as logging,</span>
 <a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="sd">        metric collection, or resource cleanup. By default, this is a no-op.</span>
@@ -4589,9 +4591,9 @@ You don't have to inherit from this class; you can use a simple list if you want
 <a id="__codelineno-0-322" name="__codelineno-0-322"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called immediately before a rollout *attempt* begins.</span>
 <a id="__codelineno-0-323" name="__codelineno-0-323"></a>
 <a id="__codelineno-0-324" name="__codelineno-0-324"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a><span class="sd">            agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a><span class="sd">            rollout: The :class:`Rollout` object that will be processed.</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a><span class="sd">            agent: The [`LitAgent`][agentlightning.LitAgent] instance associated with the runner.</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a><span class="sd">            runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a><span class="sd">            rollout: The [`Rollout`][agentlightning.Rollout] object that will be processed.</span>
 <a id="__codelineno-0-328" name="__codelineno-0-328"></a>
 <a id="__codelineno-0-329" name="__codelineno-0-329"></a><span class="sd">        Subclasses can override this method to implement custom logic such as</span>
 <a id="__codelineno-0-330" name="__codelineno-0-330"></a><span class="sd">        logging, metric collection, or resource setup. By default, this is a</span>
@@ -4609,9 +4611,9 @@ You don't have to inherit from this class; you can use a simple list if you want
 <a id="__codelineno-0-342" name="__codelineno-0-342"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called after a rollout *attempt* completes.</span>
 <a id="__codelineno-0-343" name="__codelineno-0-343"></a>
 <a id="__codelineno-0-344" name="__codelineno-0-344"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a><span class="sd">            agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="sd">            rollout: The :class:`Rollout` object that has been processed.</span>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a><span class="sd">            agent: The [`LitAgent`][agentlightning.LitAgent] instance associated with the runner.</span>
+<a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="sd">            runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="sd">            rollout: The [`Rollout`][agentlightning.Rollout] object that has been processed.</span>
 <a id="__codelineno-0-348" name="__codelineno-0-348"></a><span class="sd">            spans: The spans that have been added to the store.</span>
 <a id="__codelineno-0-349" name="__codelineno-0-349"></a>
 <a id="__codelineno-0-350" name="__codelineno-0-350"></a><span class="sd">        Subclasses can override this method for cleanup or additional</span>
@@ -4671,7 +4673,7 @@ You don't have to inherit from this class; you can use a simple list if you want
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>LitAgent</code> instance associated with the runner.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../agent/#agentlightning.LitAgent"><code>LitAgent</code></a> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -4687,7 +4689,7 @@ You don't have to inherit from this class; you can use a simple list if you want
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Runner</code> managing the rollout.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../runner/#agentlightning.Runner"><code>Runner</code></a> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -4703,7 +4705,7 @@ You don't have to inherit from this class; you can use a simple list if you want
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Rollout</code> object that has been processed.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Rollout" href="#agentlightning.Rollout"><code>Rollout</code></a> object that has been processed.</p>
               </div>
             </td>
             <td>
@@ -4763,9 +4765,9 @@ logging. By default, this is a no-op.</p>
 <a id="__codelineno-0-342" name="__codelineno-0-342"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called after a rollout *attempt* completes.</span>
 <a id="__codelineno-0-343" name="__codelineno-0-343"></a>
 <a id="__codelineno-0-344" name="__codelineno-0-344"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a><span class="sd">        agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="sd">        rollout: The :class:`Rollout` object that has been processed.</span>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a><span class="sd">        agent: The [`LitAgent`][agentlightning.LitAgent] instance associated with the runner.</span>
+<a id="__codelineno-0-346" name="__codelineno-0-346"></a><span class="sd">        runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-347" name="__codelineno-0-347"></a><span class="sd">        rollout: The [`Rollout`][agentlightning.Rollout] object that has been processed.</span>
 <a id="__codelineno-0-348" name="__codelineno-0-348"></a><span class="sd">        spans: The spans that have been added to the store.</span>
 <a id="__codelineno-0-349" name="__codelineno-0-349"></a>
 <a id="__codelineno-0-350" name="__codelineno-0-350"></a><span class="sd">    Subclasses can override this method for cleanup or additional</span>
@@ -4815,7 +4817,7 @@ logging. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>LitAgent</code> instance associated with the runner.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../agent/#agentlightning.LitAgent"><code>LitAgent</code></a> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -4831,7 +4833,7 @@ logging. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Runner</code> managing the rollout.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../runner/#agentlightning.Runner"><code>Runner</code></a> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -4847,7 +4849,7 @@ logging. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Rollout</code> object that will be processed.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Rollout" href="#agentlightning.Rollout"><code>Rollout</code></a> object that will be processed.</p>
               </div>
             </td>
             <td>
@@ -4878,9 +4880,9 @@ no-op.</p>
 <a id="__codelineno-0-322" name="__codelineno-0-322"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called immediately before a rollout *attempt* begins.</span>
 <a id="__codelineno-0-323" name="__codelineno-0-323"></a>
 <a id="__codelineno-0-324" name="__codelineno-0-324"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a><span class="sd">        agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a><span class="sd">        rollout: The :class:`Rollout` object that will be processed.</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a><span class="sd">        agent: The [`LitAgent`][agentlightning.LitAgent] instance associated with the runner.</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a><span class="sd">        runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a><span class="sd">        rollout: The [`Rollout`][agentlightning.Rollout] object that will be processed.</span>
 <a id="__codelineno-0-328" name="__codelineno-0-328"></a>
 <a id="__codelineno-0-329" name="__codelineno-0-329"></a><span class="sd">    Subclasses can override this method to implement custom logic such as</span>
 <a id="__codelineno-0-330" name="__codelineno-0-330"></a><span class="sd">    logging, metric collection, or resource setup. By default, this is a</span>
@@ -4930,7 +4932,7 @@ no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>LitAgent</code> instance associated with the runner.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../agent/#agentlightning.LitAgent"><code>LitAgent</code></a> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -4946,7 +4948,7 @@ no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Runner</code> managing the rollout.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../runner/#agentlightning.Runner"><code>Runner</code></a> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -4962,7 +4964,7 @@ no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Tracer</code> instance associated with the runner.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../runner/#agentlightning.Tracer"><code>Tracer</code></a> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -4978,7 +4980,7 @@ no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Rollout</code> object that has been processed.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Rollout" href="#agentlightning.Rollout"><code>Rollout</code></a> object that has been processed.</p>
               </div>
             </td>
             <td>
@@ -5012,10 +5014,10 @@ metric collection, or resource cleanup. By default, this is a no-op.</p>
 <a id="__codelineno-0-309" name="__codelineno-0-309"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called immediately after the rollout completes but before the tracer exits the trace context.</span>
 <a id="__codelineno-0-310" name="__codelineno-0-310"></a>
 <a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">        agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">        tracer: The :class:`Tracer` instance associated with the runner.</span>
-<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">        rollout: The :class:`Rollout` object that has been processed.</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">        agent: The [`LitAgent`][agentlightning.LitAgent] instance associated with the runner.</span>
+<a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">        runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">        tracer: The [`Tracer`][agentlightning.Tracer] instance associated with the runner.</span>
+<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">        rollout: The [`Rollout`][agentlightning.Rollout] object that has been processed.</span>
 <a id="__codelineno-0-316" name="__codelineno-0-316"></a>
 <a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">    Subclasses can override this method to implement custom logic such as logging,</span>
 <a id="__codelineno-0-318" name="__codelineno-0-318"></a><span class="sd">    metric collection, or resource cleanup. By default, this is a no-op.</span>
@@ -5064,7 +5066,7 @@ metric collection, or resource cleanup. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>LitAgent</code> instance associated with the runner.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../agent/#agentlightning.LitAgent"><code>LitAgent</code></a> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -5080,7 +5082,7 @@ metric collection, or resource cleanup. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Runner</code> managing the rollout.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../runner/#agentlightning.Runner"><code>Runner</code></a> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -5096,7 +5098,7 @@ metric collection, or resource cleanup. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Tracer</code> instance associated with the runner.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../runner/#agentlightning.Tracer"><code>Tracer</code></a> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -5112,7 +5114,7 @@ metric collection, or resource cleanup. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Rollout</code> object that will be processed.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Rollout" href="#agentlightning.Rollout"><code>Rollout</code></a> object that will be processed.</p>
               </div>
             </td>
             <td>
@@ -5146,10 +5148,10 @@ metric collection, or resource setup. By default, this is a no-op.</p>
 <a id="__codelineno-0-294" name="__codelineno-0-294"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called immediately after the tracer enters the trace context but before the rollout begins.</span>
 <a id="__codelineno-0-295" name="__codelineno-0-295"></a>
 <a id="__codelineno-0-296" name="__codelineno-0-296"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="sd">        agent: The :class:`LitAgent` instance associated with the runner.</span>
-<a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">        tracer: The :class:`Tracer` instance associated with the runner.</span>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">        rollout: The :class:`Rollout` object that will be processed.</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="sd">        agent: The [`LitAgent`][agentlightning.LitAgent] instance associated with the runner.</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="sd">        runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">        tracer: The [`Tracer`][agentlightning.Tracer] instance associated with the runner.</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">        rollout: The [`Rollout`][agentlightning.Rollout] object that will be processed.</span>
 <a id="__codelineno-0-301" name="__codelineno-0-301"></a>
 <a id="__codelineno-0-302" name="__codelineno-0-302"></a><span class="sd">    Subclasses can override this method to implement custom logic such as logging,</span>
 <a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">    metric collection, or resource setup. By default, this is a no-op.</span>
@@ -8172,9 +8174,15 @@ that is not associated with any real operations.</p>
       
         <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
       
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
         <script src="../../javascripts/charts.js"></script>
       
         <script src="../../javascripts/move-source-file.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
       
     
   <script>

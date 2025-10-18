@@ -52,6 +52,8 @@
     
       <link rel="stylesheet" href="../../css/timeago.css">
     
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
       <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
@@ -1432,7 +1434,7 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">vllm</span><span class="o">==</span><span class="m">0</span>.9.2
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">verl</span><span class="o">==</span><span class="m">0</span>.5.0
 </code></pre></div>
-<p>See <a href="https://github.com/microsoft/agent-lightning/tree/d31090e9ee20790876359075d904a64452148bcb/scripts/setup_stable_gpu.sh">this script</a> for a full installation script.</p>
+<p>See <a href="https://github.com/microsoft/agent-lightning/tree/89a887d835ef7c3e35e7337a2555d27ed49e220e/scripts/setup_stable_gpu.sh">this script</a> for a full installation script.</p>
 <h3 id="install-agent-lightning">Install Agent Lightning<a class="headerlink" href="#install-agent-lightning" title="Permanent link">&para;</a></h3>
 <p>Now, you're ready to install Agent Lightning itself.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>agentlightning
@@ -1542,9 +1544,15 @@ We recommend doing this as the final step to avoid dependency versions being ove
       
         <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
       
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
         <script src="../../javascripts/charts.js"></script>
       
         <script src="../../javascripts/move-source-file.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
       
     
   <script>

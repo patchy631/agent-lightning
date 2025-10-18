@@ -52,6 +52,8 @@
     
       <link rel="stylesheet" href="../../css/timeago.css">
     
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
       <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
@@ -3138,7 +3140,8 @@ infrastructure.</p>
 <span class="normal"><a href="#__codelineno-0-308">308</a></span>
 <span class="normal"><a href="#__codelineno-0-309">309</a></span>
 <span class="normal"><a href="#__codelineno-0-310">310</a></span>
-<span class="normal"><a href="#__codelineno-0-311">311</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="k">class</span><span class="w"> </span><span class="nc">LitAgent</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="normal"><a href="#__codelineno-0-311">311</a></span>
+<span class="normal"><a href="#__codelineno-0-312">312</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="k">class</span><span class="w"> </span><span class="nc">LitAgent</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for the training and validation logic of an agent.</span>
 <a id="__codelineno-0-40" name="__codelineno-0-40"></a>
 <a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    Developers should subclass this class and implement the rollout methods</span>
@@ -3263,155 +3266,156 @@ infrastructure.</p>
 <a id="__codelineno-0-160" name="__codelineno-0-160"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called immediately before a rollout begins.</span>
 <a id="__codelineno-0-162" name="__codelineno-0-162"></a>
-<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">        Deprecated in favor of `on_rollout_start` in the `Hook` interface.</span>
-<a id="__codelineno-0-164" name="__codelineno-0-164"></a>
-<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">            task: The :class:`Task` object that will be processed.</span>
-<a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">            tracer: The tracer instance associated with the runner.</span>
-<a id="__codelineno-0-169" name="__codelineno-0-169"></a>
-<a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">        Subclasses can override this method to implement custom logic such as</span>
-<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">        logging, metric collection, or resource setup. By default, this is a</span>
-<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">        no-op.</span>
-<a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-174" name="__codelineno-0-174"></a>
-<a id="__codelineno-0-175" name="__codelineno-0-175"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called after a rollout completes.</span>
-<a id="__codelineno-0-177" name="__codelineno-0-177"></a>
-<a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="sd">        Deprecated in favor of `on_rollout_end` in the `Hook` interface.</span>
-<a id="__codelineno-0-179" name="__codelineno-0-179"></a>
-<a id="__codelineno-0-180" name="__codelineno-0-180"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">            task: The :class:`Task` object that was processed.</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">            rollout: The resulting :class:`Rollout` object.</span>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">            runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">            tracer: The tracer instance associated with the runner.</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">        Subclasses can override this method for cleanup or additional</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">        logging. By default, this is a no-op.</span>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Main entry point for executing a rollout.</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="sd">        This method determines whether to call the synchronous or</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="sd">        asynchronous rollout method based on the agent&#39;s implementation.</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="sd">        If you don&#39;t wish to implement both training rollout and validation</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">        rollout separately, you can just implement `rollout` which will work for both.</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">            task: The task object received from the server, containing the</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">                  input data and metadata.</span>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">            resources: A dictionary of named resources (e.g., LLMs, prompt</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">                       templates) for the agent to use.</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">            rollout: The full rollout object, please avoid from directly modifying it.</span>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">                     Most agents should only use `task` and `resources`. Use `rollout`</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">                     only if you need to access metadata like `rollout_id`.</span>
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a><span class="sd">        Returns:</span>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a><span class="sd">            The result of the rollout, which can be one of:</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="sd">            - None. The tracing should be handled by the agent runner.</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="sd">            - A float representing the final reward.</span>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">            - A list of `Triplet` objects for detailed, step-by-step feedback.</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">            - A list of `ReadableSpan` objects for OpenTelemetry tracing.</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">            - A list of dictionaries for any trace spans.</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">            - A complete `Rollout` object for full control over reporting.</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Agents must implement the `rollout` method.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Asynchronous version of the main rollout method.</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">        This method determines whether to call the synchronous or</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">        asynchronous rollout method based on the agent&#39;s implementation.</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">            task: The task object received from the server, containing the</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a><span class="sd">                  input data and metadata.</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">            resources: A dictionary of named resources (e.g., LLMs, prompt</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">                       templates) for the agent to use.</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="sd">            rollout: The full rollout object, please avoid from directly modifying it.</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a><span class="sd">                     Most agents should only use `task` and `resources`. Use `rollout`</span>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="sd">                     only if you need to access metadata like `rollout_id`.</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="sd">        Returns:</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="sd">            The result of the rollout, which can be one of:</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">            - None. The tracing should be handled by the agent runner.</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">            - A float representing the final reward.</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">            - A list of `Triplet` objects for detailed, step-by-step feedback.</span>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">            - A list of `ReadableSpan` objects for OpenTelemetry tracing.</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="sd">            - A list of dictionaries for any trace spans.</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="sd">            - A complete `Rollout` object for full control over reporting.</span>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Agents must implement the `rollout_async` method for async operations.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">training_rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Defines the agent&#39;s behavior for a single training task.</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">        This method should contain the logic for how the agent processes an</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">        input, uses the provided resources (like LLMs or prompts), and</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">        produces a result.</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">            task: The task object received from the server, containing the</span>
-<a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">                  input data and metadata.</span>
-<a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="sd">            resources: A dictionary of named resources (e.g., LLMs, prompt</span>
-<a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">                       templates) for the agent to use.</span>
-<a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">            rollout: The full rollout object, please avoid from directly modifying it.</span>
-<a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
-<a id="__codelineno-0-260" name="__codelineno-0-260"></a>
-<a id="__codelineno-0-261" name="__codelineno-0-261"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">validation_rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Defines the agent&#39;s behavior for a single validation task.</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a><span class="sd">        By default, this method redirects to `training_rollout`. Override it</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">        if the agent should behave differently during validation.</span>
-<a id="__codelineno-0-266" name="__codelineno-0-266"></a>
-<a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">            task: The task object received from the server, containing the</span>
-<a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">                  input data and metadata.</span>
-<a id="__codelineno-0-270" name="__codelineno-0-270"></a><span class="sd">            resources: A dictionary of named resources for the agent to use.</span>
-<a id="__codelineno-0-271" name="__codelineno-0-271"></a><span class="sd">            rollout: The full rollout object, avoid from modifying it.</span>
-<a id="__codelineno-0-272" name="__codelineno-0-272"></a>
-<a id="__codelineno-0-273" name="__codelineno-0-273"></a><span class="sd">        Returns:</span>
-<a id="__codelineno-0-274" name="__codelineno-0-274"></a><span class="sd">            The result of the validation rollout. See `rollout` for</span>
-<a id="__codelineno-0-275" name="__codelineno-0-275"></a><span class="sd">            possible return types.</span>
-<a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-277" name="__codelineno-0-277"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>
-<a id="__codelineno-0-279" name="__codelineno-0-279"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">training_rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Asynchronous version of `training_rollout`.</span>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">        This method should be implemented by agents that perform asynchronous</span>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">        operations (e.g., non-blocking I/O, concurrent API calls).</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">            task: The task object received from the server.</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="sd">            resources: A dictionary of named resources for the agent to use.</span>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">            rollout: The full rollout object, avoid from modifying it.</span>
-<a id="__codelineno-0-289" name="__codelineno-0-289"></a>
-<a id="__codelineno-0-290" name="__codelineno-0-290"></a><span class="sd">        Returns:</span>
-<a id="__codelineno-0-291" name="__codelineno-0-291"></a><span class="sd">            The result of the asynchronous training rollout. See `rollout` for</span>
-<a id="__codelineno-0-292" name="__codelineno-0-292"></a><span class="sd">            possible return types.</span>
-<a id="__codelineno-0-293" name="__codelineno-0-293"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-294" name="__codelineno-0-294"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout_async</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
-<a id="__codelineno-0-295" name="__codelineno-0-295"></a>
-<a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validation_rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Asynchronous version of `validation_rollout`.</span>
-<a id="__codelineno-0-298" name="__codelineno-0-298"></a>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">        By default, this method redirects to `training_rollout_async`.</span>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">        Override it for different asynchronous validation behavior.</span>
-<a id="__codelineno-0-301" name="__codelineno-0-301"></a>
-<a id="__codelineno-0-302" name="__codelineno-0-302"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">            task: The task object received from the server.</span>
-<a id="__codelineno-0-304" name="__codelineno-0-304"></a><span class="sd">            resources: A dictionary of named resources for the agent to use.</span>
-<a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="sd">            rollout: The full rollout object, avoid from modifying it.</span>
-<a id="__codelineno-0-306" name="__codelineno-0-306"></a>
-<a id="__codelineno-0-307" name="__codelineno-0-307"></a><span class="sd">        Returns:</span>
-<a id="__codelineno-0-308" name="__codelineno-0-308"></a><span class="sd">            The result of the asynchronous validation rollout. See `rollout` for</span>
-<a id="__codelineno-0-309" name="__codelineno-0-309"></a><span class="sd">            possible return types.</span>
-<a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-311" name="__codelineno-0-311"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout_async</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
+<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">            task: The `Task` object that will be processed.</span>
+<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">            runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">            tracer: The [`Tracer`][agentlightning.Tracer] instance associated with the runner.</span>
+<a id="__codelineno-0-167" name="__codelineno-0-167"></a>
+<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">        Deprecated:</span>
+<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">            In favor of `on_rollout_start` in the [`Hook`][agentlightning.Hook] interface.</span>
+<a id="__codelineno-0-170" name="__codelineno-0-170"></a>
+<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">        Subclasses can override this method to implement custom logic such as</span>
+<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">        logging, metric collection, or resource setup. By default, this is a</span>
+<a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">        no-op.</span>
+<a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-175" name="__codelineno-0-175"></a>
+<a id="__codelineno-0-176" name="__codelineno-0-176"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook called after a rollout completes.</span>
+<a id="__codelineno-0-178" name="__codelineno-0-178"></a>
+<a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="sd">        Deprecated in favor of `on_rollout_end` in the `Hook` interface.</span>
+<a id="__codelineno-0-180" name="__codelineno-0-180"></a>
+<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">            task: The `Task` object that was processed.</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">            rollout: The resulting [`Rollout`][agentlightning.Rollout] object.</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">            runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">            tracer: The [`Tracer`][agentlightning.Tracer] instance associated with the runner.</span>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">        Subclasses can override this method for cleanup or additional</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">        logging. By default, this is a no-op.</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Main entry point for executing a rollout.</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="sd">        This method determines whether to call the synchronous or</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="sd">        asynchronous rollout method based on the agent&#39;s implementation.</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">        If you don&#39;t wish to implement both training rollout and validation</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">        rollout separately, you can just implement `rollout` which will work for both.</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">            task: The task object received from the server, containing the</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">                  input data and metadata.</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">            resources: A dictionary of named resources (e.g., LLMs, prompt</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">                       templates) for the agent to use.</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">            rollout: The full rollout object, please avoid from directly modifying it.</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">                     Most agents should only use `task` and `resources`. Use `rollout`</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a><span class="sd">                     only if you need to access metadata like `rollout_id`.</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="sd">            The result of the rollout, which can be one of:</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="sd">            - None. The tracing should be handled by the agent runner.</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">            - A float representing the final reward.</span>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">            - A list of `Triplet` objects for detailed, step-by-step feedback.</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">            - A list of `ReadableSpan` objects for OpenTelemetry tracing.</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">            - A list of dictionaries for any trace spans.</span>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="sd">            - A complete `Rollout` object for full control over reporting.</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Agents must implement the `rollout` method.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Asynchronous version of the main rollout method.</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">        This method determines whether to call the synchronous or</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">        asynchronous rollout method based on the agent&#39;s implementation.</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a><span class="sd">            task: The task object received from the server, containing the</span>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">                  input data and metadata.</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">            resources: A dictionary of named resources (e.g., LLMs, prompt</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="sd">                       templates) for the agent to use.</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a><span class="sd">            rollout: The full rollout object, please avoid from directly modifying it.</span>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="sd">                     Most agents should only use `task` and `resources`. Use `rollout`</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="sd">                     only if you need to access metadata like `rollout_id`.</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">            The result of the rollout, which can be one of:</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">            - None. The tracing should be handled by the agent runner.</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">            - A float representing the final reward.</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">            - A list of `Triplet` objects for detailed, step-by-step feedback.</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="sd">            - A list of `ReadableSpan` objects for OpenTelemetry tracing.</span>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="sd">            - A list of dictionaries for any trace spans.</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a><span class="sd">            - A complete `Rollout` object for full control over reporting.</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Agents must implement the `rollout_async` method for async operations.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">training_rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Defines the agent&#39;s behavior for a single training task.</span>
+<a id="__codelineno-0-248" name="__codelineno-0-248"></a>
+<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">        This method should contain the logic for how the agent processes an</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">        input, uses the provided resources (like LLMs or prompts), and</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">        produces a result.</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a>
+<a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">            task: The task object received from the server, containing the</span>
+<a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="sd">                  input data and metadata.</span>
+<a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">            resources: A dictionary of named resources (e.g., LLMs, prompt</span>
+<a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">                       templates) for the agent to use.</span>
+<a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">            rollout: The full rollout object, please avoid from directly modifying it.</span>
+<a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-260" name="__codelineno-0-260"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
+<a id="__codelineno-0-261" name="__codelineno-0-261"></a>
+<a id="__codelineno-0-262" name="__codelineno-0-262"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">validation_rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Defines the agent&#39;s behavior for a single validation task.</span>
+<a id="__codelineno-0-264" name="__codelineno-0-264"></a>
+<a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">        By default, this method redirects to `training_rollout`. Override it</span>
+<a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="sd">        if the agent should behave differently during validation.</span>
+<a id="__codelineno-0-267" name="__codelineno-0-267"></a>
+<a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">            task: The task object received from the server, containing the</span>
+<a id="__codelineno-0-270" name="__codelineno-0-270"></a><span class="sd">                  input data and metadata.</span>
+<a id="__codelineno-0-271" name="__codelineno-0-271"></a><span class="sd">            resources: A dictionary of named resources for the agent to use.</span>
+<a id="__codelineno-0-272" name="__codelineno-0-272"></a><span class="sd">            rollout: The full rollout object, avoid from modifying it.</span>
+<a id="__codelineno-0-273" name="__codelineno-0-273"></a>
+<a id="__codelineno-0-274" name="__codelineno-0-274"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-0-275" name="__codelineno-0-275"></a><span class="sd">            The result of the validation rollout. See `rollout` for</span>
+<a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="sd">            possible return types.</span>
+<a id="__codelineno-0-277" name="__codelineno-0-277"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
+<a id="__codelineno-0-279" name="__codelineno-0-279"></a>
+<a id="__codelineno-0-280" name="__codelineno-0-280"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">training_rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-281" name="__codelineno-0-281"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Asynchronous version of `training_rollout`.</span>
+<a id="__codelineno-0-282" name="__codelineno-0-282"></a>
+<a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">        This method should be implemented by agents that perform asynchronous</span>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">        operations (e.g., non-blocking I/O, concurrent API calls).</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="sd">            task: The task object received from the server.</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">            resources: A dictionary of named resources for the agent to use.</span>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a><span class="sd">            rollout: The full rollout object, avoid from modifying it.</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a><span class="sd">            The result of the asynchronous training rollout. See `rollout` for</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a><span class="sd">            possible return types.</span>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout_async</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validation_rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Asynchronous version of `validation_rollout`.</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">        By default, this method redirects to `training_rollout_async`.</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a><span class="sd">        Override it for different asynchronous validation behavior.</span>
+<a id="__codelineno-0-302" name="__codelineno-0-302"></a>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a><span class="sd">            task: The task object received from the server.</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="sd">            resources: A dictionary of named resources for the agent to use.</span>
+<a id="__codelineno-0-306" name="__codelineno-0-306"></a><span class="sd">            rollout: The full rollout object, avoid from modifying it.</span>
+<a id="__codelineno-0-307" name="__codelineno-0-307"></a>
+<a id="__codelineno-0-308" name="__codelineno-0-308"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-0-309" name="__codelineno-0-309"></a><span class="sd">            The result of the asynchronous validation rollout. See `rollout` for</span>
+<a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">            possible return types.</span>
+<a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout_async</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3910,7 +3914,7 @@ Override this property for customized async detection logic.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Task</code> object that was processed.</p>
+                <p>The <code>Task</code> object that was processed.</p>
               </div>
             </td>
             <td>
@@ -3926,7 +3930,7 @@ Override this property for customized async detection logic.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The resulting :class:<code>Rollout</code> object.</p>
+                <p>The resulting <a class="autorefs autorefs-internal" title="            agentlightning.Rollout" href="../types/#agentlightning.Rollout"><code>Rollout</code></a> object.</p>
               </div>
             </td>
             <td>
@@ -3942,7 +3946,7 @@ Override this property for customized async detection logic.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Runner</code> managing the rollout.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../runner/#agentlightning.Runner"><code>Runner</code></a> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -3958,7 +3962,7 @@ Override this property for customized async detection logic.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The tracer instance associated with the runner.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../runner/#agentlightning.Tracer"><code>Tracer</code></a> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -3973,8 +3977,7 @@ logging. By default, this is a no-op.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/litagent/litagent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-175">175</a></span>
-<span class="normal"><a href="#__codelineno-0-176">176</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-176">176</a></span>
 <span class="normal"><a href="#__codelineno-0-177">177</a></span>
 <span class="normal"><a href="#__codelineno-0-178">178</a></span>
 <span class="normal"><a href="#__codelineno-0-179">179</a></span>
@@ -3986,20 +3989,21 @@ logging. By default, this is a no-op.</p>
 <span class="normal"><a href="#__codelineno-0-185">185</a></span>
 <span class="normal"><a href="#__codelineno-0-186">186</a></span>
 <span class="normal"><a href="#__codelineno-0-187">187</a></span>
-<span class="normal"><a href="#__codelineno-0-188">188</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-175" name="__codelineno-0-175"></a><span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called after a rollout completes.</span>
-<a id="__codelineno-0-177" name="__codelineno-0-177"></a>
-<a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="sd">    Deprecated in favor of `on_rollout_end` in the `Hook` interface.</span>
-<a id="__codelineno-0-179" name="__codelineno-0-179"></a>
-<a id="__codelineno-0-180" name="__codelineno-0-180"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">        task: The :class:`Task` object that was processed.</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">        rollout: The resulting :class:`Rollout` object.</span>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">        tracer: The tracer instance associated with the runner.</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">    Subclasses can override this method for cleanup or additional</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">    logging. By default, this is a no-op.</span>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">    &quot;&quot;&quot;</span>
+<span class="normal"><a href="#__codelineno-0-188">188</a></span>
+<span class="normal"><a href="#__codelineno-0-189">189</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called after a rollout completes.</span>
+<a id="__codelineno-0-178" name="__codelineno-0-178"></a>
+<a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="sd">    Deprecated in favor of `on_rollout_end` in the `Hook` interface.</span>
+<a id="__codelineno-0-180" name="__codelineno-0-180"></a>
+<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">        task: The `Task` object that was processed.</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">        rollout: The resulting [`Rollout`][agentlightning.Rollout] object.</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">        runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">        tracer: The [`Tracer`][agentlightning.Tracer] instance associated with the runner.</span>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">    Subclasses can override this method for cleanup or additional</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">    logging. By default, this is a no-op.</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">    &quot;&quot;&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4018,7 +4022,6 @@ logging. By default, this is a no-op.</p>
     <div class="doc doc-contents ">
 
         <p>Hook called immediately before a rollout begins.</p>
-<p>Deprecated in favor of <code>on_rollout_start</code> in the <code>Hook</code> interface.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4041,7 +4044,7 @@ logging. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Task</code> object that will be processed.</p>
+                <p>The <code>Task</code> object that will be processed.</p>
               </div>
             </td>
             <td>
@@ -4057,7 +4060,7 @@ logging. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The :class:<code>Runner</code> managing the rollout.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../runner/#agentlightning.Runner"><code>Runner</code></a> managing the rollout.</p>
               </div>
             </td>
             <td>
@@ -4073,7 +4076,7 @@ logging. By default, this is a no-op.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The tracer instance associated with the runner.</p>
+                <p>The <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../runner/#agentlightning.Tracer"><code>Tracer</code></a> instance associated with the runner.</p>
               </div>
             </td>
             <td>
@@ -4082,7 +4085,12 @@ logging. By default, this is a no-op.</p>
           </tr>
       </tbody>
     </table>
-        <p>Subclasses can override this method to implement custom logic such as
+
+
+<details class="deprecated" open>
+  <summary>Deprecated</summary>
+  <p>In favor of <code>on_rollout_start</code> in the <a class="autorefs autorefs-internal" title="            agentlightning.Hook" href="../types/#agentlightning.Hook"><code>Hook</code></a> interface.</p>
+</details>        <p>Subclasses can override this method to implement custom logic such as
 logging, metric collection, or resource setup. By default, this is a
 no-op.</p>
 
@@ -4102,20 +4110,22 @@ no-op.</p>
 <span class="normal"><a href="#__codelineno-0-170">170</a></span>
 <span class="normal"><a href="#__codelineno-0-171">171</a></span>
 <span class="normal"><a href="#__codelineno-0-172">172</a></span>
-<span class="normal"><a href="#__codelineno-0-173">173</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-173">173</a></span>
+<span class="normal"><a href="#__codelineno-0-174">174</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="k">def</span><span class="w"> </span><span class="nf">on_rollout_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">Runner</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">tracer</span><span class="p">:</span> <span class="n">Tracer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Hook called immediately before a rollout begins.</span>
 <a id="__codelineno-0-162" name="__codelineno-0-162"></a>
-<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">    Deprecated in favor of `on_rollout_start` in the `Hook` interface.</span>
-<a id="__codelineno-0-164" name="__codelineno-0-164"></a>
-<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">        task: The :class:`Task` object that will be processed.</span>
-<a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">        runner: The :class:`Runner` managing the rollout.</span>
-<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">        tracer: The tracer instance associated with the runner.</span>
-<a id="__codelineno-0-169" name="__codelineno-0-169"></a>
-<a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">    Subclasses can override this method to implement custom logic such as</span>
-<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">    logging, metric collection, or resource setup. By default, this is a</span>
-<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">    no-op.</span>
-<a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">        task: The `Task` object that will be processed.</span>
+<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">        runner: The [`Runner`][agentlightning.Runner] managing the rollout.</span>
+<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">        tracer: The [`Tracer`][agentlightning.Tracer] instance associated with the runner.</span>
+<a id="__codelineno-0-167" name="__codelineno-0-167"></a>
+<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">    Deprecated:</span>
+<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">        In favor of `on_rollout_start` in the [`Hook`][agentlightning.Hook] interface.</span>
+<a id="__codelineno-0-170" name="__codelineno-0-170"></a>
+<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">    Subclasses can override this method to implement custom logic such as</span>
+<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">    logging, metric collection, or resource setup. By default, this is a</span>
+<a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">    no-op.</span>
+<a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">    &quot;&quot;&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4336,8 +4346,7 @@ rollout separately, you can just implement <code>rollout</code> which will work 
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/litagent/litagent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-190">190</a></span>
-<span class="normal"><a href="#__codelineno-0-191">191</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-191">191</a></span>
 <span class="normal"><a href="#__codelineno-0-192">192</a></span>
 <span class="normal"><a href="#__codelineno-0-193">193</a></span>
 <span class="normal"><a href="#__codelineno-0-194">194</a></span>
@@ -4363,34 +4372,35 @@ rollout separately, you can just implement <code>rollout</code> which will work 
 <span class="normal"><a href="#__codelineno-0-214">214</a></span>
 <span class="normal"><a href="#__codelineno-0-215">215</a></span>
 <span class="normal"><a href="#__codelineno-0-216">216</a></span>
-<span class="normal"><a href="#__codelineno-0-217">217</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="k">def</span><span class="w"> </span><span class="nf">rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Main entry point for executing a rollout.</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="sd">    This method determines whether to call the synchronous or</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="sd">    asynchronous rollout method based on the agent&#39;s implementation.</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a><span class="sd">    If you don&#39;t wish to implement both training rollout and validation</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">    rollout separately, you can just implement `rollout` which will work for both.</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">        task: The task object received from the server, containing the</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">              input data and metadata.</span>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">        resources: A dictionary of named resources (e.g., LLMs, prompt</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">                   templates) for the agent to use.</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">        rollout: The full rollout object, please avoid from directly modifying it.</span>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">                 Most agents should only use `task` and `resources`. Use `rollout`</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">                 only if you need to access metadata like `rollout_id`.</span>
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a><span class="sd">        The result of the rollout, which can be one of:</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="sd">        - None. The tracing should be handled by the agent runner.</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="sd">        - A float representing the final reward.</span>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">        - A list of `Triplet` objects for detailed, step-by-step feedback.</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">        - A list of `ReadableSpan` objects for OpenTelemetry tracing.</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">        - A list of dictionaries for any trace spans.</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">        - A complete `Rollout` object for full control over reporting.</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Agents must implement the `rollout` method.&quot;</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-217">217</a></span>
+<span class="normal"><a href="#__codelineno-0-218">218</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="k">def</span><span class="w"> </span><span class="nf">rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Main entry point for executing a rollout.</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="sd">    This method determines whether to call the synchronous or</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a><span class="sd">    asynchronous rollout method based on the agent&#39;s implementation.</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a><span class="sd">    If you don&#39;t wish to implement both training rollout and validation</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a><span class="sd">    rollout separately, you can just implement `rollout` which will work for both.</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">        task: The task object received from the server, containing the</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">              input data and metadata.</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">        resources: A dictionary of named resources (e.g., LLMs, prompt</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">                   templates) for the agent to use.</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">        rollout: The full rollout object, please avoid from directly modifying it.</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">                 Most agents should only use `task` and `resources`. Use `rollout`</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a><span class="sd">                 only if you need to access metadata like `rollout_id`.</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="sd">        The result of the rollout, which can be one of:</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="sd">        - None. The tracing should be handled by the agent runner.</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">        - A float representing the final reward.</span>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">        - A list of `Triplet` objects for detailed, step-by-step feedback.</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">        - A list of `ReadableSpan` objects for OpenTelemetry tracing.</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">        - A list of dictionaries for any trace spans.</span>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="sd">        - A complete `Rollout` object for full control over reporting.</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Agents must implement the `rollout` method.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4613,8 +4623,7 @@ asynchronous rollout method based on the agent's implementation.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/litagent/litagent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-219">219</a></span>
-<span class="normal"><a href="#__codelineno-0-220">220</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-220">220</a></span>
 <span class="normal"><a href="#__codelineno-0-221">221</a></span>
 <span class="normal"><a href="#__codelineno-0-222">222</a></span>
 <span class="normal"><a href="#__codelineno-0-223">223</a></span>
@@ -4637,31 +4646,32 @@ asynchronous rollout method based on the agent's implementation.</p>
 <span class="normal"><a href="#__codelineno-0-240">240</a></span>
 <span class="normal"><a href="#__codelineno-0-241">241</a></span>
 <span class="normal"><a href="#__codelineno-0-242">242</a></span>
-<span class="normal"><a href="#__codelineno-0-243">243</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronous version of the main rollout method.</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">    This method determines whether to call the synchronous or</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">    asynchronous rollout method based on the agent&#39;s implementation.</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">        task: The task object received from the server, containing the</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a><span class="sd">              input data and metadata.</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">        resources: A dictionary of named resources (e.g., LLMs, prompt</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">                   templates) for the agent to use.</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="sd">        rollout: The full rollout object, please avoid from directly modifying it.</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a><span class="sd">                 Most agents should only use `task` and `resources`. Use `rollout`</span>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="sd">                 only if you need to access metadata like `rollout_id`.</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="sd">        The result of the rollout, which can be one of:</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">        - None. The tracing should be handled by the agent runner.</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">        - A float representing the final reward.</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">        - A list of `Triplet` objects for detailed, step-by-step feedback.</span>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">        - A list of `ReadableSpan` objects for OpenTelemetry tracing.</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="sd">        - A list of dictionaries for any trace spans.</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="sd">        - A complete `Rollout` object for full control over reporting.</span>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a>    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Agents must implement the `rollout_async` method for async operations.&quot;</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-243">243</a></span>
+<span class="normal"><a href="#__codelineno-0-244">244</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronous version of the main rollout method.</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">    This method determines whether to call the synchronous or</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">    asynchronous rollout method based on the agent&#39;s implementation.</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a><span class="sd">        task: The task object received from the server, containing the</span>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">              input data and metadata.</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">        resources: A dictionary of named resources (e.g., LLMs, prompt</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="sd">                   templates) for the agent to use.</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a><span class="sd">        rollout: The full rollout object, please avoid from directly modifying it.</span>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="sd">                 Most agents should only use `task` and `resources`. Use `rollout`</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="sd">                 only if you need to access metadata like `rollout_id`.</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">        The result of the rollout, which can be one of:</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">        - None. The tracing should be handled by the agent runner.</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">        - A float representing the final reward.</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">        - A list of `Triplet` objects for detailed, step-by-step feedback.</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="sd">        - A list of `ReadableSpan` objects for OpenTelemetry tracing.</span>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="sd">        - A list of dictionaries for any trace spans.</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a><span class="sd">        - A complete `Rollout` object for full control over reporting.</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a>    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Agents must implement the `rollout_async` method for async operations.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4892,8 +4902,7 @@ produces a result.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/litagent/litagent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-245">245</a></span>
-<span class="normal"><a href="#__codelineno-0-246">246</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-246">246</a></span>
 <span class="normal"><a href="#__codelineno-0-247">247</a></span>
 <span class="normal"><a href="#__codelineno-0-248">248</a></span>
 <span class="normal"><a href="#__codelineno-0-249">249</a></span>
@@ -4906,21 +4915,22 @@ produces a result.</p>
 <span class="normal"><a href="#__codelineno-0-256">256</a></span>
 <span class="normal"><a href="#__codelineno-0-257">257</a></span>
 <span class="normal"><a href="#__codelineno-0-258">258</a></span>
-<span class="normal"><a href="#__codelineno-0-259">259</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-245" name="__codelineno-0-245"></a><span class="k">def</span><span class="w"> </span><span class="nf">training_rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines the agent&#39;s behavior for a single training task.</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">    This method should contain the logic for how the agent processes an</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">    input, uses the provided resources (like LLMs or prompts), and</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">    produces a result.</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">        task: The task object received from the server, containing the</span>
-<a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">              input data and metadata.</span>
-<a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="sd">        resources: A dictionary of named resources (e.g., LLMs, prompt</span>
-<a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">                   templates) for the agent to use.</span>
-<a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">        rollout: The full rollout object, please avoid from directly modifying it.</span>
-<a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-259">259</a></span>
+<span class="normal"><a href="#__codelineno-0-260">260</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="k">def</span><span class="w"> </span><span class="nf">training_rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines the agent&#39;s behavior for a single training task.</span>
+<a id="__codelineno-0-248" name="__codelineno-0-248"></a>
+<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">    This method should contain the logic for how the agent processes an</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">    input, uses the provided resources (like LLMs or prompts), and</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">    produces a result.</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a>
+<a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">        task: The task object received from the server, containing the</span>
+<a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="sd">              input data and metadata.</span>
+<a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">        resources: A dictionary of named resources (e.g., LLMs, prompt</span>
+<a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">                   templates) for the agent to use.</span>
+<a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">        rollout: The full rollout object, please avoid from directly modifying it.</span>
+<a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-260" name="__codelineno-0-260"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5057,8 +5067,7 @@ operations (e.g., non-blocking I/O, concurrent API calls).</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/litagent/litagent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-279">279</a></span>
-<span class="normal"><a href="#__codelineno-0-280">280</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-280">280</a></span>
 <span class="normal"><a href="#__codelineno-0-281">281</a></span>
 <span class="normal"><a href="#__codelineno-0-282">282</a></span>
 <span class="normal"><a href="#__codelineno-0-283">283</a></span>
@@ -5072,22 +5081,23 @@ operations (e.g., non-blocking I/O, concurrent API calls).</p>
 <span class="normal"><a href="#__codelineno-0-291">291</a></span>
 <span class="normal"><a href="#__codelineno-0-292">292</a></span>
 <span class="normal"><a href="#__codelineno-0-293">293</a></span>
-<span class="normal"><a href="#__codelineno-0-294">294</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">training_rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronous version of `training_rollout`.</span>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">    This method should be implemented by agents that perform asynchronous</span>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">    operations (e.g., non-blocking I/O, concurrent API calls).</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">        task: The task object received from the server.</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="sd">        resources: A dictionary of named resources for the agent to use.</span>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">        rollout: The full rollout object, avoid from modifying it.</span>
-<a id="__codelineno-0-289" name="__codelineno-0-289"></a>
-<a id="__codelineno-0-290" name="__codelineno-0-290"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-291" name="__codelineno-0-291"></a><span class="sd">        The result of the asynchronous training rollout. See `rollout` for</span>
-<a id="__codelineno-0-292" name="__codelineno-0-292"></a><span class="sd">        possible return types.</span>
-<a id="__codelineno-0-293" name="__codelineno-0-293"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout_async</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">training_rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-281" name="__codelineno-0-281"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronous version of `training_rollout`.</span>
+<a id="__codelineno-0-282" name="__codelineno-0-282"></a>
+<a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">    This method should be implemented by agents that perform asynchronous</span>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">    operations (e.g., non-blocking I/O, concurrent API calls).</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="sd">        task: The task object received from the server.</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">        resources: A dictionary of named resources for the agent to use.</span>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a><span class="sd">        rollout: The full rollout object, avoid from modifying it.</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a><span class="sd">        The result of the asynchronous training rollout. See `rollout` for</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a><span class="sd">        possible return types.</span>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout_async</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5221,8 +5231,7 @@ if the agent should behave differently during validation.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/litagent/litagent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-261">261</a></span>
-<span class="normal"><a href="#__codelineno-0-262">262</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-262">262</a></span>
 <span class="normal"><a href="#__codelineno-0-263">263</a></span>
 <span class="normal"><a href="#__codelineno-0-264">264</a></span>
 <span class="normal"><a href="#__codelineno-0-265">265</a></span>
@@ -5237,23 +5246,24 @@ if the agent should behave differently during validation.</p>
 <span class="normal"><a href="#__codelineno-0-274">274</a></span>
 <span class="normal"><a href="#__codelineno-0-275">275</a></span>
 <span class="normal"><a href="#__codelineno-0-276">276</a></span>
-<span class="normal"><a href="#__codelineno-0-277">277</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="k">def</span><span class="w"> </span><span class="nf">validation_rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines the agent&#39;s behavior for a single validation task.</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a><span class="sd">    By default, this method redirects to `training_rollout`. Override it</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">    if the agent should behave differently during validation.</span>
-<a id="__codelineno-0-266" name="__codelineno-0-266"></a>
-<a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">        task: The task object received from the server, containing the</span>
-<a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">              input data and metadata.</span>
-<a id="__codelineno-0-270" name="__codelineno-0-270"></a><span class="sd">        resources: A dictionary of named resources for the agent to use.</span>
-<a id="__codelineno-0-271" name="__codelineno-0-271"></a><span class="sd">        rollout: The full rollout object, avoid from modifying it.</span>
-<a id="__codelineno-0-272" name="__codelineno-0-272"></a>
-<a id="__codelineno-0-273" name="__codelineno-0-273"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-274" name="__codelineno-0-274"></a><span class="sd">        The result of the validation rollout. See `rollout` for</span>
-<a id="__codelineno-0-275" name="__codelineno-0-275"></a><span class="sd">        possible return types.</span>
-<a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-277" name="__codelineno-0-277"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-277">277</a></span>
+<span class="normal"><a href="#__codelineno-0-278">278</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="k">def</span><span class="w"> </span><span class="nf">validation_rollout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines the agent&#39;s behavior for a single validation task.</span>
+<a id="__codelineno-0-264" name="__codelineno-0-264"></a>
+<a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">    By default, this method redirects to `training_rollout`. Override it</span>
+<a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="sd">    if the agent should behave differently during validation.</span>
+<a id="__codelineno-0-267" name="__codelineno-0-267"></a>
+<a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">        task: The task object received from the server, containing the</span>
+<a id="__codelineno-0-270" name="__codelineno-0-270"></a><span class="sd">              input data and metadata.</span>
+<a id="__codelineno-0-271" name="__codelineno-0-271"></a><span class="sd">        resources: A dictionary of named resources for the agent to use.</span>
+<a id="__codelineno-0-272" name="__codelineno-0-272"></a><span class="sd">        rollout: The full rollout object, avoid from modifying it.</span>
+<a id="__codelineno-0-273" name="__codelineno-0-273"></a>
+<a id="__codelineno-0-274" name="__codelineno-0-274"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-275" name="__codelineno-0-275"></a><span class="sd">        The result of the validation rollout. See `rollout` for</span>
+<a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="sd">        possible return types.</span>
+<a id="__codelineno-0-277" name="__codelineno-0-277"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5390,8 +5400,7 @@ Override it for different asynchronous validation behavior.</p>
 
             <details class="quote">
               <summary>Source code in <code>agentlightning/litagent/litagent.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-296">296</a></span>
-<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-297">297</a></span>
 <span class="normal"><a href="#__codelineno-0-298">298</a></span>
 <span class="normal"><a href="#__codelineno-0-299">299</a></span>
 <span class="normal"><a href="#__codelineno-0-300">300</a></span>
@@ -5405,22 +5414,23 @@ Override it for different asynchronous validation behavior.</p>
 <span class="normal"><a href="#__codelineno-0-308">308</a></span>
 <span class="normal"><a href="#__codelineno-0-309">309</a></span>
 <span class="normal"><a href="#__codelineno-0-310">310</a></span>
-<span class="normal"><a href="#__codelineno-0-311">311</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-296" name="__codelineno-0-296"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validation_rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
-<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronous version of `validation_rollout`.</span>
-<a id="__codelineno-0-298" name="__codelineno-0-298"></a>
-<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">    By default, this method redirects to `training_rollout_async`.</span>
-<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">    Override it for different asynchronous validation behavior.</span>
-<a id="__codelineno-0-301" name="__codelineno-0-301"></a>
-<a id="__codelineno-0-302" name="__codelineno-0-302"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">        task: The task object received from the server.</span>
-<a id="__codelineno-0-304" name="__codelineno-0-304"></a><span class="sd">        resources: A dictionary of named resources for the agent to use.</span>
-<a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="sd">        rollout: The full rollout object, avoid from modifying it.</span>
-<a id="__codelineno-0-306" name="__codelineno-0-306"></a>
-<a id="__codelineno-0-307" name="__codelineno-0-307"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-308" name="__codelineno-0-308"></a><span class="sd">        The result of the asynchronous validation rollout. See `rollout` for</span>
-<a id="__codelineno-0-309" name="__codelineno-0-309"></a><span class="sd">        possible return types.</span>
-<a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-311" name="__codelineno-0-311"></a>    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout_async</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-311">311</a></span>
+<span class="normal"><a href="#__codelineno-0-312">312</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validation_rollout_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">NamedResources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">:</span> <span class="n">Rollout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RolloutRawResult</span><span class="p">:</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronous version of `validation_rollout`.</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">    By default, this method redirects to `training_rollout_async`.</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a><span class="sd">    Override it for different asynchronous validation behavior.</span>
+<a id="__codelineno-0-302" name="__codelineno-0-302"></a>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a><span class="sd">        task: The task object received from the server.</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="sd">        resources: A dictionary of named resources for the agent to use.</span>
+<a id="__codelineno-0-306" name="__codelineno-0-306"></a><span class="sd">        rollout: The full rollout object, avoid from modifying it.</span>
+<a id="__codelineno-0-307" name="__codelineno-0-307"></a>
+<a id="__codelineno-0-308" name="__codelineno-0-308"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-309" name="__codelineno-0-309"></a><span class="sd">        The result of the asynchronous validation rollout. See `rollout` for</span>
+<a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">        possible return types.</span>
+<a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a>    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rollout_async</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">rollout</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6232,9 +6242,15 @@ It will automatically handle the input and output of the function.</p>
       
         <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
       
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
         <script src="../../javascripts/charts.js"></script>
       
         <script src="../../javascripts/move-source-file.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
       
     
   <script>

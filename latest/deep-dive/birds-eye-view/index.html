@@ -52,6 +52,8 @@
     
       <link rel="stylesheet" href="../../css/timeago.css">
     
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
       <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
@@ -1536,7 +1538,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 15, 2025 05:37:44 UTC"><span class="timeago" datetime="2025-10-15T05:37:44+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 15, 2025 05:37:44 UTC">2025-10-15</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 18, 2025 12:48:04 UTC"><span class="timeago" datetime="2025-10-18T12:48:04+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 18, 2025 12:48:04 UTC">2025-10-18</span>
   </span>
 
     
@@ -1817,6 +1819,7 @@
     style M fill:none;
     style R fill:none;</code></pre>
 <h2 id="putting-it-all-together-a-reinforcement-learning-example-verl">Putting It All Together: A Reinforcement Learning Example (VERL)<a class="headerlink" href="#putting-it-all-together-a-reinforcement-learning-example-verl" title="Permanent link">&para;</a></h2>
+<p><a href="" id="birds-eye-view-verl-example"></a></p>
 <p>VERL shows how an algorithm consumes the shared infrastructure. For historical reasons, code lives in <code>agentlightning.algorithm.verl</code> and <code>agentlightning.verl</code>. The latter is legacy and reuses terms like <code>Trainer</code> in confusing ways. The former is a thin wrapper that conforms to the new algorithm interface. Future versions will merge the two.</p>
 <p>Reinforcement learning aims to learn a policy that takes actions in states to maximize expected reward. For agents, the policy is usually a language model. Inputs are prompts (state). Outputs are generated text (action). A numeric score judges quality (reward). The <code>(state, action, reward)</code> <strong>triplet</strong> is the basic learning unit.</p>
 <p>In Agent-lightning, the environment is implicit in the agent’s workflow, which orchestrates one or more LLM calls and often self-judges using rules or additional model calls. During a rollout, the agent emits spans that contain everything needed for RL training, including LLM call traces and numeric judge/reward signals. The "algorithm", on the other hand, have more responsibilities.</p>
@@ -1932,6 +1935,7 @@
     LightningStoreFacade --&gt;|thread-safe delegates| BaseStore</code></pre>
 <p>You can configure which role runs on the main thread. If the main thread runs the algorithm, it is able to spawn multiple runner threads. If it runs a runner, <code>n_runners</code> must be 1 and the runner lives on the main thread.</p>
 <h3 id="client-server-strategy">Client-server Strategy<a class="headerlink" href="#client-server-strategy" title="Permanent link">&para;</a></h3>
+<p><a href="" id="birds-eye-view-client-server-strategy"></a></p>
 <p><code>ClientServerExecutionStrategy</code> splits concerns across processes. The algorithm bundle starts a <code>LightningStoreServer</code> (HTTP API) that wraps the underlying store. Runners connect via <code>LightningStoreClient</code> to call the same interface over REST. The server embeds a client to support algorithm-launched subprocesses (e.g., an LLM proxy worker) that need to talk back to the algorithm’s process through the same API.</p>
 <p>Currently this design introduces an extra wrapper in the Server side (as shown in the diagram), which helps debugging and improves fault tolerance. We might revisit this design in the future and enforce the client to be the only way to communicate with the store.</p>
 <pre class="mermaid"><code>flowchart TD
@@ -2083,9 +2087,15 @@
       
         <script src="https://unpkg.com/chart.js@4.5.1/dist/chart.umd.min.js"></script>
       
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
         <script src="../../javascripts/charts.js"></script>
       
         <script src="../../javascripts/move-source-file.js"></script>
+      
+        <script src="../../javascripts/katex.js"></script>
       
     
   <script>
