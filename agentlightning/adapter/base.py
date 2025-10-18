@@ -26,8 +26,7 @@ class Adapter(Generic[T_from, T_to]):
 
         T_to: Target data type produced by the adapter.
 
-    Example:
-
+    Examples:
         >>> class IntToStrAdapter(Adapter[int, str]):
         ...     def adapt(self, source: int) -> str:
         ...         return str(source)
@@ -74,8 +73,7 @@ class OtelTraceAdapter(Adapter[List[ReadableSpan], T_to], Generic[T_to]):
     `opentelemetry.sdk.trace.ReadableSpan` instances and produces any target format, such as
     reinforcement learning trajectories, structured logs, or analytics-ready payloads.
 
-    Example:
-
+    Examples:
         >>> class TraceToDictAdapter(OtelTraceAdapter[dict]):
         ...     def adapt(self, spans: List[ReadableSpan]) -> dict:
         ...         return {"count": len(spans)}

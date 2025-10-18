@@ -50,14 +50,13 @@ class Baseline(FastAlgorithm):
     Raises:
         ValueError: If `train_split` falls outside the `(0, 1)` interval.
 
-    Example:
+    Examples:
+        ```python
+        from agentlightning.algorithm.fast import Baseline
 
-    ```python
-    from agentlightning.algorithm.fast import Baseline
-
-    algorithm = Baseline(n_epochs=2, train_split=0.8, span_verbosity="key_values")
-    trainer.fit(algorithm, train_dataset=my_train, val_dataset=my_val)
-    ```
+        algorithm = Baseline(n_epochs=2, train_split=0.8, span_verbosity="key_values")
+        trainer.fit(algorithm, train_dataset=my_train, val_dataset=my_val)
+        ```
     """
 
     def __init__(

@@ -237,19 +237,18 @@ def algo(
         FunctionalAlgorithm that proxies the callable while exposing the
         `Algorithm` interface.
 
-    Example:
+    Examples:
+        ```python
+        from agentlightning.algorithm.decorator import algo
 
-    ```python
-    from agentlightning.algorithm.decorator import algo
+        @algo
+        def batching_algorithm(*, store, train_dataset, val_dataset):
+            for sample in train_dataset:
+                store.enqueue_rollout(input=sample, mode="train")
 
-    @algo
-    def batching_algorithm(*, store, train_dataset, val_dataset):
-        for sample in train_dataset:
-            store.enqueue_rollout(input=sample, mode="train")
-
-    @algo
-    async def async_algorithm(*, store, train_dataset=None, val_dataset=None):
-        await store.enqueue_rollout(input={"prompt": "hello"}, mode="train")
-    ```
+        @algo
+        async def async_algorithm(*, store, train_dataset=None, val_dataset=None):
+            await store.enqueue_rollout(input={"prompt": "hello"}, mode="train")
+        ```
     """
     return FunctionalAlgorithm(func)

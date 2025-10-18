@@ -175,7 +175,8 @@ NamedResources = Dict[str, ResourceUnion]
 """
 A dictionary-like class to hold named resources.
 
-Example:
+Examples:
+    ```python
     resources: NamedResources = {
         'main_llm': LLM(
             endpoint="http://localhost:8080",
@@ -187,6 +188,7 @@ Example:
             engine='f-string'
         )
     }
+    ```
 """
 
 

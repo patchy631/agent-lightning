@@ -312,7 +312,8 @@ def llm_rollout(
         A callable FunctionalLitAgent instance that preserves the original function's
         type hints and behavior while providing all agent functionality.
 
-    Example:
+    Examples:
+        ```python
         @llm_rollout
         def my_agent(task, llm):
             # Agent logic here
@@ -328,6 +329,7 @@ def llm_rollout(
 
         # Agent methods are also available
         result = my_agent.rollout(task, resources, rollout)
+        ```
     """
 
     def decorator(f: LlmRolloutFunc[T]) -> FunctionalLitAgent[T]:
@@ -400,7 +402,8 @@ def prompt_rollout(
         A callable FunctionalLitAgent instance that preserves the original function's
         type hints and behavior while providing all agent functionality.
 
-    Example:
+    Examples:
+        ```python
         @prompt_rollout
         def my_agent(task, prompt_template):
             # Use the prompt template to generate a response
@@ -413,6 +416,7 @@ def prompt_rollout(
 
         # Agent methods are also available
         result = my_agent.rollout(task, resources, rollout)
+        ```
     """
 
     def decorator(f: PromptRolloutFunc[T]) -> FunctionalLitAgent[T]:
@@ -472,7 +476,8 @@ def rollout(func: Union[LlmRolloutFunc[T], PromptRolloutFunc[T], Callable[..., A
         A callable FunctionalLitAgent instance that preserves the original function's
         type hints and behavior while providing all agent functionality.
 
-    Example:
+    Examples:
+        ```python
         # LLM-based agent
         @rollout
         def my_llm_agent(task, llm):
@@ -495,6 +500,7 @@ def rollout(func: Union[LlmRolloutFunc[T], PromptRolloutFunc[T], Callable[..., A
 
         # Agent methods are also available
         result = my_llm_agent.rollout(task, resources, rollout)
+        ```
 
     Raises:
         NotImplementedError: If the function signature doesn't match any known patterns.
