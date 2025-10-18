@@ -47,6 +47,10 @@ This section explains how Agent-lightning handles and uses token IDs — a subtl
 
 Most agents interact with LLMs via **Chat Completion APIs**, exchanging chat messages. There are two main approaches to collecting training data from such agents.
 
+!!! note
+
+    Tokenization here refers to the process of converting **Chat Messages** into **Token IDs**. Detokenization is the reverse process of converting **Token IDs** back to **Chat Messages**. Normally, the tokenizer is published along with the pretrained model, which includes a vocabulary, special tokens, and a chat template to dealing with chat messages.
+
 **1. Retokenizing chat messages.**
 In this approach, you store chat messages as text and let training algorithms **retokenize** them later, as done in many SFT workflows (e.g., [HuggingFace SFT](https://huggingface.co/docs/trl/sft_trainer)).
 In practice, we’ve found this method unstable and less accurate. The chart below compares training results.

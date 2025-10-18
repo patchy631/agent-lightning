@@ -120,6 +120,7 @@ nav:
     - Store: reference/store.md
     - Trainer: reference/trainer.md
     - Types: reference/types.md
+    - Internal: reference/internal.md
 
 extra_css:
   - https://unpkg.com/katex@0/dist/katex.min.css
