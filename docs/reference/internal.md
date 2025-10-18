@@ -11,3 +11,5 @@
 ::: agentlightning.adapter.triplet.Transition
 
 ::: agentlightning.adapter.triplet.RewardMatchPolicy
+
+::: agentlightning.algorithm.decorator.FunctionalAlgorithm

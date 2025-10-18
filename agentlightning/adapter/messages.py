@@ -21,15 +21,28 @@ if TYPE_CHECKING:
 
 
 class OpenAIMessages(TypedDict):
-    """OpenAI-style chat messages."""
+    """OpenAI-style chat messages with optional tool definitions.
+
+    Attributes:
+        messages: Ordered chat messages that describe the conversation.
+        tools: Tool specifications available to the assistant, if any.
+    """
 
     messages: List[ChatCompletionMessageParam]
-    """The list of chat messages."""
     tools: Optional[List[ChatCompletionFunctionToolParam]]
-    """The list of tools."""
 
 
 class _RawSpanInfo(TypedDict):
+    """Intermediate representation parsed from a span.
+
+    Attributes:
+        prompt: Prompt messages reconstructed from span attributes.
+        completion: Assistant completions following tool invocations.
+        request: Request payload recorded in the trace.
+        response: Response payload recorded in the trace.
+        tools: Tool call metadata extracted from child spans.
+    """
+
     prompt: List[Dict[str, Any]]
     completion: List[Dict[str, Any]]
     request: Dict[str, Any]

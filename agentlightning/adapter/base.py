@@ -21,6 +21,7 @@ class Adapter(Generic[T_from, T_to]):
         the actual conversion.
 
     Type Variables:
+
         T_from: Source data type supplied to the adapter.
 
         T_to: Target data type produced by the adapter.
