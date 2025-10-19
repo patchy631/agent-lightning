@@ -1261,6 +1261,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/internal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Internal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1454,7 +1477,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 17, 2025 18:24:27 UTC"><span class="timeago" datetime="2025-10-17T18:24:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 17, 2025 18:24:27 UTC">2025-10-17</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 19, 2025 15:08:10 UTC"><span class="timeago" datetime="2025-10-19T15:08:10+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 19, 2025 15:08:10 UTC">2025-10-19</span>
   </span>
 
     
@@ -1490,8 +1513,12 @@
 
 <!-- Page content -->
 <h1 id="train-the-first-agent-with-agent-lightning">Train the First Agent with Agent-lightning<a class="headerlink" href="#train-the-first-agent-with-agent-lightning" title="Permanent link">&para;</a></h1>
-<p>Welcome! This tutorial is your first step into making AI agents smarter using the <strong>Agent-lightning</strong> framework. We'll show you how to take a simple agent and automatically improve its performance through a process called <strong>Automatic Prompt Optimization (APO)</strong>.</p>
+<p>Welcome! This tutorial is your first step into making AI agents smarter using the <strong>Agent-lightning</strong> framework. We'll show you how to take a simple agent and automatically improve its performance through a process called <a href="../../algorithm-zoo/apo/"><strong>Automatic Prompt Optimization (APO)</strong></a>.</p>
 <p>The main goal of Agent-lightning is to provide a structured way to <strong>train your agents</strong>. Just like you train a machine learning model on data, you can train an agent on a task dataset. This could involve using Reinforcement Learning (RL) to teach it new behaviors or, as we'll do today, optimizing its prompts to make it more accurate and reliable.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>You can open the sample code <a href="https://github.com/microsoft/agent-lightning/tree/7d8dccd2b023a2dc9e93a18705fee650e16e85e0/examples/apo/room_selector_apo.py">room_selector_apo.py</a> and <a href="https://github.com/microsoft/agent-lightning/tree/7d8dccd2b023a2dc9e93a18705fee650e16e85e0/examples/apo/room_selector.py">room_selector.py</a> as you go through this tutorial.</p>
+</div>
 <h2 id="our-example-the-room-selector-agent">Our Example: The Room Selector Agent<a class="headerlink" href="#our-example-the-room-selector-agent" title="Permanent link">&para;</a></h2>
 <p>Today, we'll work with an agent whose job is to book a meeting room. It's a common but tricky task with multiple constraints.</p>
 <p>Here's how the agent works:</p>
@@ -1562,44 +1589,43 @@
 <a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a>    <span class="k">return</span> <span class="n">reward</span>
 </code></pre></div>
 </div>
-<p>In Agent-lightning, you wrap this logic in a Python function marked with the <code>@rollout</code> decorator, so that the agent can be managed and tuned by Agent-lightning's runner and trainer. The <code>prompt_template</code> that the APO algorithm tunes is passed in as an argument:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentlightning</span><span class="w"> </span><span class="kn">import</span> <span class="n">rollout</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentlightning.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptTemplate</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nd">@rollout</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">room_selector</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">RoomSelectionTask</span><span class="p">,</span> <span class="n">prompt_template</span><span class="p">:</span> <span class="n">PromptTemplate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="c1"># ... agent logic using the prompt_template ...</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="c1"># The final reward is determined by a grader function</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">reward</span> <span class="o">=</span> <span class="n">room_selection_grader</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">final_message</span><span class="p">,</span> <span class="n">task</span><span class="p">[</span><span class="s2">&quot;expected_choice&quot;</span><span class="p">])</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="k">return</span> <span class="n">reward</span>
+<p>In Agent-lightning, you wrap this logic in a Python function marked with the <a class="autorefs autorefs-internal" title="            agentlightning.rollout(func)" href="../../reference/agent/#agentlightning.rollout"><code>@rollout</code></a> decorator, so that the agent can be managed and tuned by Agent-lightning's runner and trainer. The <code>prompt_template</code> that the APO algorithm tunes is passed in as an argument:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">agentlightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">agl</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nd">@agl</span><span class="o">.</span><span class="n">rollout</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">room_selector</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">RoomSelectionTask</span><span class="p">,</span> <span class="n">prompt_template</span><span class="p">:</span> <span class="n">agl</span><span class="o">.</span><span class="n">PromptTemplate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="c1"># ... agent logic using the prompt_template ...</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="c1"># The final reward is determined by a grader function</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">reward</span> <span class="o">=</span> <span class="n">room_selection_grader</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">final_message</span><span class="p">,</span> <span class="n">task</span><span class="p">[</span><span class="s2">&quot;expected_choice&quot;</span><span class="p">])</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="k">return</span> <span class="n">reward</span>
 </code></pre></div>
 <h2 id="core-concepts-tasks-rollouts-spans-and-prompt-templates">Core Concepts: Tasks, Rollouts, Spans, and Prompt Templates<a class="headerlink" href="#core-concepts-tasks-rollouts-spans-and-prompt-templates" title="Permanent link">&para;</a></h2>
 <p>To understand how Agent-lightning works, you need to know these key terms.</p>
 <h3 id="task">Task<a class="headerlink" href="#task" title="Permanent link">&para;</a></h3>
 <p>A task is a specific input or problem statement given to the agent. It defines what the agent needs to accomplish.</p>
-<div class="admonition tip">
-<p class="admonition-title">Analogy</p>
+<div class="admonition example">
+<p class="admonition-title">Analogy: Task</p>
 <p>If the agent is a chef, a task is the recipe request: "Bake a chocolate cake."</p>
 </div>
 <h3 id="rollout">Rollout<a class="headerlink" href="#rollout" title="Permanent link">&para;</a></h3>
 <p>A rollout is a single, complete execution of an agent attempting to solve a given <strong>task</strong>. It's the entire story from receiving the task to producing a final result and receiving a reward. A rollout captures a full trace of the agent's execution.</p>
-<div class="admonition tip">
-<p class="admonition-title">Analogy</p>
+<div class="admonition example">
+<p class="admonition-title">Analogy: Rollout</p>
 <p>A rollout is one full attempt by the chef to bake the chocolate cake, from gathering ingredients to the final taste test.</p>
 </div>
 <h3 id="span">Span<a class="headerlink" href="#span" title="Permanent link">&para;</a></h3>
 <p>A span represents a single unit of work or an operation within a <strong>rollout</strong>. Spans are the building blocks of a trace. They have a start and end time and contain details about the specific operation, like an LLM call, a tool execution, or a reward calculation. For a more precise definition, see the <a href="https://opentelemetry.io/docs/concepts/signals/traces/">OpenTelemetry documentation</a>.</p>
-<div class="admonition tip">
-<p class="admonition-title">Analogy</p>
+<div class="admonition example">
+<p class="admonition-title">Analogy: Span</p>
 <p>If the rollout is "baking a cake," a span could be "preheating the oven," "mixing flour and sugar," or "adding frosting." Each is a distinct step or unit of work.</p>
 </div>
 <p>The picture below from <a href="https://google.github.io/adk-docs/observability/cloud-trace/">ADK</a> shows a typical rollout, where each rectangle in the waterfall visualizes a span. As can be seen in the visualization, spans can be sequential, parallel or nested among each other. In other frameworks, the terminilogy might be slightly different. Agent-lightning follows the terminalogies used by OpenTelemetry to avoid confusion.</p>
 <p><img alt="AgentOps Waterfall Visualization" src="../../assets/agentops-waterfall-visualization.jpg" /></p>
 <h3 id="prompt-template">Prompt Template<a class="headerlink" href="#prompt-template" title="Permanent link">&para;</a></h3>
 <p>A prompt template is a reusable instruction for the agent, often containing placeholders that can be filled in with specific details from a task. It is a key <strong>"resource"</strong> that the algorithm learns and improves over time.</p>
-<div class="admonition tip">
-<p class="admonition-title">Analogy</p>
+<div class="admonition example">
+<p class="admonition-title">Analogy: Resource (Prompt Template)</p>
 <p>If the task is the recipe request, the prompt template is the master recipe card that the chef follows. The algorithm's job is to edit this recipe card to make the instructions clearer and the final dish better.</p>
 </div>
 <h2 id="the-training-loop-how-the-magic-happens">The Training Loop: How the Magic Happens<a class="headerlink" href="#the-training-loop-how-the-magic-happens" title="Permanent link">&para;</a></h2>
@@ -1617,7 +1643,7 @@
 <p>In the next tutorial, we will see that the "via Trainer" here is not accurate. It's actually via the runner and store.</p>
 </div>
 <h3 id="the-algorithm">The Algorithm<a class="headerlink" href="#the-algorithm" title="Permanent link">&para;</a></h3>
-<p>The algorithm is the smart part of the system that drives the improvement. In this tutorial, we use <strong>APO</strong> (Automatic Prompt Optimization). It works in a few steps:</p>
+<p>The algorithm is the smart part of the system that drives the improvement. In this tutorial, we use <a class="autorefs autorefs-internal" title="            APO" href="../../algorithm-zoo/apo/#agentlightning.algorithm.apo.APO"><strong>APO</strong></a> (Automatic Prompt Optimization). It works in a few steps:</p>
 <ol>
 <li><strong>Evaluate:</strong> The algorithm first asks for rollouts to be run using the current prompt template to see how well it performs.</li>
 <li><strong>Critique:</strong> It then looks at the detailed spans from those rollouts. Using a powerful LLM (<code>gpt-5-mini</code>), it generates a "textual gradient", which is a natural language critique of the prompt. For example: "The prompt is ambiguous about how to handle tie-breakers for equally good rooms."</li>
@@ -1625,39 +1651,43 @@
 </ol>
 <p>This cycle repeats, with each round producing a slightly better prompt. To use it, you simply initialize the APO class with your desired hyperparameters.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># In the main training script: run_apo.py</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentlightning.algorithm.apo</span><span class="w"> </span><span class="kn">import</span> <span class="n">APO</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncOpenAI</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">openai</span> <span class="o">=</span> <span class="n">AsyncOpenAI</span><span class="p">()</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">algo</span> <span class="o">=</span> <span class="n">APO</span><span class="p">(</span><span class="n">openai</span><span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncOpenAI</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">openai</span> <span class="o">=</span> <span class="n">AsyncOpenAI</span><span class="p">()</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">algo</span> <span class="o">=</span> <span class="n">agl</span><span class="o">.</span><span class="n">APO</span><span class="p">(</span><span class="n">openai</span><span class="p">)</span>
 </code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Make sure you have <code>OPENAI_API_KEY</code> set in your environment variables.</p>
+</div>
 <h3 id="the-trainer">The Trainer<a class="headerlink" href="#the-trainer" title="Permanent link">&para;</a></h3>
-<p>The Trainer is the central component you'll interact with. It connects everything and manages the entire workflow by running the loop described above. You configure the Trainer, providing the algorithm, the number of parallel runners, and the initial prompt. A single call to <code>trainer.fit()</code> kicks off the entire process!</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># In the main training script: run_apo.py</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentlightning</span><span class="w"> </span><span class="kn">import</span> <span class="n">Trainer</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># 1. Configure the Trainer with the algorithm and initial prompt</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">algorithm</span><span class="o">=</span><span class="n">algo</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">n_runners</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="c1"># Run 8 agents in parallel to try out the prompts</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">initial_resources</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="c1"># The initial prompt template to be tuned</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="s2">&quot;prompt_template&quot;</span><span class="p">:</span> <span class="n">prompt_template_baseline</span><span class="p">()</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="p">},</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="c1"># This is used to convert the span data into a message format consumable by APO algorithm</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">adapter</span><span class="o">=</span><span class="n">TraceMessagesAdapter</span><span class="p">(),</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">)</span>
+<p>The Trainer is the central component you'll interact with. It connects everything and manages the entire workflow by running the loop described above. You configure the Trainer, providing the algorithm, the number of parallel runners, and the initial prompt. A single call to <a class="autorefs autorefs-internal" title="            fit(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.fit"><code>trainer.fit()</code></a> kicks off the entire process!</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># 1. Configure the Trainer with the algorithm and initial prompt</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">agl</span><span class="o">.</span><span class="n">Trainer</span><span class="p">(</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">algorithm</span><span class="o">=</span><span class="n">algo</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">n_runners</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="c1"># Run 8 agents in parallel to try out the prompts</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">initial_resources</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="c1"># The initial prompt template to be tuned</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="s2">&quot;prompt_template&quot;</span><span class="p">:</span> <span class="n">prompt_template_baseline</span><span class="p">()</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="p">},</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="c1"># This is used to convert the span data into a message format consumable by APO algorithm</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">adapter</span><span class="o">=</span><span class="n">agl</span><span class="o">.</span><span class="n">TraceToMessages</span><span class="p">(),</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="p">)</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># 2. Load datasets: They can be list of task objects consumable by `room_selector`.</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">dataset_train</span><span class="p">,</span> <span class="n">dataset_val</span> <span class="o">=</span> <span class="o">...</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># 2. Load datasets: They can be list of task objects consumable by `room_selector`.</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="n">dataset_train</span><span class="p">,</span> <span class="n">dataset_val</span> <span class="o">=</span> <span class="o">...</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="c1"># 3. Start the training process!</span>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    <span class="n">agent</span><span class="o">=</span><span class="n">room_selector</span><span class="p">,</span>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="n">train_dataset</span><span class="o">=</span><span class="n">dataset_train</span><span class="p">,</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>    <span class="n">val_dataset</span><span class="o">=</span><span class="n">dataset_val</span>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="p">)</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># 3. Start the training process!</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="n">agent</span><span class="o">=</span><span class="n">room_selector</span><span class="p">,</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="n">train_dataset</span><span class="o">=</span><span class="n">dataset_train</span><span class="p">,</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="n">val_dataset</span><span class="o">=</span><span class="n">dataset_val</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="p">)</span>
 </code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><a class="autorefs autorefs-internal" title="            agentlightning.TraceToMessages" href="../../reference/algorithm/#agentlightning.TraceToMessages"><code>TraceToMessages</code></a> is a convenience adapter that converts spans into OpenAI chat messages. It requires <code>openai &gt;= 1.100.0</code> to be installed.</p>
+</div>
 <h2 id="training-results">Training Results<a class="headerlink" href="#training-results" title="Permanent link">&para;</a></h2>
 <p>The APO algorithm successfully improved the agent's performance. We ran the example with the following hyper-parameters:</p>
 <ul>

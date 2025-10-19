@@ -1303,6 +1303,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/internal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Internal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1538,7 +1561,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 18, 2025 12:48:04 UTC"><span class="timeago" datetime="2025-10-18T12:48:04+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 18, 2025 12:48:04 UTC">2025-10-18</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 19, 2025 15:08:10 UTC"><span class="timeago" datetime="2025-10-19T15:08:10+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 19, 2025 15:08:10 UTC">2025-10-19</span>
   </span>
 
     
@@ -1574,15 +1597,20 @@
 
 <!-- Page content -->
 <h1 id="the-birds-eye-view-of-agent-lightning">The Bird's Eye View of Agent-lightning<a class="headerlink" href="#the-birds-eye-view-of-agent-lightning" title="Permanent link">&para;</a></h1>
-<p>This article summarizes how Agent-lightning (as of v0.2) wires algorithms, runners, and stores together and shows where auxiliary components (tracer, adapters, proxies) plug into the loop. Each section provides a diagram for a different perspective of the system.</p>
+<div class="admonition warning">
+<p class="admonition-title">High Volume of Information Ahead</p>
+<p>This article provides an in-depth exploration of the Agent-lightning architecture.
+It is not intended as a beginner’s guide or usage tutorial.</p>
+</div>
+<p>This article summarizes how Agent-lightning (as of v0.2) wires the <a class="autorefs autorefs-internal" title="            agentlightning.Algorithm" href="../../reference/algorithm/#agentlightning.Algorithm">Algorithm</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner">Runner</a>, and <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore">LightningStore</a> loop together and shows where auxiliary components (the <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../../reference/runner/#agentlightning.Tracer">Tracer</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Adapter" href="../../reference/algorithm/#agentlightning.Adapter">Adapter</a>, and <a class="autorefs autorefs-internal" title="            agentlightning.LLMProxy" href="../../reference/algorithm/#agentlightning.LLMProxy">LLM Proxy</a>) plug into the loop. Each section provides a diagram for a different perspective of the system.</p>
 <h2 id="algorithm-runner-store-data-flow">Algorithm ↔ Runner ↔ Store data flow<a class="headerlink" href="#algorithm-runner-store-data-flow" title="Permanent link">&para;</a></h2>
 <p>At its heart, Agent-lightning is built on three main components that work in a coordinated loop:</p>
 <ul>
-<li><strong>Algorithm:</strong> The "brain" of the system. It decides what tasks to run, learns from the results, and updates resources (like AI models or prompts).</li>
-<li><strong>Runner:</strong> The "worker" of the system. It executes tasks assigned by the algorithm, runs the agent, and records the results.</li>
-<li><strong>LightningStore:</strong> The central "database" and message queue. It acts as the single source of truth, storing tasks, results, and resources, and enabling communication between the Algorithm and Runner.</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.Algorithm" href="../../reference/algorithm/#agentlightning.Algorithm">Algorithm</a>:</strong> The "brain" of the system. It decides what tasks to run, learns from the results, and updates resources (like AI models or prompts).</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner">Runner</a>:</strong> The "worker" of the system. It executes tasks assigned by the algorithm, runs the agent, and records the results.</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore">LightningStore</a>:</strong> The central "database" and message queue. It acts as the single source of truth, storing tasks, results, and resources, and enabling communication between the Algorithm and Runner.</li>
 </ul>
-<p>The typical data flow in a training loop is as follows: The <strong>Algorithm</strong> enqueues tasks (called <strong>Rollouts</strong>) into the <strong>Store</strong>. A <strong>Runner</strong> then dequeues a task, executes it, and streams the results (called <strong>Spans</strong>) back to the Store. Once the task is complete, the Algorithm can query the new data from the Store to learn and update its resources.</p>
+<p>The typical data flow in a training loop is as follows: The <strong><a class="autorefs autorefs-internal" title="            agentlightning.Algorithm" href="../../reference/algorithm/#agentlightning.Algorithm">Algorithm</a></strong> enqueues tasks (called <strong><a class="autorefs autorefs-internal" title="            agentlightning.Rollout" href="../../reference/types/#agentlightning.Rollout">Rollouts</a></strong>) into the <strong><a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore">LightningStore</a></strong>. A <strong><a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner">Runner</a></strong> then dequeues a task, executes it, and streams the results (called <strong><a class="autorefs autorefs-internal" title="            agentlightning.Span" href="../../reference/types/#agentlightning.Span">Spans</a></strong>) back to the store. Once the task is complete, the algorithm can query the new data from the store to learn and update its resources.</p>
 <p>The diagram below shows this fundamental interaction in a simple, non-parallel setup.</p>
 <pre class="mermaid"><code>sequenceDiagram
     autonumber
@@ -1607,15 +1635,15 @@
 <h3 id="key-terminology">Key Terminology<a class="headerlink" href="#key-terminology" title="Permanent link">&para;</a></h3>
 <p>We define the following terms, which may be helpful for understanding the diagram above.</p>
 <ul>
-<li><strong>Resources:</strong> A collection of assets to be tuned or trained. Agents perform rollouts against resources and collect span data. Algorithms use those data to update the resources. In RL training, the resources are a tunable model. In prompt tuning, the resources are prompt templates.</li>
-<li><strong>Rollout:</strong> A unit of work that an agent performs against a resource. A rollout (noun) can be incomplete, in which case it is also known as a <strong>task</strong>, <strong>sample</strong>, or <strong>job</strong> (these terms are used interchangeably). The agent executes its own defined workflow against the rollout — the process is also called "to rollout" (verb). After execution, the rollout (noun) is considered <em>complete</em>.</li>
-<li><strong>Attempt:</strong> A single execution of a rollout. One rollout can have multiple attempts in case of failures or timeouts.</li>
-<li><strong>Span:</strong> During the rollout, the agent can generate multiple spans (also known as "traces" or "events"). The recorded spans are collected in the store, which is crucial for understanding agent behavior and optimizing agents.</li>
-<li><strong>Reward:</strong> A special span that is defined as a number judging the quality of the rollout during some period of the rollout.</li>
-<li><strong>Dataset:</strong> A collection of incomplete rollouts (i.e., tasks) for the agent to process. The dual datasets (train, val) serve as the initial input for the algorithm to enqueue the first batch of rollouts.</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.Resource" href="../../reference/types/#agentlightning.Resource">Resources</a>:</strong> A collection of assets to be tuned or trained. Agents perform rollouts against resources and collect span data. Algorithms use those data to update the resources. In RL training, the resources are a tunable model. In prompt tuning, the resources are prompt templates.</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.Rollout" href="../../reference/types/#agentlightning.Rollout">Rollout</a>:</strong> A unit of work that an agent performs against a resource. A rollout (noun) can be incomplete, in which case it is also known as a <strong>task</strong>, <strong>sample</strong>, or <strong>job</strong> (these terms are used interchangeably). The agent executes its own defined workflow against the rollout — the process is also called "to rollout" (verb). After execution, the rollout (noun) is considered <em>complete</em>.</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.Attempt" href="../../reference/types/#agentlightning.Attempt">Attempt</a>:</strong> A single execution of a rollout. One rollout can have multiple attempts in case of failures or timeouts.</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.Span" href="../../reference/types/#agentlightning.Span">Span</a>:</strong> During the rollout, the agent can generate multiple spans (also known as "traces" or "events"). The recorded spans are collected in the store, which is crucial for understanding agent behavior and optimizing agents.</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.emit_reward(reward)" href="../../reference/agent/#agentlightning.emit_reward">Reward</a>:</strong> A special span that is defined as a number judging the quality of the rollout during some period of the rollout.</li>
+<li><strong><a class="autorefs autorefs-internal" title="            agentlightning.Dataset" href="../../reference/types/#agentlightning.Dataset">Dataset</a>:</strong> A collection of incomplete rollouts (i.e., tasks) for the agent to process. The dual datasets (train, val) serve as the initial input for the algorithm to enqueue the first batch of rollouts.</li>
 </ul>
 <h3 id="store">Store<a class="headerlink" href="#store" title="Permanent link">&para;</a></h3>
-<p>As discussed previously, the store is the central hub for all data in Agent-lightning. The store exposes a set of APIs for algorithms and runners to interact with the data; the most important ones are:</p>
+<p>As discussed previously, the <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore">LightningStore</a> is the central hub for all data in Agent-lightning. The store exposes a set of APIs for algorithms and runners to interact with the data; the most important ones are:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentlightning.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttemptedRollout</span><span class="p">,</span> <span class="n">ResourcesUpdate</span><span class="p">,</span> <span class="n">Span</span><span class="p">,</span> <span class="n">TaskInput</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">LightningStore</span><span class="p">:</span>
@@ -1636,12 +1664,17 @@
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="o">...</span>
 </code></pre></div>
+<p>These interfaces operate on <a class="autorefs autorefs-internal" title="            agentlightning.AttemptedRollout" href="../../reference/types/#agentlightning.AttemptedRollout"><code>AttemptedRollout</code></a>, <a class="autorefs autorefs-internal" title="            agentlightning.ResourcesUpdate" href="../../reference/types/#agentlightning.ResourcesUpdate"><code>ResourcesUpdate</code></a>, <a class="autorefs autorefs-internal" title="            agentlightning.Span" href="../../reference/types/#agentlightning.Span"><code>Span</code></a>, and <a class="autorefs autorefs-internal" title="            agentlightning.TaskInput = Any
+
+  
+      module-attribute
+  " href="../../reference/internal/#agentlightning.TaskInput"><code>TaskInput</code></a> instances from <code>agentlightning.types</code>.</p>
 <p>As the APIs show, the store essentially provides a queue for rollouts and storage for resources, spans, and attempts. Developers should implement the store carefully to ensure data integrity and consistency, especially when multiple runners work in parallel across multiple attempts.</p>
-<p>The store is designed to be extensible. Users can implement their own store by inheriting from <code>LightningStore</code> and overriding methods. Agent-lightning provides a few reference implementations, such as <code>InMemoryLightningStore</code> (default) and <code>SqliteLightningStore</code> (under construction). When parallelized, the store may need special wrappers to ensure thread/process safety or delegate computation to a store in another process or machine.</p>
+<p>The store is designed to be extensible. Users can implement their own store by inheriting from <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore"><code>LightningStore</code></a> and overriding methods. Agent-lightning provides a few reference implementations, such as <a class="autorefs autorefs-internal" title="            agentlightning.InMemoryLightningStore" href="../../reference/store/#agentlightning.InMemoryLightningStore"><code>InMemoryLightningStore</code></a> (default) and <code>SqliteLightningStore</code> (under construction). When parallelized, the store may need special wrappers to ensure thread/process safety or delegate computation to a store in another process or machine.</p>
 <h2 id="supporting-components-in-the-loop">Supporting Components in the Loop<a class="headerlink" href="#supporting-components-in-the-loop" title="Permanent link">&para;</a></h2>
 <p>While the core loop is simple, Agent-lightning provides several components to make development easier and more powerful.</p>
 <h3 id="tracer">Tracer<a class="headerlink" href="#tracer" title="Permanent link">&para;</a></h3>
-<p>The tracer is a component within the Runner that records detailed spans (events) during an agent's execution and sends them to the Store. Instead of requiring the agent to manually log every span, the tracer automatically instruments key methods (e.g., LLM calls) and captures their inputs, outputs, and metadata. This provides a detailed log of the agent's behavior with minimal effort.</p>
+<p>The <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../../reference/runner/#agentlightning.Tracer"><code>Tracer</code></a> is a component within the <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner"><code>Runner</code></a> that records detailed spans (events) during an agent's execution and sends them to the <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore"><code>LightningStore</code></a>. Instead of requiring the agent to manually log every span, the tracer automatically instruments key methods (e.g., LLM calls) and captures their inputs, outputs, and metadata. This provides a detailed log of the agent's behavior with minimal effort.</p>
 <pre class="mermaid"><code>sequenceDiagram
     autonumber
     participant Store
@@ -1666,9 +1699,13 @@
         Runner--&gt;&gt;Store: update_attempt(status)
     end
     Tracer-&gt;&gt;Agent: Unapply instrumentation</code></pre>
-<p>The above diagram shows the overall data flow between store, tracer and agent. In realistic, it's a bit more complicated than that. Spans are not emitted actively by the agent; they are intercepted by the tracer by hooking and instrumenting key methods used in the agents.  The tracer uses a callback (called exporter) to monitor events and log to the store. Before a rollout starts, the runner enters a <code>trace_context</code> before invoking the agent, wiring store identifiers into the tracer. Each span completion streams back to the store through <code>LightningSpanProcessor.on_end</code>, so the agent’s instrumentation lands in <code>add_otel_span</code>. If the agent’s rollout method returns a numeric reward, the runner emits one more OpenTelemetry span before finalizing the attempt.</p>
+<p>The above diagram shows the overall data flow between store, tracer and agent. In realistic, it's a bit more complicated than that. Spans are not emitted actively by the agent; they are intercepted by the tracer by hooking and instrumenting key methods used in the agents.  The tracer uses a callback (called exporter) to monitor events and log to the store. Before a rollout starts, the runner enters a <a class="autorefs autorefs-internal" title="            trace_context(name=None, *, store=None, rollout_id=None, attempt_id=None)" href="../../reference/runner/#agentlightning.Tracer.trace_context"><code>trace_context</code></a> before invoking the agent, wiring store identifiers into the tracer. Each span completion streams back to the store through <code>LightningSpanProcessor</code>, so the agent’s instrumentation lands in <a class="autorefs autorefs-internal" title="            add_otel_span(rollout_id, attempt_id, readable_span, sequence_id=None)
+
+  
+      async
+  " href="../../reference/store/#agentlightning.LightningStore.add_otel_span"><code>add_otel_span</code></a>. If the agent’s rollout method returns a numeric reward, the runner emits one more OpenTelemetry span before finalizing the attempt.</p>
 <h3 id="hooks">Hooks<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h3>
-<p>Hooks are user-defined callback functions that allow you to augment a Runner's behavior at specific points in its lifecycle. You can use hooks to add custom logging, set up resources before a rollout begins, or tear them down after it ends. Hooks can be triggered at four key moments: <code>on_rollout_start</code>, <code>on_trace_start</code>, <code>on_trace_end</code>, and <code>on_rollout_end</code>.</p>
+<p><a class="autorefs autorefs-internal" title="            agentlightning.Hook" href="../../reference/types/#agentlightning.Hook"><code>Hook</code></a> implementations are user-defined callback functions that allow you to augment a <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner"><code>Runner</code></a>'s behavior at specific points in its lifecycle. You can use hooks to add custom logging, set up resources before a rollout begins, or tear them down after it ends. Hooks can be triggered at four key moments: <code>on_rollout_start</code>, <code>on_trace_start</code>, <code>on_trace_end</code>, and <code>on_rollout_end</code>.</p>
 <p>Users should pay special attention to the difference between <code>on_trace_end</code> and <code>on_rollout_end</code>. The former is called right before the tracer exits the trace context, while the latter is called after the runner processes the final leftover rewards and spans, and finalizes the attempt in the store.</p>
 <pre class="mermaid"><code>sequenceDiagram
     autonumber
@@ -1698,20 +1735,20 @@
         Runner-&gt;&gt;Hooks: on_rollout_end(agent, runner, rollout, status)
     end</code></pre>
 <h3 id="adapter">Adapter<a class="headerlink" href="#adapter" title="Permanent link">&para;</a></h3>
-<p>The Adapter is a component used by the Algorithm to transform raw data from the Store into a format suitable for learning. Runners stream raw spans into the Store during execution. Later, the Algorithm queries these spans and uses an Adapter to convert them into structured data, like training examples for a reinforcement learning model.</p>
-<p>For instance, the <code>TracerTraceToTriplet</code> processes OpenTelemetry spans to create <code>(prompt, response, reward)</code> triplets, which are the fundamental data structure for many RL fine-tuning algorithms.</p>
+<p>The <a class="autorefs autorefs-internal" title="            agentlightning.Adapter" href="../../reference/algorithm/#agentlightning.Adapter"><code>Adapter</code></a> is a component used by the <a class="autorefs autorefs-internal" title="            agentlightning.Algorithm" href="../../reference/algorithm/#agentlightning.Algorithm"><code>Algorithm</code></a> to transform raw data from the <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore"><code>LightningStore</code></a> into a format suitable for learning. Runners stream raw spans into the store during execution. Later, the algorithm queries these spans and uses an adapter to convert them into structured data, like training examples for a reinforcement learning model.</p>
+<p>For instance, the <a class="autorefs autorefs-internal" title="            agentlightning.TracerTraceToTriplet" href="../../reference/algorithm/#agentlightning.TracerTraceToTriplet"><code>TracerTraceToTriplet</code></a> processes OpenTelemetry spans to create <code>(prompt, response, reward)</code> triplets, which are the fundamental data structure for many RL fine-tuning algorithms.</p>
 <pre class="mermaid"><code>flowchart LR
     Runner -- (1) add_otel_span --&gt; Store
     Store -- (2) query_spans --&gt; Algorithm
     Algorithm -- (3) spans --&gt; Adapter
     Adapter -- (4) transformed data --&gt; Algorithm</code></pre>
 <h3 id="llm-proxy">LLM Proxy<a class="headerlink" href="#llm-proxy" title="Permanent link">&para;</a></h3>
-<p>The LLM Proxy is an optional bridge component that sits between an agent and the algorithms' resources. It acts as a centralized endpoint for all LLM calls. Usually the proxy URL is added to the store as a special resource, so that the runner can fetch it along with other resources when dequeuing a rollout. During rollouts, the runner invokes the proxy's HTTP endpoint instead of calling a model backend directly.</p>
+<p>The <a class="autorefs autorefs-internal" title="            agentlightning.LLMProxy" href="../../reference/algorithm/#agentlightning.LLMProxy"><code>LLMProxy</code></a> is an optional bridge component that sits between an agent and the algorithms' resources. It acts as a centralized endpoint for all LLM calls. Usually the proxy URL is added to the store as a special resource, so that the <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner"><code>Runner</code></a> can fetch it along with other resources when dequeuing a rollout. During rollouts, the runner invokes the proxy's HTTP endpoint instead of calling a model backend directly.</p>
 <p>This design offers several benefits:</p>
 <ol>
-<li><strong>Instrumentation:</strong> It automatically captures detailed traces of LLM interactions (prompts, responses, metadata) and sends them to the Store, complementing the Tracer, especially when the agent's code is hard to instrument directly.</li>
+<li><strong>Instrumentation:</strong> It automatically captures detailed traces of LLM interactions (prompts, responses, metadata) and sends them to the store, complementing the tracer, especially when the agent's code is hard to instrument directly.</li>
 <li><strong>Backend Abstraction:</strong> It provides a unified interface for various LLM backends (OpenAI, Anthropic, local models) and can add features like retry logic, rate limiting, and caching.</li>
-<li><strong>Resource Management:</strong> The Algorithm can dynamically update which LLM the agent uses (e.g., swapping to a newly fine-tuned model) by simply swapping the backend model the proxy is using, without interrupting the agent's code.</li>
+<li><strong>Resource Management:</strong> The algorithm can dynamically update which LLM the agent uses (e.g., swapping to a newly fine-tuned model) by simply swapping the backend model the proxy is using, without interrupting the agent's code.</li>
 </ol>
 <p>The benefits above seem to be all discussed within the context of model fine-tuning. As a matter of fact, the proxy can be useful for prompt tuning as well. The algorithm can register one of the following two types of endpoints into the proxy:</p>
 <ol>
@@ -1752,7 +1789,7 @@
     end</code></pre>
 <p>In this diagram, the store receives spans from both the proxy and the runner. We will see a problem later with parallelism where the proxy and runner are in different machines, and spans need to obtain a special counter from the store to ensure the ordering of spans.</p>
 <h3 id="trainer">Trainer<a class="headerlink" href="#trainer" title="Permanent link">&para;</a></h3>
-<p>The Trainer is the high-level orchestrator that initializes and connects all major components -- algorithm, runner, store, tracer, adapter, LLM proxy, and hooks. The components can have a lifecycle as long as the trainer. The trainer manages their lifecycles and handles dependency injection, ensuring that every part of the system operates within a consistent and shared environment.</p>
+<p>The <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer">Trainer</a> is the high-level orchestrator that initializes and connects all major components -- <a class="autorefs autorefs-internal" title="            agentlightning.Algorithm" href="../../reference/algorithm/#agentlightning.Algorithm">Algorithm</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner">Runner</a>, <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore">LightningStore</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../../reference/runner/#agentlightning.Tracer">Tracer</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Adapter" href="../../reference/algorithm/#agentlightning.Adapter">Adapter</a>, <a class="autorefs autorefs-internal" title="            agentlightning.LLMProxy" href="../../reference/algorithm/#agentlightning.LLMProxy">LLM Proxy</a>, and <a class="autorefs autorefs-internal" title="            agentlightning.Hook" href="../../reference/types/#agentlightning.Hook">Hook</a>. The components can have a lifecycle as long as the trainer. The trainer manages their lifecycles and handles dependency injection, ensuring that every part of the system operates within a consistent and shared environment.</p>
 <p>Below, we demonstrate how the components relate to each other and their roles. We first clarify the roles and relationships shown in the diagram:</p>
 <ol>
 <li><strong>Owns:</strong> components that the trainer constructs and manages directly (e.g., runner, tracer).</li>
@@ -1760,7 +1797,7 @@
 <li><strong>References:</strong> weak links for coordination without ownership.</li>
 <li><strong>Uses:</strong> components that are temporarily interacted with.</li>
 </ol>
-<p>For example, the store is injected into the algorithm and runner. The tracer and agent are injected into the runner. The adapter and LLM proxy are injected into the algorithm. The store is further injected into the tracer, adapter and LLM proxy by the runner and algorithm respectively.</p>
+<p>For example, the <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore">LightningStore</a> is injected into the <a class="autorefs autorefs-internal" title="            agentlightning.Algorithm" href="../../reference/algorithm/#agentlightning.Algorithm">Algorithm</a> and <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner">Runner</a>. The <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../../reference/runner/#agentlightning.Tracer">Tracer</a> and <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../../reference/agent/#agentlightning.LitAgent">LitAgent</a> are injected into the runner. The <a class="autorefs autorefs-internal" title="            agentlightning.Adapter" href="../../reference/algorithm/#agentlightning.Adapter">Adapter</a> and <a class="autorefs autorefs-internal" title="            agentlightning.LLMProxy" href="../../reference/algorithm/#agentlightning.LLMProxy">LLM Proxy</a> are injected into the algorithm. The store is further injected into the tracer, adapter and LLM proxy by the runner and algorithm respectively.</p>
 <pre class="mermaid"><code>flowchart TD
     %% === Left side: Algorithm domain ===
     subgraph L["Algorithm Side"]
@@ -1880,8 +1917,8 @@
 </li>
 </ol>
 <h2 id="execution-strategies-and-parallelism">Execution Strategies and Parallelism<a class="headerlink" href="#execution-strategies-and-parallelism" title="Permanent link">&para;</a></h2>
-<p>Readers might have observed from the diagram above that there is absolutely no communication between (1) runner and agents and (2) algorithm. The only overlap of them is the trainer and store. This observation is very clear with the diagram within the trainer section. This design allows us to flexibly scale the runner and algorithm independently, which is crucial for large-scale training.</p>
-<p>Agent-lightning packages two executable bundles: a runner bundle (runner, tracer, hooks, agent) and an algorithm bundle (algorithm, adapter, LLM proxy). Both share the store. The trainer initializes and connects the bundles.</p>
+<p>Readers might have observed from the diagram above that there is absolutely no communication between (1) runner and agents and (2) algorithm. The only overlap of them is the <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer">Trainer</a> and <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore">LightningStore</a>. This observation is very clear with the diagram within the trainer section. This design allows us to flexibly scale the runner and algorithm independently, which is crucial for large-scale training.</p>
+<p>Agent-lightning packages two executable bundles: a runner bundle (<a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner">Runner</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Tracer" href="../../reference/runner/#agentlightning.Tracer">Tracer</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Hook" href="../../reference/types/#agentlightning.Hook">Hook</a>, <a class="autorefs autorefs-internal" title="            agentlightning.LitAgent" href="../../reference/agent/#agentlightning.LitAgent">LitAgent</a>) and an algorithm bundle (<a class="autorefs autorefs-internal" title="            agentlightning.Algorithm" href="../../reference/algorithm/#agentlightning.Algorithm">Algorithm</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Adapter" href="../../reference/algorithm/#agentlightning.Adapter">Adapter</a>, <a class="autorefs autorefs-internal" title="            agentlightning.LLMProxy" href="../../reference/algorithm/#agentlightning.LLMProxy">LLM Proxy</a>). Both share the <a class="autorefs autorefs-internal" title="            agentlightning.LightningStore" href="../../reference/store/#agentlightning.LightningStore">LightningStore</a>. The trainer initializes and connects the bundles.</p>
 <pre class="mermaid"><code>graph TD
     subgraph Runner_Side["Runner Bundle"]
         direction LR
@@ -1902,13 +1939,13 @@
     TR --&gt; Algorithm_Side
 
     linkStyle 0,1,2,3,4 opacity:0;</code></pre>
-<p>An <strong>execution strategy</strong>, defined and owned by the trainer, governs how algorithm and runner bundles are placed, connected, scaled, and aborted. It serves four primary purposes.</p>
+<p>An <a class="autorefs autorefs-internal" title="            agentlightning.ExecutionStrategy" href="../../reference/trainer/#agentlightning.ExecutionStrategy">execution strategy</a>, defined and owned by the trainer, governs how algorithm and runner bundles are placed, connected, scaled, and aborted. It serves four primary purposes.</p>
 <p>Execution strategies first determine <strong>bundle placement</strong> — whether the two bundles run in the same thread, process, machine, or across separate machines. They also define <strong>store management</strong>, wrapping the store and specifying how data is shared between bundles.</p>
 <p>In terms of <strong>scalability</strong>, the strategy can replicate the runner bundle across multiple threads, processes, or machines to expand throughput on the runner side. The algorithm side remains single-process due to the complexity of parallelization. Mature frameworks such as <em>DeepSpeed</em> and <em>Megatron</em> already support distributed model training, so scaling of the algorithm bundle is delegated to those implementations.</p>
 <p><strong>Abort handling</strong> is another core responsibility. Aborts may be triggered by normal exits, failures in either bundle, or user interrupts. The trainer must include cancellation interfaces for the bundles so that bundles can be cleanly aborted. When the algorithm bundle exits normally, the strategy signals the runner bundle to terminate. If the runner exits first, no signal is sent to the algorithm, as it may still be processing completed rollouts. In cases of failure or user interruption, the strategy signals both bundles to abort; if a bundle fails to respond, the strategy should attempt a forceful termination.</p>
 <p>Agent-lightning currently provides two execution strategies: <strong>shared-memory</strong> and <strong>client-server</strong>, described in the following sections.</p>
 <h3 id="shared-memory-strategy">Shared-memory Strategy<a class="headerlink" href="#shared-memory-strategy" title="Permanent link">&para;</a></h3>
-<p><code>SharedMemoryExecutionStrategy</code> runs algorithm and runner bundles as threads in one process. The strategy wraps the store with <code>LightningStoreThreaded</code>, which guards calls with a lock for safe concurrency.</p>
+<p><a class="autorefs autorefs-internal" title="            agentlightning.SharedMemoryExecutionStrategy" href="../../reference/trainer/#agentlightning.SharedMemoryExecutionStrategy"><code>SharedMemoryExecutionStrategy</code></a> runs algorithm and runner bundles as threads in one process. The strategy wraps the store with <a class="autorefs autorefs-internal" title="            agentlightning.LightningStoreThreaded" href="../../reference/store/#agentlightning.LightningStoreThreaded"><code>LightningStoreThreaded</code></a>, which guards calls with a lock for safe concurrency.</p>
 <p>This is good for lightweight debugging because components share one Python heap and avoid serialization. It is not suitable for heavy RL training or compute-intensive agents.</p>
 <pre class="mermaid"><code>flowchart TB
     subgraph MainProcess
@@ -1936,7 +1973,7 @@
 <p>You can configure which role runs on the main thread. If the main thread runs the algorithm, it is able to spawn multiple runner threads. If it runs a runner, <code>n_runners</code> must be 1 and the runner lives on the main thread.</p>
 <h3 id="client-server-strategy">Client-server Strategy<a class="headerlink" href="#client-server-strategy" title="Permanent link">&para;</a></h3>
 <p><a href="" id="birds-eye-view-client-server-strategy"></a></p>
-<p><code>ClientServerExecutionStrategy</code> splits concerns across processes. The algorithm bundle starts a <code>LightningStoreServer</code> (HTTP API) that wraps the underlying store. Runners connect via <code>LightningStoreClient</code> to call the same interface over REST. The server embeds a client to support algorithm-launched subprocesses (e.g., an LLM proxy worker) that need to talk back to the algorithm’s process through the same API.</p>
+<p><a class="autorefs autorefs-internal" title="            agentlightning.ClientServerExecutionStrategy" href="../../reference/trainer/#agentlightning.ClientServerExecutionStrategy"><code>ClientServerExecutionStrategy</code></a> splits concerns across processes. The algorithm bundle starts a <a class="autorefs autorefs-internal" title="            agentlightning.LightningStoreServer" href="../../reference/store/#agentlightning.LightningStoreServer"><code>LightningStoreServer</code></a> (HTTP API) that wraps the underlying store. Runners connect via <a class="autorefs autorefs-internal" title="            agentlightning.LightningStoreClient" href="../../reference/store/#agentlightning.LightningStoreClient"><code>LightningStoreClient</code></a> to call the same interface over REST. The server embeds a client to support algorithm-launched subprocesses (e.g., an LLM proxy worker) that need to talk back to the algorithm’s process through the same API.</p>
 <p>Currently this design introduces an extra wrapper in the Server side (as shown in the diagram), which helps debugging and improves fault tolerance. We might revisit this design in the future and enforce the client to be the only way to communicate with the store.</p>
 <pre class="mermaid"><code>flowchart TD
     subgraph Algorithm Process Group
@@ -1985,10 +2022,14 @@
 <ol>
 <li>The algorithm does not enqueue rollouts from a fixed dataset. Runners report tasks/rollouts and spans spontaneously.</li>
 <li>The algorithm can wait for rollouts with a expected set of rollout IDs, but more oftenly polls for new rollouts and spans or waits for a count to arrive.</li>
-<li>The runner processes one rollout at a time via <code>step(task)</code> instead of exhausting a task queue. It notifies the store when starting a rollout so the store records it.</li>
+<li>The <a class="autorefs autorefs-internal" title="            agentlightning.Runner" href="../../reference/runner/#agentlightning.Runner"><code>Runner</code></a> processes one rollout at a time via <a class="autorefs autorefs-internal" title="            step(input, *, resources=None, mode=None, event=None)
+
+  
+      async
+  " href="../../reference/runner/#agentlightning.Runner.step"><code>step(task)</code></a> instead of exhausting a task queue. It notifies the store when starting a rollout so the store records it.</li>
 <li>A user or higher-level loop controls which resources the next step uses and when to retry.</li>
 </ol>
-<p>Spans, adapters, and LLM proxies work the same way.</p>
+<p><a class="autorefs autorefs-internal" title="            agentlightning.Span" href="../../reference/types/#agentlightning.Span">Spans</a>, <a class="autorefs autorefs-internal" title="            agentlightning.Adapter" href="../../reference/algorithm/#agentlightning.Adapter">Adapter</a> implementations, and the <a class="autorefs autorefs-internal" title="            agentlightning.LLMProxy" href="../../reference/algorithm/#agentlightning.LLMProxy">LLM Proxy</a> work the same way.</p>
 <pre class="mermaid"><code>sequenceDiagram
     autonumber
     actor User

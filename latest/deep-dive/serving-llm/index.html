@@ -1204,6 +1204,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/internal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Internal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1340,7 +1363,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 18, 2025 12:48:04 UTC"><span class="timeago" datetime="2025-10-18T12:48:04+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 18, 2025 12:48:04 UTC">2025-10-18</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 19, 2025 15:08:10 UTC"><span class="timeago" datetime="2025-10-19T15:08:10+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 19, 2025 15:08:10 UTC">2025-10-19</span>
   </span>
 
     
@@ -1409,9 +1432,13 @@
 <p><a href="" id="token-ids-matter"></a></p>
 <p>This section explains how Agent-lightning handles and uses token IDs — a subtle but important detail for training stability and accuracy.</p>
 <p>Most agents interact with LLMs via <strong>Chat Completion APIs</strong>, exchanging chat messages. There are two main approaches to collecting training data from such agents.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Tokenization here refers to the process of converting <strong>Chat Messages</strong> into <strong>Token IDs</strong>. Detokenization is the reverse process of converting <strong>Token IDs</strong> back to <strong>Chat Messages</strong>. Normally, the tokenizer is published along with the pretrained model, which includes a vocabulary, special tokens, and a chat template to dealing with chat messages.</p>
+</div>
 <p><strong>1. Retokenizing chat messages.</strong>
 In this approach, you store chat messages as text and let training algorithms <strong>retokenize</strong> them later, as done in many SFT workflows (e.g., <a href="https://huggingface.co/docs/trl/sft_trainer">HuggingFace SFT</a>).
-In practice, we’ve found this method unstable and less accurate. The chart below compares training results.</p>
+In practice, we’ve found this method unstable and less accurate. The chart below compares training results. The retokenization approach is run twice. All settings are the same except for the retokenization approach.</p>
 <div style="height:400px">
 <canvas data-chart='{
   "type": "line",
@@ -1424,7 +1451,7 @@ In practice, we’ve found this method unstable and less accurate. The chart bel
         "spanGaps": true
       },
       {
-        "label": "Retokenization (Run Again)",
+        "label": "Retokenization (Second Run)",
         "data": [0.494, 0.526, 0.536, 0.554, 0.544, 0.556, 0.568, 0.552, 0.45, 0.466, 0.474, 0.47, 0.464, 0.476, 0.488, 0.432],
         "spanGaps": true
       },
@@ -1468,7 +1495,10 @@ In practice, we’ve found this method unstable and less accurate. The chart bel
 }'></canvas>
 </div>
 
-<p>This instability has three causes. Firstly, chat template used in different frameworks could be slightly different. For example, one single LLaMA model can work with multiple chat templates (multiple in <a href="https://github.com/vllm-project/vllm/tree/1d165d6d859d3c50720f0c07209db2363c4fd33b/examples">vLLM</a> and one in <a href="https://huggingface.co/meta-llama">HuggingFace</a>). Secondly, tokenization drift: a word might be generated as two tokens (e.g., <code>H + AVING</code>) but later retokenized as <code>HAV + ING</code>. The text looks identical, but the token IDs differ from what the model originally produced. Thirdly, tool-call serialization: when a generated tool call like <code>&lt;tool_call&gt;{ "name": ... }&lt;/tool_call&gt;</code> is parsed, whitespace and formatting can change, or JSON errors may be auto-corrected — masking the model’s true generation errors and preventing them from being trained away.</p>
+<p>This instability has three causes. Firstly, chat template used in different frameworks could be slightly different. For example, one single LLaMA model can work with multiple chat templates (multiple in <a href="https://github.com/vllm-project/vllm/tree/1d165d6d859d3c50720f0c07209db2363c4fd33b/examples">vLLM</a> and one in <a href="https://huggingface.co/meta-llama">HuggingFace</a>). It's possible that the chat template used in detokenization is different from the one used in tokenization (this is actually an implementation bug).</p>
+<p>Secondly, a word might be generated as two tokens (e.g., <code>H + AVING</code>) but later retokenized as <code>HAV + ING</code>. The text looks identical, but the token IDs differ from what the model originally produced.</p>
+<p>Thirdly, a generated tool call text like <code>&lt;tool_call&gt;{ "name": ... }&lt;/tool_call&gt;</code> is parsed by tool call parser into an object that is required by chat completion API. Later, the object is rendered back to <code>&lt;tool_call&gt;{ "name": ... }&lt;/tool_call&gt;</code> and retokenized again, tool call parsing and re-rendering might cause changes in whitespace and formatting. In some situations, JSON errors may even be auto-corrected by the tool call parser — masking the model’s true generation errors and preventing them from being trained away.</p>
+<hr />
 <p><strong>2. Saving token IDs directly.</strong>
 The alternative is to save the token IDs generated by the model, as done in RL setups like <a href="https://thinkingmachines.ai/tinker/">Tinker</a>. This requires a training pipeline that treats tokens as first-class entities, meaning agents must communicate with the inference engine at the token level.</p>
 <p>However, most agents — especially those built with frameworks like LangChain — rely on OpenAI-compatible APIs and can’t tokenize or detokenize themselves. As mentioned <a class="autorefs autorefs-internal" title="General background on LLM serving" href="#general-llm-serving-background">earlier</a>, implementing this layer manually is complex and error-prone. Some frameworks implement custom solutions (e.g., <a href="https://github.com/volcengine/verl/blob/4da0d3d3188072772cb2ec817b3d6cf4a463821f/recipe/langgraph_agent/chat_model.py">VERL Agent Loop</a>, <a href="https://github.com/thinking-machines-lab/tinker-cookbook/blob/34a6588d7055040c259985d98e71c0140b389ba7/tinker_cookbook/renderers.py">Tinker Renderer</a>), while others leave it to users (e.g., <a href="https://novasky-ai.notion.site/skyrl-searchr1">SkyRL Search-R1</a>).</p>
