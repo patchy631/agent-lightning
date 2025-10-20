@@ -69,6 +69,11 @@ from agentlightning.reward import reward
 from agentlightning.tracer.agentops import AgentOpsTracer, LightningSpanProcessor
 from agentlightning.tracer.http import HttpTracer
 from agentlightning.types import Span, Triplet
+from agentlightning.utils.uvicorn_server import (
+    UvicornServerHandle,
+    create_uvicorn_server,
+    start_uvicorn_in_thread,
+)
 
 from ..common.tracer import clear_agentops_init, clear_tracer_provider
 
@@ -105,7 +110,7 @@ class MockOpenAICompatibleServer:
         self.host = host
         self.port = port
         self.app = FastAPI()
-        self.server_thread = None
+        self.server_handle: UvicornServerHandle | None = None
         self.server = None
         self.prompt_caches = self._load_prompt_caches()
         self._setup_routes()
@@ -169,28 +174,19 @@ class MockOpenAICompatibleServer:
 
     async def __aenter__(self):
         # Start the server manually
-        config = uvicorn.Config(self.app, host=self.host, port=self.port, log_level="error")
-        self.server = uvicorn.Server(config)
-        self.server_thread = threading.Thread(target=self.server.run, daemon=True)
-        self.server_thread.start()
-
-        # Wait for server to start
-        max_wait = 10  # seconds
-        wait_time = 0
-        while not getattr(self.server, "started", False) and wait_time < max_wait:
-            await asyncio.sleep(0.1)
-            wait_time += 0.1
-
-        if not getattr(self.server, "started", False):
+        self.server = create_uvicorn_server(self.app, host=self.host, port=self.port, log_level="error")
+        self.server_handle = start_uvicorn_in_thread(self.server)
+        started = await self.server_handle.wait_until_started_async(timeout=10.0)
+        if not started:
             raise RuntimeError("Server failed to start within timeout")
 
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        if self.server:
-            self.server.should_exit = True
-        if self.server_thread and self.server_thread.is_alive():
-            self.server_thread.join(timeout=5)
+        if self.server_handle:
+            self.server_handle.stop(timeout=5)
+            self.server_handle = None
+        self.server = None
 
 
 async def run_agent(agent_func: Callable[[], Any]) -> None:

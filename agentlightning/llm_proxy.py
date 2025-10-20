@@ -25,6 +25,11 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 
 from agentlightning.types import LLM, ProxyLLM
+from agentlightning.utils.uvicorn_server import (
+    UvicornServerHandle,
+    create_uvicorn_server,
+    start_uvicorn_in_thread,
+)
 
 from .store.base import LightningStore
 
@@ -522,10 +527,10 @@ class LLMProxy:
         self.litellm_config.setdefault("litellm_settings", {})
         self.litellm_config["litellm_settings"].setdefault("num_retries", num_retries)
 
-        self._server_thread = None
+        self._server_handle: UvicornServerHandle | None = None
         self._config_file = None
-        self._uvicorn_server = None
         self._ready_event = threading.Event()
+        self._uvicorn_server: uvicorn.Server | None = None
 
     def set_store(self, store: LightningStore) -> None:
         """Set the store for the proxy.
@@ -546,25 +551,6 @@ class LLMProxy:
         if self.is_running():
             self.restart()
         # Do nothing if the server is not running.
-
-    def _wait_until_started(self, startup_timeout: float = 20.0):
-        """Block until the uvicorn server reports started or timeout.
-
-        Args:
-            startup_timeout: Maximum seconds to wait.
-        """
-        start = time.time()
-        while True:
-            if self._uvicorn_server is None:
-                break
-            if self._uvicorn_server.started:
-                self._ready_event.set()
-                break
-            if self._uvicorn_server.should_exit:
-                break
-            if time.time() - start > startup_timeout:
-                break
-            time.sleep(0.01)
 
     def start(self):
         """Start the proxy server thread and initialize global wiring.
@@ -601,18 +587,13 @@ class LLMProxy:
         save_worker_config(config=self._config_file)
 
         # Bind to all interfaces to allow other hosts to reach it if needed.
-        self._uvicorn_server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=self.port))
-
-        def run_server():
-            # Serve uvicorn in this background thread with its own event loop.
-            assert self._uvicorn_server is not None
-            asyncio.run(self._uvicorn_server.serve())
+        self._uvicorn_server = create_uvicorn_server(app, host="0.0.0.0", port=self.port)
 
         logger.info("Starting LLMProxy server thread...")
         self._ready_event.clear()
-        self._server_thread = threading.Thread(target=run_server, daemon=True)
-        self._server_thread.start()
-        self._wait_until_started()
+        self._server_handle = start_uvicorn_in_thread(self._uvicorn_server)
+        if self._server_handle.wait_until_started():
+            self._ready_event.set()
 
     def stop(self):
         """Stop the proxy server and clean up temporary artifacts.
@@ -629,15 +610,10 @@ class LLMProxy:
 
         logger.info("Stopping LLMProxy server thread...")
         stop_success = True
-        if self._server_thread is not None and self._uvicorn_server is not None and self._uvicorn_server.started:
-            self._uvicorn_server.should_exit = True
-            self._server_thread.join(timeout=10.0)  # Allow time for graceful shutdown.
-            if self._server_thread.is_alive():
-                logger.error(
-                    "LLMProxy server thread is still alive after 10 seconds. Cannot kill it because it's a thread."
-                )
+        if self._server_handle is not None and self._uvicorn_server is not None:
+            if not self._server_handle.stop(timeout=10.0):
                 stop_success = False
-            self._server_thread = None
+            self._server_handle = None
             self._uvicorn_server = None
             self._config_file = None
             self._ready_event.clear()
@@ -667,7 +643,7 @@ class LLMProxy:
         Returns:
             bool: True if server was started and did not signal exit.
         """
-        return self._uvicorn_server is not None and self._uvicorn_server.started
+        return self._server_handle is not None and self._server_handle.is_running()
 
     def as_resource(
         self,

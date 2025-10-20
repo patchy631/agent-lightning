@@ -30,6 +30,11 @@ from agentlightning.types import (
     Span,
     TaskInput,
 )
+from agentlightning.utils.uvicorn_server import (
+    UvicornServerHandle,
+    create_uvicorn_server,
+    start_uvicorn_in_thread,
+)
 
 from .base import UNSET, LightningStore, Unset
 
@@ -95,12 +100,8 @@ class LightningStoreServer(LightningStore):
         self.port = port
         self.app: FastAPI | None = FastAPI(title="LightningStore Server")
         self._setup_routes()
-        self._uvicorn_config: uvicorn.Config | None = uvicorn.Config(
-            self.app, host="0.0.0.0", port=self.port, log_level="error"
-        )
-        self._uvicorn_server: uvicorn.Server | None = uvicorn.Server(self._uvicorn_config)
-
-        self._serving_thread: Optional[threading.Thread] = None
+        self._uvicorn_server: uvicorn.Server | None = None
+        self._server_handle: UvicornServerHandle | None = None
 
         # Process-awareness:
         # LightningStoreServer holds a plain Python object (self.store) in one process
@@ -142,8 +143,7 @@ class LightningStoreServer(LightningStore):
         self.port = state["port"]
         self._owner_pid = state["_owner_pid"]
         self._client = None
-        # Do NOT reconstruct app, _uvicorn_config, _uvicorn_server
-        # to avoid transferring server state to subprocess
+        # Do NOT reconstruct app or _uvicorn_server to avoid transferring server state to subprocess
 
     @property
     def endpoint(self) -> str:
@@ -154,16 +154,16 @@ class LightningStoreServer(LightningStore):
 
         You need to call this method in the same process as the server was created in.
         """
-        assert self._uvicorn_server is not None
+        if self._server_handle is not None and self._server_handle.is_running():
+            await self.stop()
+        assert self.app is not None
+        self._uvicorn_server = create_uvicorn_server(self.app, host="0.0.0.0", port=self.port, log_level="error")
         logger.info(f"Starting server at {self.endpoint}")
 
-        uvicorn_server = self._uvicorn_server
-
-        def run_server_forever():
-            asyncio.run(uvicorn_server.serve())
-
-        self._serving_thread = threading.Thread(target=run_server_forever, daemon=True)
-        self._serving_thread.start()
+        self._server_handle = start_uvicorn_in_thread(self._uvicorn_server)
+        started = await self._server_handle.wait_until_started_async()
+        if not started:
+            raise RuntimeError("uvicorn server failed to report started state")
 
         # Wait for /health to be available
         current_time = time.time()
@@ -181,14 +181,14 @@ class LightningStoreServer(LightningStore):
 
         You need to call this method in the same process as the server was created in.
         """
-        assert self._uvicorn_server is not None
-        if self._uvicorn_server.started:
+        if self._uvicorn_server is None or self._server_handle is None:
+            return
+        if self._server_handle.is_running():
             logger.info("Stopping server...")
-            self._uvicorn_server.should_exit = True
-            if self._serving_thread is not None:
-                self._serving_thread.join(timeout=10)
-            self._serving_thread = None
+            self._server_handle.stop(timeout=10)
             logger.info("Server stopped.")
+        self._server_handle = None
+        self._uvicorn_server = None
 
     def _backend(self) -> LightningStore:
         """Returns the object to delegate to in *this* process.
