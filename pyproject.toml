@@ -134,6 +134,13 @@ trl = [
   "vllm",
 ]
 
+# For Tinker integration.
+tinker = [
+  {include-group = "torch-stable"},
+  "tinker",
+  "tinker_cookbook",
+]
+
 # Agent-related dependencies.
 autogen = [
   "autogen-agentchat",
@@ -198,6 +205,7 @@ torch = [
   { index = "pytorch-cu128", group = "torch-cu128" },
   { index = "pytorch-cpu", group = "torch-cpu" },
 ]
+tinker_cookbook = { git = "https://github.com/thinking-machines-lab/tinker-cookbook", rev = "1cbb08330370542e0b055f636dbab1579a5499d8" }
 
 [[tool.uv.index]]
 name = "pypi"
@@ -215,6 +223,9 @@ url = "https://download.pytorch.org/whl/cpu"
 flash-attn = [
   { requirement = "torch", match-runtime = true },
 ]
+
+[tool.uv.dependency-groups]
+tinker = {requires-python = ">=3.11"}
 
 [build-system]
 requires = ["hatchling"]
