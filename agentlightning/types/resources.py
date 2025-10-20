@@ -4,14 +4,8 @@ from __future__ import annotations
 
 import inspect
 import logging
-from typing import (
-    Annotated,
-    Any,
-    Dict,
-    Literal,
-    Optional,
-    Union,
-)
+from pathlib import Path
+from typing import Annotated, Any, Dict, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -138,20 +132,61 @@ class PromptTemplate(Resource):
         engine (Literal['jinja', 'f-string', 'poml']): The templating engine
             to use for rendering the prompt. I imagine users can use their own
             customized engines, but algos can only well operate on a subset of them.
+
+    Notes:
+        ``poml`` templates accept an additional keyword argument ``_poml_format``
+        when calling :meth:`format`. This value is forwarded to :func:`poml.poml`
+        and defaults to ``"openai_chat"``.
     """
 
     resource_type: Literal["prompt_template"] = "prompt_template"
     template: str
     engine: Literal["jinja", "f-string", "poml"]
 
-    def format(self, **kwargs: Any) -> str:
-        """Format the prompt template with the given kwargs."""
+    def format(self, **kwargs: Any) -> Any:
+        """Format the prompt template with the given kwargs.
+
+        Returns:
+            Any: The rendered prompt. ``f-string`` and ``jinja`` engines return a
+            string, while ``poml`` returns the object produced by :func:`poml.poml`.
+
+        Raises:
+            RuntimeError: If the required optional dependency for the configured
+                engine is not available.
+        """
         if self.engine == "f-string":
             return self.template.format(**kwargs)
-        else:
-            raise NotImplementedError(
-                "Formatting prompt templates for non-f-string engines with format() helper is not supported yet."
-            )
+        if self.engine == "jinja":
+            try:
+                from jinja2 import Template
+            except ImportError as exc:  # pragma: no cover - defensive guard
+                raise RuntimeError(
+                    "Formatting a PromptTemplate with engine 'jinja' requires the 'jinja2' package to be installed."
+                ) from exc
+
+            template = Template(self.template)
+            return template.render(**kwargs)
+        if self.engine == "poml":
+            try:
+                import poml  # type: ignore[import-not-found]
+            except ImportError as exc:  # pragma: no cover - defensive guard
+                raise RuntimeError(
+                    "Formatting a PromptTemplate with engine 'poml' requires the 'poml' package to be installed."
+                ) from exc
+
+            poml_kwargs = dict(kwargs)
+            poml_format = poml_kwargs.pop("_poml_format", "openai_chat")
+
+            template_input: Any
+            template_path = Path(self.template)
+            if template_path.suffix == ".poml" and template_path.exists():
+                template_input = template_path
+            else:
+                template_input = self.template
+
+            return poml.poml(template_input, context=poml_kwargs, format=poml_format)
+
+        raise NotImplementedError(f"Unknown prompt template engine: {self.engine}")
 
 
 # Use discriminated union for proper deserialization
