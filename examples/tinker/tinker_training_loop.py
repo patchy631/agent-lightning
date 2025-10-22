@@ -1,6 +1,14 @@
+# Copyright (c) Microsoft. All rights reserved.
+
+"""RL training main loop with Tinker API.
+
+This script is based on Tinker Cookbook's [`rl_train.py` script](https://github.com/thinking-machines-lab/tinker-cookbook/blob/9b2af83cb62b9c4e8325a0efab71429e5aedf289/tinker_cookbook/rl/train.py),
+with modifications on how the rollout is collected.
+
+Environments are not used at all because Agent-lightning handles "environment" has part of user agent's logic.
 """
-Implements RL on general MDPs
-"""
+
+from __future__ import annotations
 
 import asyncio
 import io
@@ -16,7 +24,6 @@ import tinker
 import torch
 from tinker_cookbook import checkpoint_utils
 from tinker_cookbook.completers import TinkerTokenCompleter
-from tinker_cookbook.display import colorize_example
 from tinker_cookbook.eval.evaluators import SamplingClientEvaluator, SamplingClientEvaluatorBuilder
 from tinker_cookbook.rl.data_processing import (
     assemble_training_data,
@@ -24,19 +31,11 @@ from tinker_cookbook.rl.data_processing import (
     remove_constant_reward_groups,
 )
 from tinker_cookbook.rl.metric_util import RLTestSetEvaluator, compute_trajectory_metrics
-from tinker_cookbook.rl.metrics import (
-    compute_kl_sample_train,
-    compute_post_kl,
-    compute_sampling_client_metrics,
-    incorporate_kl_penalty,
-)
+from tinker_cookbook.rl.metrics import incorporate_kl_penalty
 from tinker_cookbook.rl.rollouts import do_group_rollout
 from tinker_cookbook.rl.train import (
     compute_full_batch_metrics_and_get_sampling_client,
-    forward_backward,
-    optim_step,
     print_group,
-    remove_mask,
     save_checkpoint_and_get_sampling_client,
     train_step,
 )
@@ -48,7 +47,7 @@ from tinker_cookbook.rl.types import (
 )
 from tinker_cookbook.tokenizer_utils import Tokenizer
 from tinker_cookbook.utils import ml_log
-from tinker_cookbook.utils.misc_utils import safezip, split_list, timed
+from tinker_cookbook.utils.misc_utils import timed
 from tinker_cookbook.utils.trace import get_scope_context, scope, trace_init
 
 logger = logging.getLogger("agentlightning.tinker")
@@ -119,7 +118,7 @@ async def prepare_minibatch(
     """Converts the trajectories into a minibatch, and provides metrics about the minibatch"""
 
     # Compute trajectory metrics
-    metrics = {}
+    metrics: dict[str, Any] = {}
     taglist_P = [env_group_builder.logging_tags() for env_group_builder in env_group_builders_P]
     metrics.update(compute_trajectory_metrics(trajectory_groups_P, taglist_P))
 
@@ -160,7 +159,7 @@ async def do_train_step_and_get_sampling_client(
     context = get_scope_context()
     context.attributes["step"] = i_batch
 
-    metrics = {}
+    metrics: dict[str, Any] = {}
     data_D, prepare_minibatch_metrics = await prepare_minibatch(
         env_group_builders_P,
         trajectory_groups_P,
