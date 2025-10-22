@@ -1,9 +1,18 @@
 import json
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List, TypedDict
 
 import openai
 import pandas as pd
+from openai.types.chat import (
+    ChatCompletionMessageFunctionToolCallParam,
+    ChatCompletionMessageParam,
+    ChatCompletionToolMessageParam,
+    ChatCompletionToolParam,
+)
+from rich.console import Console
+
+from agentlightning import LLM, rollout
 
 CAPITALS = {
     "japan": "Tokyo",
@@ -20,12 +29,19 @@ CAPITALS = {
     "india": "New Delhi",
 }
 
+console = Console()
+
 
 def country_capital_lookup(country: str) -> str:
     return CAPITALS.get(country.strip().lower(), "Unknown")
 
 
-TOOLS = [
+class CapitalTask(TypedDict):
+    input: str
+    output: str
+
+
+TOOLS: List[ChatCompletionToolParam] = [
     {
         "type": "function",
         "function": {
@@ -43,67 +59,84 @@ SYSTEM = (
 )
 
 
-def run_task(openai_client: openai.OpenAI, model: str, task_input: Dict[str, str]) -> float:
-    """
-    Run one evaluation task.
+@rollout
+def capital_agent(task: CapitalTask, llm: LLM) -> float:
+    """Run one evaluation task with capital agent.
+
     Returns 1.0 if output contains expected substring, else 0.0.
     """
-    print("[run_task] Running task with input:", task_input)
-    prompt = task_input["input"]
-    expected = task_input["expected_substring"]
+    print("[bold blue][run_task][/bold blue] Running task with input:", task)
+    prompt = task["input"]
+    expected = task["output"]
 
-    # --- Call #1 ---
-    first = openai_client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": prompt},
-        ],
-        tools=TOOLS,
-        tool_choice="auto",
-        temperature=0,
-    )
-    print("[run_task] First call response:", first)
+    openai_client = openai.OpenAI(base_url=llm.endpoint)
 
-    msg = first.choices[0].message
-    tool_calls = getattr(msg, "tool_calls", None)
-
-    messages = [
+    messages: List[ChatCompletionMessageParam] = [
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": prompt},
     ]
 
-    if tool_calls:
-        messages.append(
-            {"role": "assistant", "tool_calls": [tc.to_dict() for tc in tool_calls], "content": msg.content or ""}
-        )
-        for tc in tool_calls:
-            if tc.function.name == "country_capital_lookup":
+    # --- Call #1 ---
+    first = openai_client.chat.completions.create(
+        model=llm.model,
+        messages=messages,
+        tools=TOOLS,
+        tool_choice="auto",
+        temperature=0,
+    )
+    print("[bold blue][run_task][/bold blue] First call response:", first)
+
+    msg = first.choices[0].message
+
+    if msg.tool_calls:
+        assistant_tool_calls: List[ChatCompletionMessageFunctionToolCallParam] = []
+        tool_results: List[ChatCompletionToolMessageParam] = []
+        for tc in msg.tool_calls:
+            if tc.type == "function" and tc.function.name == "country_capital_lookup":
                 args = json.loads(tc.function.arguments or "{}")
                 result = country_capital_lookup(args.get("country", ""))
-                messages.append(
+                assistant_tool_calls.append(
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    }
+                )
+                tool_results.append(
                     {
                         "role": "tool",
                         "tool_call_id": tc.id,
-                        "name": "country_capital_lookup",
-                        "content": json.dumps({"capital": result}),
+                        "content": result,
                     }
                 )
-        print("[run_task] Messages after tool call:", messages)
+        messages.append(
+            {
+                "role": "assistant",
+                "content": msg.content or "",
+                "tool_calls": assistant_tool_calls,
+            }
+        )
+        messages.extend(tool_results)
+        print("[bold blue][run_task][/bold blue] Messages after tool call:", messages)
+
+        # --- Call #2 ---
+        second = openai_client.chat.completions.create(
+            model=llm.model,
+            messages=messages,
+            temperature=0,
+        )
+        print("[bold blue][run_task][/bold blue] Second call response:", second)
+        final_text = second.choices[0].message.content or ""
     else:
-        messages.append({"role": "assistant", "content": msg.content or ""})
+        print("[bold blue][run_task][/bold blue] No tool calls made.")
+        final_text = msg.content or ""
 
-    # --- Call #2 ---
-    second = openai_client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=0,
-    )
-    print("[run_task] Second call response:", second)
-
-    final_text = second.choices[0].message.content.strip()
+    final_text = final_text.strip()
     reward = 1.0 if expected.lower() in final_text.lower() else 0.0
-    print(f"[run_task] Final output: {final_text} | Reward: {reward}")
+    print(f"[bold blue][run_task][/bold blue] Final output: {final_text} | Reward: {reward}")
     return reward
 
 
