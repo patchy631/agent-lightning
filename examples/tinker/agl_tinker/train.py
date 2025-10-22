@@ -50,13 +50,15 @@ from tinker_cookbook.utils import ml_log
 from tinker_cookbook.utils.misc_utils import timed
 from tinker_cookbook.utils.trace import get_scope_context, scope, trace_init
 
+from .env import AGLDataset, AGLDatasetBuilder, AGLDummyEnvGroupBuilder
+
 logger = logging.getLogger("agentlightning.tinker")
 
 
 @chz.chz
 class Config:
     learning_rate: float
-    dataset_builder: RLDatasetBuilder  # also determines batch size
+    dataset_builder: AGLDatasetBuilder[Any]  # also determines batch size
     model_name: str
     max_tokens: int
     compute_post_kl: bool = False
@@ -89,7 +91,7 @@ class Config:
 @scope
 async def do_group_rollout_and_filter_constant_reward(
     sampling_client: tinker.SamplingClient,
-    env_group_builder: EnvGroupBuilder,
+    env_group_builder: AGLDummyEnvGroupBuilder[Any],
     max_tokens: int,
     do_remove_constant_reward_groups: bool,
 ) -> TrajectoryGroup | None:
@@ -204,7 +206,7 @@ async def do_sync_training(
     training_client: tinker.TrainingClient,
     service_client: tinker.ServiceClient,
     evaluators: list[SamplingClientEvaluator],
-    dataset: RLDataset,
+    dataset: AGLDataset[Any],
     ml_logger: ml_log.Logger,
     tokenizer: Tokenizer,
 ):

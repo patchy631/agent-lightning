@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Sequence
+from typing import Any, Sequence
 
 from tinker_cookbook.completers import TokenCompleter
 from tinker_cookbook.rl.types import (
@@ -12,8 +12,10 @@ from tinker_cookbook.rl.types import (
     Transition,
 )
 
+from .env import AGLDummyEnv, AGLDummyEnvGroupBuilder
 
-async def do_single_rollout(policy: TokenCompleter, env: Env) -> Trajectory:
+
+async def do_single_rollout(policy: TokenCompleter, env: AGLDummyEnv[Any]) -> Trajectory:
     transitions: list[Transition] = []
     ob, stop_condition = await env.initial_observation()
     while True:
@@ -34,7 +36,7 @@ async def do_single_rollout(policy: TokenCompleter, env: Env) -> Trajectory:
     return Trajectory(transitions=transitions, final_ob=ob)
 
 
-async def do_group_rollout(env_group_builder: EnvGroupBuilder, policy: TokenCompleter) -> TrajectoryGroup:
+async def do_group_rollout(env_group_builder: AGLDummyEnvGroupBuilder[Any], policy: TokenCompleter) -> TrajectoryGroup:
     envs_G: Sequence[Env] = await env_group_builder.make_envs()
     trajectories_G = await asyncio.gather(*[do_single_rollout(policy, env) for env in envs_G])
     rewards_and_metrics_G = await env_group_builder.compute_group_rewards(trajectories_G)

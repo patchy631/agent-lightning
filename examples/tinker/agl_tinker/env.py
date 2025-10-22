@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import logging
 from random import Random
-from typing import Generic, Sequence, TypeVar
+from typing import Generic, Optional, Sequence, TypeVar
 
 from tinker_cookbook.eval.evaluators import SamplingClientEvaluator
 from tinker_cookbook.rl.types import (
@@ -11,6 +12,7 @@ from tinker_cookbook.rl.types import (
     Metrics,
     Observation,
     RLDataset,
+    RLDatasetBuilder,
     StepResult,
     StopCondition,
     Trajectory,
@@ -19,6 +21,8 @@ from tinker_cookbook.rl.types import (
 from agentlightning import Dataset
 
 T_task = TypeVar("T_task")
+
+logger = logging.getLogger(__name__)
 
 
 class AGLDummyEnv(Env, Generic[T_task]):
@@ -39,7 +43,7 @@ class AGLDummyEnvGroupBuilder(EnvGroupBuilder, Generic[T_task]):
         self.task = task
         self.num_envs = num_envs
 
-    async def make_envs(self) -> Sequence[Env]:
+    async def make_envs(self) -> Sequence[AGLDummyEnv[T_task]]:
         return [AGLDummyEnv(self.task) for _ in range(self.num_envs)]
 
 
@@ -70,6 +74,57 @@ class AGLDataset(RLDataset, Generic[T_task]):
 
     def __len__(self) -> int:
         return len(self.dataset) // self.batch_size
+
+
+class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
+
+    def __init__(
+        self,
+        train_dataset: Dataset[T_task],
+        *,
+        val_dataset: Optional[Dataset[T_task]] = None,
+        train_val_split: float = 0.7,
+        batch_size: int,
+        shuffle: bool = True,
+        group_size: int = 4,
+        seed: int = 42,
+    ) -> None:
+        self.train_dataset = train_dataset
+        self.val_dataset = val_dataset
+        self.train_val_split = train_val_split
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.group_size = group_size
+        self.seed = seed
+
+    async def __call__(self) -> tuple[AGLDataset[T_task], AGLDataset[T_task]]:
+        if self.val_dataset is None:
+            indices = list(range(len(self.train_dataset)))
+            Random(self.seed).shuffle(indices)
+            val_indices = indices[int(len(indices) * self.train_val_split) :]
+            train_indices = indices[: int(len(indices) * self.train_val_split)]
+            logger.warning(
+                "No validation dataset provided, splitting train dataset into train (%d) and validation (%d)",
+                len(train_indices),
+                len(val_indices),
+            )
+            train_dataset = [self.train_dataset[i] for i in train_indices]
+            val_dataset = [self.train_dataset[i] for i in val_indices]
+        else:
+            train_dataset = self.train_dataset
+            val_dataset = self.val_dataset
+
+        return (
+            AGLDataset(
+                train_dataset,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                group_size=self.group_size,
+                seed=self.seed,
+            ),
+            # For validation, always use batch_size=1 and group_size=1 to avoid dropping or repeating any samples
+            AGLDataset(val_dataset, batch_size=1, shuffle=False, group_size=1),
+        )
 
 
 class AGLTestSetEvaluator(SamplingClientEvaluator):
