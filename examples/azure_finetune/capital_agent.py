@@ -1,6 +1,7 @@
+import asyncio
 import json
 import os
-from typing import Any, Dict, List, TypedDict
+from typing import List, TypedDict, cast
 
 import openai
 import pandas as pd
@@ -12,7 +13,7 @@ from openai.types.chat import (
 )
 from rich.console import Console
 
-from agentlightning import LLM, rollout
+from agentlightning import LLM, AgentOpsTracer, InMemoryLightningStore, LitAgentRunner, rollout
 
 CAPITALS = {
     "japan": "Tokyo",
@@ -65,11 +66,11 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
 
     Returns 1.0 if output contains expected substring, else 0.0.
     """
-    print("[bold blue][run_task][/bold blue] Running task with input:", task)
+    console.print("[bold blue]Runner[/bold blue] Running task with input:", task)
     prompt = task["input"]
     expected = task["output"]
 
-    openai_client = openai.OpenAI(base_url=llm.endpoint)
+    openai_client = openai.OpenAI(base_url=llm.endpoint, api_key=os.getenv("AZURE_OPENAI_API_KEY", ""))
 
     messages: List[ChatCompletionMessageParam] = [
         {"role": "system", "content": SYSTEM},
@@ -84,7 +85,7 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
         tool_choice="auto",
         temperature=0,
     )
-    print("[bold blue][run_task][/bold blue] First call response:", first)
+    console.print("[bold blue]Runner[/bold blue] First call response:", first)
 
     msg = first.choices[0].message
 
@@ -120,7 +121,7 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
             }
         )
         messages.extend(tool_results)
-        print("[bold blue][run_task][/bold blue] Messages after tool call:", messages)
+        console.print("[bold blue]Runner[/bold blue] Messages after tool call:", messages)
 
         # --- Call #2 ---
         second = openai_client.chat.completions.create(
@@ -128,21 +129,33 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
             messages=messages,
             temperature=0,
         )
-        print("[bold blue][run_task][/bold blue] Second call response:", second)
+        console.print("[bold blue]Runner[/bold blue] Second call response:", second)
         final_text = second.choices[0].message.content or ""
     else:
-        print("[bold blue][run_task][/bold blue] No tool calls made.")
+        console.print("[bold blue]Runner[/bold blue] No tool calls made.")
         final_text = msg.content or ""
 
     final_text = final_text.strip()
     reward = 1.0 if expected.lower() in final_text.lower() else 0.0
-    print(f"[bold blue][run_task][/bold blue] Final output: {final_text} | Reward: {reward}")
+    console.print(f"[bold blue]Runner[/bold blue] Final output: {final_text} | Reward: {reward}")
     return reward
 
 
-if __name__ == "__main__":
-    client = openai.OpenAI(api_key=os.getenv("AZURE_OPENAI_API_KEY"), base_url=os.getenv("AZURE_OPENAI_ENDPOINT"))
+async def main():
+    llm = LLM(
+        endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", ""),
+        model="gpt-4.1-mini",
+    )
 
-    data = pd.read_csv("capital_samples.csv")
-    sample = data.iloc[0].to_dict()
-    run_task(client, "gpt-4o-new", sample)
+    data = pd.read_csv("capital_samples.csv")  # type: ignore
+    tracer = AgentOpsTracer()
+    runner = LitAgentRunner[CapitalTask](tracer=tracer)
+    store = InMemoryLightningStore()
+    with runner.run_context(agent=capital_agent, store=store):
+        for index in range(5):
+            sample = cast(CapitalTask, data.iloc[index].to_dict())  # type: ignore
+            await runner.step(sample, resources={"main_llm": llm})
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
