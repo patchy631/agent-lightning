@@ -11,17 +11,13 @@ Environments are not used at all because Agent-lightning handles "environment" h
 from __future__ import annotations
 
 import asyncio
-import io
 import logging
 import os
 import time
-from turtle import forward
-from typing import Any, Callable, List, Literal, Sequence
+from typing import Any, Literal, Sequence
 
 import chz
-import numpy as np
 import tinker
-import torch
 from tinker_cookbook import checkpoint_utils
 from tinker_cookbook.completers import TinkerTokenCompleter
 from tinker_cookbook.eval.evaluators import SamplingClientEvaluator, SamplingClientEvaluatorBuilder
@@ -32,7 +28,6 @@ from tinker_cookbook.rl.data_processing import (
 )
 from tinker_cookbook.rl.metric_util import RLTestSetEvaluator, compute_trajectory_metrics
 from tinker_cookbook.rl.metrics import incorporate_kl_penalty
-from tinker_cookbook.rl.rollouts import do_group_rollout
 from tinker_cookbook.rl.train import (
     compute_full_batch_metrics_and_get_sampling_client,
     print_group,
@@ -41,8 +36,6 @@ from tinker_cookbook.rl.train import (
 )
 from tinker_cookbook.rl.types import (
     EnvGroupBuilder,
-    RLDataset,
-    RLDatasetBuilder,
     TrajectoryGroup,
 )
 from tinker_cookbook.tokenizer_utils import Tokenizer
@@ -51,8 +44,9 @@ from tinker_cookbook.utils.misc_utils import timed
 from tinker_cookbook.utils.trace import get_scope_context, scope, trace_init
 
 from .env import AGLDataset, AGLDatasetBuilder, AGLDummyEnvGroupBuilder
+from .rollout import agl_group_rollout
 
-logger = logging.getLogger("agentlightning.tinker")
+logger = logging.getLogger(__name__)
 
 
 @chz.chz
@@ -96,7 +90,7 @@ async def do_group_rollout_and_filter_constant_reward(
     do_remove_constant_reward_groups: bool,
 ) -> TrajectoryGroup | None:
     policy = TinkerTokenCompleter(sampling_client, max_tokens=max_tokens)
-    trajectory_group = await do_group_rollout(env_group_builder, policy)
+    trajectory_group = await agl_group_rollout(env_group_builder, policy)
 
     # Remove if all trajectories have the same reward
     trajectory_groups = [trajectory_group]
@@ -213,28 +207,34 @@ async def do_sync_training(
     """Implements fully synchronous on-policy training"""
 
     # Initial sampling client
+    logger.info(f"Creating sampling client with training client {training_client} and start batch {start_batch}")
     sampling_client, _ = await save_checkpoint_and_get_sampling_client(
         training_client, start_batch, cfg.log_path, cfg.save_every
     )
 
+    logger.info(f"Starting training from batch {start_batch} to {end_batch}")
     for i_batch in range(start_batch, end_batch):
         metrics = {
             "progress/batch": i_batch,
             "optim/lr": cfg.learning_rate,
             "progress/done_frac": (i_batch + 1) / num_batches,
         }
+        logger.info(f"[Batch {i_batch}] Starting training step. Learning rate: {cfg.learning_rate}")
         t_start = time.time()
 
         # Run evaluations
         if cfg.eval_every > 0 and i_batch % cfg.eval_every == 0:
+            logger.info(f"[Batch {i_batch}] Running evaluations")
             with timed("run_evals", metrics):
                 for evaluator in evaluators:
                     eval_metrics = await evaluator(sampling_client)
                     metrics.update({f"test/{k}": v for k, v in eval_metrics.items()})
 
         # Get batch and sample trajectories
+        logger.info(f"[Batch {i_batch}] Getting batch data from dataset")
         env_group_builders_P = dataset.get_batch(i_batch)
         with timed("sample", metrics):
+            logger.info(f"[Batch {i_batch}] Sampling trajectories...")
             trajectory_groups_P = await asyncio.gather(
                 *[
                     asyncio.create_task(
@@ -252,8 +252,10 @@ async def do_sync_training(
         trajectory_groups_P = [
             trajectory_group for trajectory_group in trajectory_groups_P if trajectory_group is not None
         ]
+        logger.info(f"[Batch {i_batch}] Trajectories sampled: {len(trajectory_groups_P)}")
 
         # Train step
+        logger.info(f"[Batch {i_batch}] Starting training step...")
         sampling_client, train_step_metrics = await do_train_step_and_get_sampling_client(
             cfg,
             i_batch,
@@ -268,6 +270,7 @@ async def do_sync_training(
         metrics.update(train_step_metrics)
         metrics["time/total"] = time.time() - t_start
         ml_logger.log_metrics(metrics, step=i_batch)
+        logger.info(f"[Batch {i_batch}] Sampling and training completed")
 
 
 @scope
@@ -302,7 +305,9 @@ async def main(
     else:
         start_batch = 0
 
+    logger.info(f"Creating service client with base URL {cfg.base_url}")
     service_client = tinker.ServiceClient(base_url=cfg.base_url)
+    logger.info(f"Creating training client with model name {cfg.model_name} and rank {cfg.lora_rank}")
     training_client = await service_client.create_lora_training_client_async(cfg.model_name, rank=cfg.lora_rank)
 
     load_state_path: str | None = resume_info["state_path"] if resume_info else cfg.load_checkpoint_path
@@ -310,18 +315,22 @@ async def main(
         future = await training_client.load_state_async(load_state_path)
         _ = await future.result_async()
         logger.info(f"Loaded state from {load_state_path}")
+    else:
+        logger.info("No checkpoint found, starting from scratch")
 
     # Get tokenizer from training client
     tokenizer = training_client.get_tokenizer()
+    logger.info(f"Tokenizer created: {tokenizer}")
 
     # Create dataset from thunk
-    dataset, maybe_test_dataset = await cfg.dataset_builder()
+    dataset, test_dataset = await cfg.dataset_builder()
     evaluators = [evaluator() for evaluator in cfg.evaluator_builders]
-    if maybe_test_dataset is not None:
-        evaluators.append(RLTestSetEvaluator(maybe_test_dataset, max_tokens=cfg.max_tokens))
+    # TODO: temporarily disabled
+    # if maybe_test_dataset is not None:
+    #     evaluators.append(RLTestSetEvaluator(maybe_test_dataset, max_tokens=cfg.max_tokens))
 
     num_batches = len(dataset)
-    logger.info(f"Will train on {num_batches} batches")
+    logger.info(f"Will train on {num_batches} batches and test on {len(test_dataset)} batches")
 
     # Training loop
     await do_sync_training(
@@ -339,6 +348,7 @@ async def main(
 
     # Save final checkpoint
     if start_batch < num_batches:
+        logger.info(f"Saving final checkpoint to {cfg.log_path}/final.pt")
         _ = await checkpoint_utils.save_checkpoint_async(
             training_client=training_client,
             name="final",

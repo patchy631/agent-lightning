@@ -4,6 +4,7 @@ import logging
 from random import Random
 from typing import Generic, Optional, Sequence, TypeVar
 
+import chz
 from tinker_cookbook.eval.evaluators import SamplingClientEvaluator
 from tinker_cookbook.rl.types import (
     Action,
@@ -76,26 +77,16 @@ class AGLDataset(RLDataset, Generic[T_task]):
         return len(self.dataset) // self.batch_size
 
 
+@chz.chz
 class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
 
-    def __init__(
-        self,
-        train_dataset: Dataset[T_task],
-        *,
-        val_dataset: Optional[Dataset[T_task]] = None,
-        train_val_split: float = 0.7,
-        batch_size: int,
-        shuffle: bool = True,
-        group_size: int = 4,
-        seed: int = 42,
-    ) -> None:
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
-        self.train_val_split = train_val_split
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.group_size = group_size
-        self.seed = seed
+    train_dataset: Dataset[T_task]
+    batch_size: int
+    val_dataset: Optional[Dataset[T_task]] = None
+    train_val_split: float = 0.7
+    shuffle: bool = True
+    group_size: int = 4
+    seed: int = 42
 
     async def __call__(self) -> tuple[AGLDataset[T_task], AGLDataset[T_task]]:
         if self.val_dataset is None:
