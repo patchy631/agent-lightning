@@ -1543,7 +1543,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 20, 2025 11:44:13 UTC"><span class="timeago" datetime="2025-10-20T11:44:13+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 20, 2025 11:44:13 UTC">2025-10-20</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 22, 2025 02:03:43 UTC"><span class="timeago" datetime="2025-10-22T02:03:43+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 22, 2025 02:03:43 UTC">2025-10-22</span>
   </span>
 
     
@@ -1580,6 +1580,13 @@
 <!-- Page content -->
 <h1 id="installation-guide">Installation Guide<a class="headerlink" href="#installation-guide" title="Permanent link">&para;</a></h1>
 <p>This guide explains how to install <strong>Agent-Lightning</strong>. You can install it from <strong>PyPI</strong> (the Python Package Index) for general use or directly from the <strong>source code</strong> if you plan to contribute or need fine-grained control over dependencies.</p>
+<div class="admonition info">
+<p class="admonition-title">Platform and Hardware Requirements</p>
+<p>Agent-Lightning is officially supported on <strong>Linux distributions</strong> (Ubuntu 22.04 or later is recommended).
+At the moment <strong>macOS and Windows</strong> (outside of WSL2) are not supported.</p>
+<p>The Python runtime must be <strong>Python 3.10 or newer</strong>. We recommend using the latest patch release of Python 3.10, 3.11, or 3.12 to pick up performance and security updates.</p>
+<p>A <strong>GPU is optional</strong>—you only need CUDA-capable hardware if you plan to fine-tune model weights or run GPU-accelerated workloads. CPU-only environments are fully supported for evaluation and inference.</p>
+</div>
 <h2 id="installing-from-pypi">Installing from PyPI<a class="headerlink" href="#installing-from-pypi" title="Permanent link">&para;</a></h2>
 <p>The easiest way to get started is by installing Agent-Lightning directly from PyPI. This ensures you get the latest <strong>stable release</strong> of the package, tested for compatibility and reliability.</p>
 <h3 id="install-the-stable-release">Install the Stable Release<a class="headerlink" href="#install-the-stable-release" title="Permanent link">&para;</a></h3>
@@ -1632,7 +1639,7 @@ For a more stable setup, install dependencies step-by-step:</p>
 <h2 id="example-specific-installation">Example-specific Installation<a class="headerlink" href="#example-specific-installation" title="Permanent link">&para;</a></h2>
 <p>Each example in the <code>examples/</code> directory may have its own additional dependencies.
 Please refer to the <strong>README</strong> file of each example for detailed setup instructions:</p>
-<p><a href="https://github.com/microsoft/agent-lightning/tree/0e04363f4c3046b6c7cba9092f9e8b6fd4d8c3a9/examples">See Example READMEs</a>.</p>
+<p><a href="https://github.com/microsoft/agent-lightning/tree/2b12e29f3282f6a8c74cf764b24a9741d7340abd/examples">See Example READMEs</a>.</p>
 <h2 id="installing-from-source-for-developers-and-contributors">Installing from Source (for Developers and Contributors)<a class="headerlink" href="#installing-from-source-for-developers-and-contributors" title="Permanent link">&para;</a></h2>
 <p>If you plan to contribute to Agent-Lightning or prefer to work with the latest development code, install it directly from the <strong>source repository</strong>.</p>
 <h3 id="why-install-from-source">Why Install from Source?<a class="headerlink" href="#why-install-from-source" title="Permanent link">&para;</a></h3>
@@ -1679,7 +1686,7 @@ Please refer to the <strong>README</strong> file of each example for detailed se
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span>--group<span class="w"> </span>agents<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span>--no-default-groups
 </code></pre></div>
-<p>Read more about Agent-lightning managed dependency groups <a href="https://github.com/microsoft/agent-lightning/tree/0e04363f4c3046b6c7cba9092f9e8b6fd4d8c3a9/pyproject.toml">here</a>.</p>
+<p>Read more about Agent-lightning managed dependency groups <a href="https://github.com/microsoft/agent-lightning/tree/2b12e29f3282f6a8c74cf764b24a9741d7340abd/pyproject.toml">here</a>.</p>
 <h3 id="activating-your-environment">Activating Your Environment<a class="headerlink" href="#activating-your-environment" title="Permanent link">&para;</a></h3>
 <p>After syncing dependencies, <code>uv</code> automatically creates a virtual environment inside the <code>.venv/</code> directory.</p>
 <p>You can use it in two ways:</p>
