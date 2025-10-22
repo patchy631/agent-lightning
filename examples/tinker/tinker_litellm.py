@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, List, Literal, TypeGuard
+from typing import Any, List, Literal, TypeGuard, cast
 
 import litellm
 import tinker
@@ -10,6 +10,7 @@ from litellm.types.utils import Choices
 from litellm.types.utils import Message as LitellmMessage
 from litellm.types.utils import ModelResponse
 from litellm.utils import custom_llm_setup
+from pydantic import TypeAdapter
 from tinker.types import ModelInput, SampleResponse, SamplingParams
 from tinker_cookbook.renderers import Message as TinkerMessage
 from tinker_cookbook.renderers import Qwen3Renderer, Renderer
@@ -34,13 +35,15 @@ class TinkerLLM(CustomLLM):
         self.renderer = renderer
         self.tokenizer = tokenizer
 
-    def _validate_message(self, messages: Any) -> TypeGuard[List[TinkerMessage]]:
+    def _validate_messages(self, messages: Any) -> TypeGuard[List[TinkerMessage]]:
+        TypeAdapter(List[TinkerMessage]).validate_python(messages)
+        # Exception will be raised if validation fails
         return True
-        # TODO: implement this
-        raise NotImplementedError()
 
     def _validate_role(self, role: str) -> TypeGuard[Literal["assistant", "user", "system", "tool", "function"]]:
-        return role in ["assistant", "user", "system", "tool", "function"]
+        if role not in ["assistant", "user", "system", "tool", "function"]:
+            raise ValueError(f"Invalid role: {role}")
+        return True
 
     def _parse_tool_call(self, tool_call: TinkerToolCall) -> ChatCompletionMessageToolCall:
         if set(tool_call.keys()) != {"name", "args"}:
@@ -56,11 +59,12 @@ class TinkerLLM(CustomLLM):
 
     def _prepare_model_input(self, **kwargs: Any) -> ModelInput:
         messages = kwargs.pop("messages", None)
-        if not self._validate_message(messages):
-            raise ValueError("...")
-        return self.renderer.build_generation_prompt(messages)
+        if self._validate_messages(messages):
+            return self.renderer.build_generation_prompt(messages)
+        else:
+            assert False, "This should never happen"
 
-    def _parse_response(self, response: SampleResponse) -> ModelResponse:
+    def _parse_response(self, model_input: ModelInput, response: SampleResponse) -> ModelResponse:
         choices: List[Choices] = []
         for seq in response.sequences:
             if seq.logprobs is not None:
@@ -82,7 +86,7 @@ class TinkerLLM(CustomLLM):
             if parse_success:
                 role = parsed_response["role"]
                 if not self._validate_role(role):
-                    raise ValueError(f"Invalid role: {role}")
+                    assert False, "This should never happen"
                 content = parsed_response["content"]
                 tool_calls = parsed_response.get("tool_calls", None)
                 if tool_calls:
@@ -92,6 +96,7 @@ class TinkerLLM(CustomLLM):
                         message=LitellmMessage(role=role, content=content, tool_calls=tool_calls),
                         finish_reason=seq.stop_reason,
                         logprobs=logprobs,
+                        token_ids=seq.tokens,
                     )
                 )
             else:
@@ -102,15 +107,18 @@ class TinkerLLM(CustomLLM):
                         message=LitellmMessage(role="assistant", content=parsed_response["content"]),
                         finish_reason=seq.stop_reason,
                         logprobs=logprobs,
+                        token_ids=seq.tokens,
                     )
                 )
-        return ModelResponse(id=generate_id("tinker-sampling-"), choices=choices)
+        return ModelResponse(
+            id=generate_id("tinker-sampling-"), choices=choices, prompt_token_ids=model_input.to_ints()
+        )
 
     async def acompletion(self, **kwargs: Any) -> ModelResponse:
         model_input = self._prepare_model_input(**kwargs)
         params = SamplingParams(max_tokens=20, temperature=0.0, stop=self.renderer.get_stop_sequences())
         result = await sampling_client.sample_async(prompt=model_input, sampling_params=params, num_samples=1)
-        return self._parse_response(result)
+        return self._parse_response(model_input, result)
 
 
 tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-30B-A3B-Instruct-2507")
