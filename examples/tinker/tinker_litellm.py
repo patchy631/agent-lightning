@@ -14,6 +14,7 @@ from tinker.types import ModelInput, SampleResponse, SamplingParams
 from tinker_cookbook.renderers import Message as TinkerMessage
 from tinker_cookbook.renderers import Qwen3Renderer, Renderer
 from tinker_cookbook.renderers import ToolCall as TinkerToolCall
+from transformers import PreTrainedTokenizerBase
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 from agentlightning.logging import configure_logger
@@ -29,8 +30,9 @@ def generate_id(prefix: str) -> str:
 
 
 class TinkerLLM(CustomLLM):
-    def __init__(self, renderer: Renderer) -> None:
+    def __init__(self, renderer: Renderer, tokenizer: PreTrainedTokenizerBase) -> None:
         self.renderer = renderer
+        self.tokenizer = tokenizer
 
     def _validate_message(self, messages: Any) -> TypeGuard[List[TinkerMessage]]:
         return True
@@ -61,6 +63,21 @@ class TinkerLLM(CustomLLM):
     def _parse_response(self, response: SampleResponse) -> ModelResponse:
         choices: List[Choices] = []
         for seq in response.sequences:
+            if seq.logprobs is not None:
+                token_strings: List[str] = self.tokenizer.batch_decode([token] for token in seq.tokens)
+                logprobs = LitellmChoiceLogprobs(
+                    content=[
+                        ChatCompletionTokenLogprob(
+                            token=token,
+                            logprob=logprob,
+                            top_logprobs=[],
+                        )
+                        for token, logprob in zip(token_strings, seq.logprobs)
+                    ]
+                )
+            else:
+                logprobs = None
+
             parsed_response, parse_success = self.renderer.parse_response(seq.tokens)
             if parse_success:
                 role = parsed_response["role"]
@@ -70,21 +87,6 @@ class TinkerLLM(CustomLLM):
                 tool_calls = parsed_response.get("tool_calls", None)
                 if tool_calls:
                     tool_calls = [self._parse_tool_call(tool_call) for tool_call in tool_calls]
-
-                if seq.logprobs is not None:
-                    logprobs = LitellmChoiceLogprobs(
-                        content=[
-                            ChatCompletionTokenLogprob(
-                                token=str(token),
-                                logprob=logprob,
-                                top_logprobs=[],
-                            )
-                            for token, logprob in zip(seq.tokens, seq.logprobs)
-                        ]
-                    )
-                else:
-                    logprobs = None
-
                 choices.append(
                     Choices(
                         message=LitellmMessage(role=role, content=content, tool_calls=tool_calls),
@@ -93,7 +95,15 @@ class TinkerLLM(CustomLLM):
                     )
                 )
             else:
-                raise ValueError(f"Failed to parse response: {parsed_response}")
+                logger.warning(f"Failed to parse response: {parsed_response}")
+                # Go with the default path
+                choices.append(
+                    Choices(
+                        message=LitellmMessage(role="assistant", content=parsed_response["content"]),
+                        finish_reason=seq.stop_reason,
+                        logprobs=logprobs,
+                    )
+                )
         return ModelResponse(id=generate_id("tinker-sampling-"), choices=choices)
 
     async def acompletion(self, **kwargs: Any) -> ModelResponse:
@@ -104,8 +114,9 @@ class TinkerLLM(CustomLLM):
 
 
 tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-30B-A3B-Instruct-2507")
+print(type(tokenizer))
 
-tinker_llm = TinkerLLM(Qwen3Renderer(tokenizer))
+tinker_llm = TinkerLLM(Qwen3Renderer(tokenizer), tokenizer)
 
 litellm.custom_provider_map = [{"provider": "agl-tinker", "custom_handler": tinker_llm}]
 
@@ -125,6 +136,7 @@ llm_proxy = LLMProxy(
             "litellm_params": {"model": "agl-tinker/Qwen3-30B-A3B-Instruct-2507"},
         }
     ],
+    num_retries=0,
 )
 
 llm_proxy.start()
