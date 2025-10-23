@@ -2,7 +2,7 @@
 
 import logging
 import uuid
-from typing import Any, List, Literal, TypeGuard
+from typing import Any, Callable, Dict, List, Literal, Type, TypeGuard, TypeVar, cast
 
 import tinker
 from litellm.llms.custom_llm import CustomLLM
@@ -20,6 +20,8 @@ from transformers import PreTrainedTokenizerBase
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
 
 def generate_id(prefix: str) -> str:
     return prefix + str(uuid.uuid4())
@@ -32,12 +34,20 @@ class TinkerLLM(CustomLLM):
         renderer: Renderer,
         tokenizer: PreTrainedTokenizerBase,
         sampling_client: tinker.SamplingClient,
-        default_max_tokens: int = 2048,
+        max_tokens: int = 2048,
+        temperature: float = 1.0,
+        top_k: int = -1,
+        top_p: float = 1.0,
+        seed: int = 42,
     ) -> None:
         self.renderer = renderer
         self.tokenizer = tokenizer
         self.sampling_client = sampling_client
-        self.default_max_tokens = default_max_tokens
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.top_k = top_k
+        self.top_p = top_p
+        self.seed = seed
 
     def _validate_messages(self, messages: Any) -> TypeGuard[List[TinkerMessage]]:
         TypeAdapter(List[TinkerMessage]).validate_python(messages)
@@ -60,6 +70,27 @@ class TinkerLLM(CustomLLM):
             },
             type="function",
         )
+
+    def _get_optional_params(
+        self,
+        kwargs: Dict[str, Any],
+        keys: List[str],
+        expected_type: Type[T],
+        validate_fn: Callable[[T], bool],
+        default_value: T,
+    ) -> T:
+        optional_params = cast(Dict[str, Any], kwargs.get("optional_params", {}))
+        if not isinstance(optional_params, dict):  # type: ignore
+            raise ValueError(f"Invalid optional params type: {type(optional_params)}")
+        for key in keys:
+            if key in optional_params:
+                value = optional_params[key]
+                if not isinstance(value, expected_type):
+                    raise ValueError(f"Invalid {key} type: {type(value)}")
+                if not validate_fn(value):
+                    raise ValueError(f"Invalid {key}. Did not pass validation: {value}")
+                return value
+        return default_value
 
     def _prepare_model_input(self, **kwargs: Any) -> ModelInput:
         messages = kwargs.pop("messages", None)
@@ -118,9 +149,26 @@ class TinkerLLM(CustomLLM):
             id=generate_id("tinker-sampling-"), choices=choices, prompt_token_ids=model_input.to_ints()
         )
 
-    async def acompletion(self, **kwargs: Any) -> ModelResponse:
+    async def acompletion(self, **kwargs: Any) -> ModelResponse:  # type: ignore
         print(kwargs)
+        max_tokens = self._get_optional_params(
+            kwargs, ["max_completion_tokens", "max_tokens"], int, lambda x: x >= 0, self.max_tokens
+        )
+        temperature = self._get_optional_params(
+            kwargs, ["temperature"], float, lambda x: 0.0 <= x <= 2.0, self.temperature
+        )
+        top_k = self._get_optional_params(kwargs, ["top_k"], int, lambda x: True, self.top_k)
+        top_p = self._get_optional_params(kwargs, ["top_p"], float, lambda x: 0.0 <= x <= 1.0, self.top_p)
+        seed = self._get_optional_params(kwargs, ["seed"], int, lambda _: True, self.seed)
+        print(max_tokens, temperature, top_k, top_p, seed)
         model_input = self._prepare_model_input(**kwargs)
-        params = SamplingParams(max_tokens=20, temperature=0.0, stop=self.renderer.get_stop_sequences())
+        params = SamplingParams(
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            seed=seed,
+            stop=self.renderer.get_stop_sequences(),
+        )
         result = await self.sampling_client.sample_async(prompt=model_input, sampling_params=params, num_samples=1)
         return self._parse_response(model_input, result)

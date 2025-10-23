@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import logging
 from typing import cast
 
 import litellm
@@ -25,9 +26,7 @@ def main():
     renderer = Qwen3Renderer(tokenizer)  # type: ignore
     service_client = tinker.ServiceClient()
     sampling_client = service_client.create_sampling_client(base_model=model_name)
-    tinker_llm = TinkerLLM(
-        renderer=renderer, tokenizer=tokenizer, sampling_client=sampling_client, default_max_tokens=20
-    )
+    tinker_llm = TinkerLLM(renderer=renderer, tokenizer=tokenizer, sampling_client=sampling_client, max_tokens=20)
 
     litellm.custom_provider_map = [{"provider": "agl-tinker", "custom_handler": tinker_llm}]
 
@@ -53,8 +52,12 @@ def main():
 
         client = openai.OpenAI(base_url="http://localhost:4000/v1", api_key="dummy")
         response = client.chat.completions.create(
-            model="Qwen3-30B-A3B-Instruct-2507",
+            model=model_name,
             messages=[{"role": "user", "content": "Hello world!"}],
+            max_tokens=10,
+            temperature=0.5,
+            top_p=0.9,
+            seed=43,
         )
         print(response)
     finally:
