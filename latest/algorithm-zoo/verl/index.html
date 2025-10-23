@@ -2106,11 +2106,13 @@ mode.</p>
 external environments, tools, or APIs through an AgentLightningServer. It simplifies
 the training loop by removing the complex conditional logic present in the original
 RayPPOTrainer and focusing on the agent mode workflow.</p>
-<p>Key differences from RayPPOTrainer:
-1. Uses AgentModeDaemon for server communication
-2. Simplified data flow without pop/union operations
-3. Direct batch processing through agent daemon
-4. Streamlined validation using agent_mode validation</p>
+<p>Key differences from RayPPOTrainer:</p>
+<ol>
+<li>Uses AgentModeDaemon for server communication</li>
+<li>Simplified data flow without pop/union operations</li>
+<li>Direct batch processing through agent daemon</li>
+<li>Streamlined validation using agent_mode validation</li>
+</ol>
 
 
 

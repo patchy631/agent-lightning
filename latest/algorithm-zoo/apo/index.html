@@ -1724,14 +1724,18 @@
 <p>APO is an iterative prompt optimization algorithm that uses LLM-generated textual gradients
 to improve prompts through a beam search process. It evaluates prompts on rollouts,
 computes critiques based on the results, and applies edits to generate improved prompts.</p>
-<p>The algorithm operates in rounds, where each round:
-1. Samples parent prompts from the current beam
-2. Generates new prompts by computing textual gradients and applying edits
-3. Evaluates all candidates on a validation set
-4. Selects the top-k prompts for the next round</p>
-<p>Based on the ideas from:
-- ProTeGi: https://aclanthology.org/2023.emnlp-main.494.pdf
-- TextGrad: https://github.com/zou-group/textgrad</p>
+<p>The algorithm operates in rounds, where each round:</p>
+<ol>
+<li>Samples parent prompts from the current beam</li>
+<li>Generates new prompts by computing textual gradients and applying edits</li>
+<li>Evaluates all candidates on a validation set</li>
+<li>Selects the top-k prompts for the next round</li>
+</ol>
+<p>Based on the ideas from:</p>
+<ul>
+<li><a href="https://aclanthology.org/2023.emnlp-main.494.pdf">ProTeGi</a></li>
+<li><a href="https://github.com/zou-group/textgrad">TextGrad</a></li>
+</ul>
 
 
 
@@ -1960,11 +1964,13 @@ and generates a critique describing how the prompt could be improved.</p>
     <div class="doc doc-contents ">
 
         <p>Evaluate a prompt on a batch of tasks by running rollouts and computing average reward.</p>
-<p>This method:
-1. Adds the prompt as a named resource to the store
-2. Enqueues rollouts for each task in the dataset
-3. Waits for rollouts to complete (with timeout)
-4. Computes and returns the average reward</p>
+<p>This method:</p>
+<ol>
+<li>Adds the prompt as a named resource to the store</li>
+<li>Enqueues rollouts for each task in the dataset</li>
+<li>Waits for rollouts to complete (with timeout)</li>
+<li>Computes and returns the average reward</li>
+</ol>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2222,11 +2228,13 @@ with rewards and status information for gradient computation.</p>
     <div class="doc doc-contents ">
 
         <p>Execute the APO algorithm to optimize prompts through beam search with textual gradients.</p>
-<p>The algorithm performs iterative prompt optimization over multiple rounds:
-- Each round: samples parent prompts, generates new candidates via textual gradients,
-  evaluates all candidates on validation data, and keeps the top performers
-- Tracks the historically best prompt across all rounds
-- Uses different training data samples for each gradient computation to ensure diversity</p>
+<p>The algorithm performs iterative prompt optimization over multiple rounds:</p>
+<ul>
+<li>Each round: samples parent prompts, generates new candidates via textual gradients,
+  evaluates all candidates on validation data, and keeps the top performers</li>
+<li>Tracks the historically best prompt across all rounds</li>
+<li>Uses different training data samples for each gradient computation to ensure diversity</li>
+</ul>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2286,9 +2294,11 @@ with rewards and status information for gradient computation.</p>
     <div class="doc doc-contents ">
 
         <p>Generate an improved prompt by computing a textual gradient and applying an edit.</p>
-<p>This is the main optimization step that:
-1. Computes a critique (textual gradient) based on rollout performance
-2. Uses another LLM to apply the critique and generate an improved prompt</p>
+<p>This is the main optimization step that:</p>
+<ol>
+<li>Computes a critique (textual gradient) based on rollout performance</li>
+<li>Uses another LLM to apply the critique and generate an improved prompt</li>
+</ol>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
