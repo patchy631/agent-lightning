@@ -8,18 +8,15 @@ from typing import Generic, Optional, Sequence, TypeVar
 
 import chz
 import pandas as pd
-from tinker_cookbook.eval.evaluators import SamplingClientEvaluator
 from tinker_cookbook.rl.types import (
     Action,
     Env,
     EnvGroupBuilder,
-    Metrics,
     Observation,
     RLDataset,
     RLDatasetBuilder,
     StepResult,
     StopCondition,
-    Trajectory,
 )
 
 from agentlightning import Dataset
@@ -68,7 +65,7 @@ class AGLDataset(RLDataset, Generic[T_task]):
         else:
             self.indices = list(range(len(self.dataset)))
 
-    def get_batch(self, index: int) -> Sequence[EnvGroupBuilder]:
+    def get_batch(self, index: int) -> Sequence[AGLDummyEnvGroupBuilder[T_task]]:
         start_index = index * self.batch_size
         end_index = min((index + 1) * self.batch_size, len(self.dataset))
         return [
@@ -99,11 +96,11 @@ class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
         Supports parquet, csv and jsonl files.
         """
         if file.endswith(".parquet"):
-            return pd.read_parquet(file).to_dict(orient="records")
+            return pd.read_parquet(file).to_dict(orient="records")  # type: ignore
         elif file.endswith(".csv"):
-            return pd.read_csv(file).to_dict(orient="records")
+            return pd.read_csv(file).to_dict(orient="records")  # type: ignore
         elif file.endswith(".jsonl"):
-            return pd.read_json(file, lines=True).to_dict(orient="records")
+            return pd.read_json(file, lines=True).to_dict(orient="records")  # type: ignore
         else:
             raise ValueError(f"Unsupported file type: {file}")
 
@@ -140,25 +137,6 @@ class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
                 group_size=self.group_size,
                 seed=self.seed,
             ),
-            # For validation, always use batch_size=1 and group_size=1 to avoid dropping or repeating any samples
-            AGLDataset(val_dataset, batch_size=1, shuffle=False, group_size=1),
+            # For validation, always use batch_size=len(val_dataset) and group_size=1 to avoid dropping or repeating any samples
+            AGLDataset(val_dataset, batch_size=len(val_dataset), shuffle=False, group_size=1),
         )
-
-
-class AGLTestSetEvaluator(SamplingClientEvaluator):
-    def __init__(self, dataset: RLDataset, max_tokens: int, name: str | None = None):
-        self.env_group_builders_P = dataset_to_env_group_builders(dataset)
-        self.max_tokens = max_tokens
-        self.name = name
-
-    async def __call__(self, sampling_client: tinker.SamplingClient) -> dict[str, float]:
-        policy = TinkerTokenCompleter(sampling_client, max_tokens=self.max_tokens)
-        trajectory_groups_P = await asyncio.gather(
-            *[do_group_rollout(builder, policy) for builder in self.env_group_builders_P]
-        )
-        taglist_P = [builder.logging_tags() for builder in self.env_group_builders_P]
-        metrics = compute_trajectory_metrics(trajectory_groups_P, taglist_P)
-
-        if self.name is not None:
-            metrics = {f"{self.name}/{k}": v for k, v in metrics.items()}
-        return metrics

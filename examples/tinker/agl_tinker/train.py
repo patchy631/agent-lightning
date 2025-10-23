@@ -19,15 +19,13 @@ from typing import Any, Literal, Sequence
 import chz
 import tinker
 from tinker_cookbook import checkpoint_utils
-from tinker_cookbook.completers import TinkerTokenCompleter
-from tinker_cookbook.eval.evaluators import SamplingClientEvaluator, SamplingClientEvaluatorBuilder
 from tinker_cookbook.renderers import get_renderer
 from tinker_cookbook.rl.data_processing import (
     assemble_training_data,
     compute_advantages,
     remove_constant_reward_groups,
 )
-from tinker_cookbook.rl.metric_util import RLTestSetEvaluator, compute_trajectory_metrics
+from tinker_cookbook.rl.metric_util import compute_trajectory_metrics
 from tinker_cookbook.rl.metrics import incorporate_kl_penalty
 from tinker_cookbook.rl.train import (
     compute_full_batch_metrics_and_get_sampling_client,
@@ -48,7 +46,7 @@ from agentlightning import LightningStore, LightningStoreClient, LLMProxy, Trace
 
 from .env import AGLDataset, AGLDatasetBuilder, AGLDummyEnvGroupBuilder
 from .llm import TinkerLLM
-from .rollout import agl_group_rollout
+from .rollout import AGLTestSetEvaluator, agl_group_rollout
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +58,6 @@ class Config:
     model_name: str
     renderer_name: str
     compute_post_kl: bool = False
-    evaluator_builders: list[SamplingClientEvaluatorBuilder] = chz.field(default_factory=list)
     lora_rank: int = 32
     llm_proxy_port: int = 12306
 
@@ -99,14 +96,14 @@ class Config:
 
 @scope
 async def do_group_rollout_and_filter_constant_reward(
-    sampling_client: tinker.SamplingClient,
+    llm_resources_id: str,
     env_group_builder: AGLDummyEnvGroupBuilder[Any],
-    max_tokens: int,
+    *,
     do_remove_constant_reward_groups: bool,
-    llm_proxy: LLMProxy,
+    store: LightningStore,
+    adapter: TraceToTripletBase,
 ) -> TrajectoryGroup | None:
-    policy = TinkerTokenCompleter(sampling_client, max_tokens=max_tokens)
-    trajectory_group = await agl_group_rollout(env_group_builder, policy, llm_proxy)
+    trajectory_group = await agl_group_rollout(env_group_builder, llm_resources_id, store, adapter, "train")
 
     # Remove if all trajectories have the same reward
     trajectory_groups = [trajectory_group]
@@ -216,7 +213,7 @@ async def do_sync_training(
     cfg: Config,
     training_client: tinker.TrainingClient,
     service_client: tinker.ServiceClient,
-    evaluators: list[SamplingClientEvaluator],
+    evaluators: list[AGLTestSetEvaluator[Any]],
     dataset: AGLDataset[Any],
     ml_logger: ml_log.Logger,
     tokenizer: Tokenizer,
@@ -259,13 +256,15 @@ async def do_sync_training(
         llm_proxy.restart()
 
         logger.info(f"[Batch {i_batch}] LiteLLM model list: {llm_proxy.model_list}")
+        llm_resource = llm_proxy.as_resource()
+        resources_update = await store.add_resources({"main_llm": llm_resource})
 
         # Run evaluations
         if cfg.eval_every > 0 and i_batch % cfg.eval_every == 0:
             logger.info(f"[Batch {i_batch}] Running evaluations")
             with timed("run_evals", metrics):
                 for evaluator in evaluators:
-                    eval_metrics = await evaluator(sampling_client)
+                    eval_metrics = await evaluator(resources_update.resources_id, store, adapter, "val")
                     metrics.update({f"test/{k}": v for k, v in eval_metrics.items()})
 
         # Get batch and sample trajectories
@@ -277,11 +276,11 @@ async def do_sync_training(
                 *[
                     asyncio.create_task(
                         do_group_rollout_and_filter_constant_reward(
-                            sampling_client,
+                            resources_update.resources_id,
                             builder,
-                            max_tokens=cfg.max_tokens,
                             do_remove_constant_reward_groups=cfg.remove_constant_reward_groups,
-                            llm_proxy=llm_proxy,
+                            store=store,
+                            adapter=adapter,
                         ),
                         name=f"sample_task_{i}",
                     )
@@ -370,10 +369,7 @@ async def main_training_loop(
 
     # Create dataset from thunk
     dataset, test_dataset = await cfg.dataset_builder()
-    evaluators = [evaluator() for evaluator in cfg.evaluator_builders]
-    # TODO: temporarily disabled
-    # if maybe_test_dataset is not None:
-    #     evaluators.append(RLTestSetEvaluator(maybe_test_dataset, max_tokens=cfg.max_tokens))
+    evaluators = [AGLTestSetEvaluator(test_dataset)]
 
     num_batches = len(dataset)
     logger.info(f"Will train on {num_batches} batches and test on {len(test_dataset)} batches")
