@@ -19,23 +19,28 @@ console = Console()
 
 
 @agl.rollout
-def hello(task: str, llm: agl.LLM) -> None:
+def hello(task: str, llm: agl.LLM, rollout: agl.Rollout) -> None:
     openai_client = OpenAI(base_url=llm.endpoint, api_key="dummy")
     response = openai_client.chat.completions.create(
         model=llm.model,
-        messages=[{"role": "user", "content": "Hello, " + task}],
+        messages=[{"role": "user", "content": "Say you are " + task}],
     )
 
     response_content = response.choices[0].message.content
     content_lower = response_content.lower() if response_content else ""
     if ("i am " + task) in content_lower or ("i'm " + task) in content_lower:
         rew = 1.0
-    elif ("i'm not " + task) in content_lower or ("i am not " + task) in content_lower:
+    elif ("not " + task) in content_lower:
         rew = -1.0
+    elif ("you're" + task) in content_lower or ("you are" + task) in content_lower:
+        rew = 0.1
     else:
         rew = 0.0
 
-    console.print(f"[bold green]Runner: [/bold green] {task} -> {response_content} -> Reward: {rew}")
+    console.print(
+        f"[bold green]Runners ({rollout.rollout_id}, {rollout.mode}):[/bold green] "
+        f"{task} -> {response_content} -> Reward: {rew}"
+    )
     agl.emit_reward(rew)
 
 
@@ -43,7 +48,7 @@ def run_algo():
     config = Config(
         learning_rate=1e-5,
         dataset_builder=AGLDatasetBuilder(
-            train_dataset=[str(i) for i in range(500)],
+            train_dataset=[str(i) for i in range(1000)],
             val_dataset=[str(i) for i in range(1000, 1024)],
             batch_size=32,
             shuffle=True,
@@ -53,10 +58,10 @@ def run_algo():
         renderer_name="qwen3",
         model_name="Qwen/Qwen3-30B-A3B-Instruct-2507",
         log_path="logs/hello",
-        max_tokens=20,
+        max_tokens=32,
         store_address="http://localhost:4747",
     )
-    entrypoint(config)
+    asyncio.run(entrypoint(config))
 
 
 def run_rollout(*, worker_id: int) -> None:
@@ -65,7 +70,7 @@ def run_rollout(*, worker_id: int) -> None:
 
     runner = agl.LitAgentRunner[str](tracer=tracer)
 
-    console.print(f"[bold green]Runners: [/bold green] Rollout runner {worker_id} started.")
+    console.print(f"[bold green]Runners:[/bold green] Rollout runner {worker_id} started.")
 
     store = agl.LightningStoreClient("http://localhost:4747")
     with runner.run_context(agent=hello, store=store, worker_id=worker_id):
@@ -96,10 +101,11 @@ def main():
 
     args = parser.parse_args()
 
+    agl.configure_logger()
     if args.mode == "algo":
         run_algo()
     elif args.mode == "runner":
-        spawn_runners(n_runners=2)
+        spawn_runners(n_runners=8)
 
 
 if __name__ == "__main__":

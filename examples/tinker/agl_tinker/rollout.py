@@ -116,10 +116,15 @@ async def agl_single_rollout(
         logger.error(f"[Rollout {rollout.rollout_id}] Failed with status {completed_rollout.status}")
     else:
         logger.info(
-            f"[Rollout {rollout.rollout_id}] Succeeded under {cast(float, completed_rollout.end_time) - completed_rollout.start_time:.2f} seconds"
+            f"[Rollout {rollout.rollout_id}] Rollout succeeded under "
+            f"{cast(float, completed_rollout.end_time) - completed_rollout.start_time:.2f} seconds"
         )
 
     spans = await store.query_spans(rollout.rollout_id, "latest")
+    if not spans:
+        logger.error(f"[Rollout {rollout.rollout_id}] No spans found. Return an empty trajectory.")
+        return Trajectory(transitions=[], final_ob=ModelInput.from_ints([]))
+
     triplets = adapter.adapt(spans)
     logger.info(
         f"[Rollout {rollout.rollout_id}] Adapted {len(triplets)} triplets from {len(spans)} spans. "

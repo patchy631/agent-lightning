@@ -174,7 +174,6 @@ class TinkerLLM(CustomLLM):
         top_k = self._get_optional_params(kwargs, ["top_k"], int, lambda x: True, self.top_k)
         top_p = self._get_optional_params(kwargs, ["top_p"], float, lambda x: 0.0 <= x <= 1.0, self.top_p)
         seed = self._get_optional_params(kwargs, ["seed"], int, lambda _: True, self.seed)
-        print(max_tokens, temperature, top_k, top_p, seed)
         model_input = self._prepare_model_input(**kwargs)
         params = SamplingParams(
             max_tokens=max_tokens,
@@ -185,7 +184,8 @@ class TinkerLLM(CustomLLM):
             stop=self.renderer.get_stop_sequences(),
         )
         result = await self.sampling_client.sample_async(prompt=model_input, sampling_params=params, num_samples=1)
-        return self._parse_response(model_input, result)
+        final_response = self._parse_response(model_input, result)
+        return final_response
 
     def as_model_list(self) -> List[ModelConfig]:
         return [
