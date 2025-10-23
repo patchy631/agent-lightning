@@ -1,10 +1,10 @@
-name: GPU Test
+name: Examples - APO
 permissions:
   contents: read
 on:
   schedule:
-    # Every day at 5 AM UTC+8
-    - cron: '0 21 * * *'
+    # Every day at 3 AM UTC+8
+    - cron: '0 19 * * *'
 
   workflow_dispatch:
 
@@ -24,14 +24,14 @@ jobs:
         with:
           script: |
             const evaluateTrigger = require('./scripts/trigger_on_label.js');
-            evaluateTrigger({ core, context, labelName: 'ci-gpu' });
+            evaluateTrigger({ core, context, labelName: 'ci-apo' });
 
-  tests-full:
+  apo:
     needs: label-check
     if: needs.label-check.outputs.should-run == 'true'
-    name: GPU Test with Python ${{ matrix.python-version }} (${{ matrix.setup-script }})
-
-    runs-on: [self-hosted, 1ES.Pool=agl-runner-gpu]
+    name: APO (Python ${{ matrix.python-version }}, ${{ matrix.setup-script }})
+    # This job is run on GitHub hosted runners rather than self-hosted runners because it needs no GPU.
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       matrix:
@@ -44,8 +44,6 @@ jobs:
           setup-script: 'latest'
       fail-fast: false
     steps:
-      - name: Check GPU status
-        run: nvidia-smi
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
         with:
@@ -55,10 +53,14 @@ jobs:
         run: uv lock --upgrade
         if: matrix.setup-script == 'latest'
       - name: Sync dependencies (latest)
-        run: uv sync --frozen --no-default-groups --extra apo --group dev --group agents --group torch-gpu-stable
+        run: |
+          uv sync --frozen --no-default-groups --extra apo \
+            --group dev --group experiment --group agents --group core-stable
         if: matrix.setup-script == 'latest'
       - name: Sync dependencies (stable & legacy)
-        run: uv sync --frozen --no-default-groups --extra apo --group dev --group agents --group torch-gpu-${{ matrix.setup-script }}
+        run: |
+          uv sync --frozen --no-default-groups --extra apo \
+            --group dev --group experiment --group agents --group core-${{ matrix.setup-script }}
         if: matrix.setup-script != 'latest'
       - name: Freeze dependencies
         run: |
@@ -69,7 +71,7 @@ jobs:
       - name: Upload dependencies artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dependencies-${{ matrix.python-version }}-${{ matrix.setup-script }}
+          name: dependencies-apo-${{ matrix.python-version }}-${{ matrix.setup-script }}
           path: requirements-freeze.txt
           compression-level: 0
 
@@ -80,10 +82,35 @@ jobs:
           AZURE_API_BASE: ${{ secrets.AZURE_GROUP_SUBSCRIPTION_API_BASE }}
           AZURE_API_KEY: ${{ secrets.AZURE_GROUP_SUBSCRIPTION_API_KEY }}
 
-      - name: Run tests
+      - name: APO custom algorithm
         run: |
-          uv run pytest -v --durations=0 tests
+          set -ex
+          cd examples/apo
+          uv run apo_custom_algorithm_trainer.py | tee _ci_apo.log
+          # Check whether the log contains "Best prompt found:"
+          grep "Best prompt found:" _ci_apo.log
         env:
-          PYTEST_ADDOPTS: "--color=yes"
+          # New versions follow OPENAI_BASE_URL instead of OPENAI_API_BASE
           OPENAI_BASE_URL: http://localhost:12306/
           OPENAI_API_KEY: dummy
+      - name: APO custom algorithm debugger
+        run: |
+          set -ex
+          cd examples/apo
+          uv run apo_debug.py --mode runner
+          uv run apo_debug.py --mode hook
+          uv run apo_debug.py --mode trainer
+        env:
+          # New versions follow OPENAI_BASE_URL instead of OPENAI_API_BASE
+          OPENAI_BASE_URL: http://localhost:12306/
+          OPENAI_API_KEY: dummy
+
+      - name: APO built-in algorithm
+        run: |
+          set -ex
+          cd examples/apo
+          uv run room_selector_apo.py
+        env:
+          OPENAI_BASE_URL: http://localhost:12306/
+          OPENAI_API_KEY: dummy
+        if: matrix.setup-script != 'legacy'

@@ -1,10 +1,10 @@
-name: GPU Test
+name: Examples - Spider
 permissions:
   contents: read
 on:
   schedule:
-    # Every day at 5 AM UTC+8
-    - cron: '0 21 * * *'
+    # Every day at 4 AM UTC+8
+    - cron: '0 20 * * *'
 
   workflow_dispatch:
 
@@ -24,15 +24,14 @@ jobs:
         with:
           script: |
             const evaluateTrigger = require('./scripts/trigger_on_label.js');
-            evaluateTrigger({ core, context, labelName: 'ci-gpu' });
+            evaluateTrigger({ core, context, labelName: 'ci-spider' });
 
-  tests-full:
+  spider:
     needs: label-check
     if: needs.label-check.outputs.should-run == 'true'
-    name: GPU Test with Python ${{ matrix.python-version }} (${{ matrix.setup-script }})
-
+    name: Spider (Python ${{ matrix.python-version }}, ${{ matrix.setup-script }})
     runs-on: [self-hosted, 1ES.Pool=agl-runner-gpu]
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       matrix:
         include:
@@ -46,6 +45,8 @@ jobs:
     steps:
       - name: Check GPU status
         run: nvidia-smi
+      - name: Check disk space
+        run: df -h
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
         with:
@@ -55,10 +56,14 @@ jobs:
         run: uv lock --upgrade
         if: matrix.setup-script == 'latest'
       - name: Sync dependencies (latest)
-        run: uv sync --frozen --no-default-groups --extra apo --group dev --group agents --group torch-gpu-stable
+        run: |
+          uv sync --frozen --no-default-groups --extra verl \
+            --group dev --group experiment --group agents --group torch-gpu-stable
         if: matrix.setup-script == 'latest'
       - name: Sync dependencies (stable & legacy)
-        run: uv sync --frozen --no-default-groups --extra apo --group dev --group agents --group torch-gpu-${{ matrix.setup-script }}
+        run: |
+          uv sync --frozen --no-default-groups --extra verl \
+            --group dev --group experiment --group agents --group torch-gpu-${{ matrix.setup-script }}
         if: matrix.setup-script != 'latest'
       - name: Freeze dependencies
         run: |
@@ -69,7 +74,7 @@ jobs:
       - name: Upload dependencies artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dependencies-${{ matrix.python-version }}-${{ matrix.setup-script }}
+          name: dependencies-spider-${{ matrix.python-version }}-${{ matrix.setup-script }}
           path: requirements-freeze.txt
           compression-level: 0
 
@@ -80,10 +85,43 @@ jobs:
           AZURE_API_BASE: ${{ secrets.AZURE_GROUP_SUBSCRIPTION_API_BASE }}
           AZURE_API_KEY: ${{ secrets.AZURE_GROUP_SUBSCRIPTION_API_KEY }}
 
-      - name: Run tests
+      - name: Prepare Spider dataset
         run: |
-          uv run pytest -v --durations=0 tests
+          set -ex
+          cd examples/spider
+          uv run gdown --fuzzy https://drive.google.com/file/d/1oi9J1jZP9TyM35L85CL3qeGWl2jqlnL6/view
+          unzip -q spider-data.zip -d data
+          rm spider-data.zip
+
+      - name: Spider sanity check
+        run: |
+          set -ex
+          cd examples/spider
+          uv run sql_agent.py
         env:
-          PYTEST_ADDOPTS: "--color=yes"
-          OPENAI_BASE_URL: http://localhost:12306/
+          OPENAI_API_BASE: http://localhost:12306/
           OPENAI_API_KEY: dummy
+        if: success() || failure()
+
+      - name: Spider training
+        run: |
+          set -ex
+          source .venv/bin/activate
+          cd examples/spider
+          ../../scripts/restart_ray.sh
+          sleep 5
+          PYTHONUNBUFFERED=1 python train_sql_agent.py fast
+          sleep 10
+        shell: bash
+        env:
+          WANDB_BASE_URL: ${{ secrets.MSR_WANDB_BASE_URL }}
+          WANDB_API_KEY: ${{ secrets.MSR_WANDB_API_KEY }}
+        id: spider_train
+
+      - name: Validate Spider training
+        run: |
+          set -ex
+          uv run scripts/validate_example_wandb.py ${{ steps.spider_train.outputs.project_name }} ${{ steps.spider_train.outputs.run_name }}
+        env:
+          WANDB_BASE_URL: ${{ secrets.MSR_WANDB_BASE_URL }}
+          WANDB_API_KEY: ${{ secrets.MSR_WANDB_API_KEY }}
