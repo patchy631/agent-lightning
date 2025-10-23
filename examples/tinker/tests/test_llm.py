@@ -2,17 +2,25 @@
 
 import asyncio
 import logging
+import time
 from typing import cast
 
-import litellm
 import openai
 import tinker
 from agl_tinker.llm import TinkerLLM
+from agl_tinker.rollout import reconstruct_transitions
 from rich.console import Console
 from tinker_cookbook.renderers import Qwen3Renderer
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
-from agentlightning import AgentOpsTracer, InMemoryLightningStore, LLMProxy, configure_logger
+from agentlightning import (
+    AgentOpsTracer,
+    InMemoryLightningStore,
+    LLMProxy,
+    TracerTraceToTriplet,
+    configure_logger,
+    emit_reward,
+)
 
 configure_logger(name="agentlightning")
 configure_logger(name="agl_tinker", level=logging.INFO)
@@ -41,18 +49,21 @@ async def main():
     )
 
     try:
+        tracer = AgentOpsTracer()
+        tracer.init()
+        tracer.init_worker(0)
+
+        # init tracer before llm_proxy to avoid tracer provider being not active.
         console.print("Starting LLM proxy...")
         llm_proxy.start()
         console.print("LLM proxy started")
 
-        tracer = AgentOpsTracer()
-        client = openai.OpenAI(
-            base_url=f"http://localhost:4000/rollout/{rollout.rollout_id}/attempt/{rollout.attempt.attempt_id}",
-            api_key="dummy",
-        )
+        # client = openai.OpenAI(
+        #     base_url=f"http://localhost:4000/rollout/{rollout.rollout_id}/attempt/{rollout.attempt.attempt_id}",
+        #     api_key="dummy",
+        # )
+        client = openai.OpenAI(base_url="http://localhost:4000/v1", api_key="dummy")
 
-        tracer.init()
-        tracer.init_worker(0)
         async with tracer.trace_context(
             name="test_llm", store=store, rollout_id=rollout.rollout_id, attempt_id=rollout.attempt.attempt_id
         ):
@@ -65,11 +76,21 @@ async def main():
                 seed=43,
             )
             print(response)
+            emit_reward(8.0)
+
+        print(f"Found {len(tracer.get_last_trace())} spans in the tracer")
+
         tracer.teardown_worker(0)
         tracer.teardown()
 
         for store_span in await store.query_spans(rollout.rollout_id):
             print(store_span)
+
+        spans = await store.query_spans(rollout.rollout_id)
+        console.print(f"Found {len(spans)} spans")
+        adapter = TracerTraceToTriplet()
+        trajectory = reconstruct_transitions(spans, adapter, rollout.rollout_id)
+        print(trajectory)
     finally:
         console.print("Stopping LLM proxy...")
         llm_proxy.stop()

@@ -505,6 +505,30 @@ class TraceTree:
 
         return rewards
 
+    def span_to_triplet(self, span: Span, agent_name: str) -> Triplet:
+        """Convert a span to a triplet.
+
+        Subclass can override this method to add more fields to the triplet,
+        such as chat messages and tool calls.
+        """
+        prompt_token_ids = span.attributes.get("prompt_token_ids", [])  # type: ignore
+        response_token_ids = span.attributes.get("response_token_ids", [])  # type: ignore
+        response_id = span.attributes.get("gen_ai.response.id", None)  # type: ignore
+
+        logprobs_content = span.attributes.get("logprobs.content", None)  # type: ignore
+        if isinstance(logprobs_content, str):
+            logprobs_content = json.loads(logprobs_content)
+            response: Dict[str, Any] = {"token_ids": response_token_ids, "logprobs": logprobs_content}
+        else:
+            response = {"token_ids": response_token_ids}
+
+        return Triplet(
+            prompt={"token_ids": prompt_token_ids},
+            response=response,
+            reward=None,
+            metadata=dict(response_id=response_id, agent_name=agent_name),
+        )
+
     def to_trajectory(
         self,
         llm_call_match: str = r"openai\.chat\.completion",
@@ -537,23 +561,9 @@ class TraceTree:
             within_llm_call=False if dedup_llm_call else None,
             existing_llm_call_response_ids=set(),
         )
-        id_transitions = [
-            (
-                llm_call.id,
-                Triplet(
-                    prompt={"token_ids": llm_call.span.attributes.get("prompt_token_ids", [])},  # type: ignore
-                    response={"token_ids": llm_call.span.attributes.get("response_token_ids", [])},  # type: ignore
-                    reward=None,
-                    metadata=dict(
-                        response_id=llm_call.span.attributes.get(  # type: ignore
-                            "gen_ai.response.id", None
-                        ),  # it works at least for OpenAI
-                        agent_name=agent_name,
-                    ),
-                ),
-            )
-            for llm_call, agent_name in llm_calls
-        ]
+        id_transitions: List[Tuple[str, Triplet]] = []
+        for llm_call, agent_name in llm_calls:
+            id_transitions.append((llm_call.id, self.span_to_triplet(llm_call.span, agent_name)))
 
         rewards = self.match_rewards(reward_match, [call for call, _ in llm_calls])
         transitions = [

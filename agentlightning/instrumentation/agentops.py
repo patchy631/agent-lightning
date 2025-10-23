@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import multiprocessing
 import signal
 import socket
 import time
-from typing import Any, Callable
+from typing import Any, Callable, no_type_check
 
 import flask
 import requests
@@ -40,41 +41,58 @@ def _patch_new_agentops():
 
     _original_handle_chat_attributes = handle_chat_attributes  # type: ignore
 
+    @no_type_check
     def _handle_chat_attributes_with_tokens(args=None, kwargs=None, return_value=None, **kws):  # type: ignore
-        attributes = _original_handle_chat_attributes(args=args, kwargs=kwargs, return_value=return_value, **kws)  # type: ignore
-        if return_value is not None and hasattr(return_value, "prompt_token_ids"):  # type: ignore
-            attributes["prompt_token_ids"] = list(return_value.prompt_token_ids)  # type: ignore
-        if return_value is not None and hasattr(return_value, "response_token_ids"):  # type: ignore
-            attributes["response_token_ids"] = list(return_value.response_token_ids[0])  # type: ignore
+        attributes = _original_handle_chat_attributes(args=args, kwargs=kwargs, return_value=return_value, **kws)
+        if return_value is not None and hasattr(return_value, "prompt_token_ids"):
+            attributes["prompt_token_ids"] = list(return_value.prompt_token_ids)
+        if return_value is not None and hasattr(return_value, "response_token_ids"):
+            attributes["response_token_ids"] = list(return_value.response_token_ids[0])
 
         # For LiteLLM Proxy (v0.2) with vLLM return_token_ids, response_token_ids now lives in choices
         if (
-            not attributes.get("response_token_ids")
-            and return_value is not None
-            and hasattr(return_value, "choices")  # type: ignore
-            and return_value.choices  # type: ignore
-            and isinstance(return_value.choices, list)  # type: ignore
+            return_value is not None
+            and hasattr(return_value, "choices")
+            and return_value.choices
+            and isinstance(return_value.choices, list)
         ):
-            first_choice = return_value.choices[0]  # type: ignore
-            if hasattr(first_choice, "token_ids"):  # type: ignore
-                attributes["response_token_ids"] = list(first_choice.token_ids)  # type: ignore
-            # newer versions of OpenAI client SDK
-            elif hasattr(first_choice, "provider_specific_fields") and "token_ids" in first_choice.provider_specific_fields:  # type: ignore
-                attributes["response_token_ids"] = list(first_choice.provider_specific_fields["token_ids"])  # type: ignore
+            first_choice = return_value.choices[0]
+            # Token IDs from "choices[0].token_ids"
+            if "response_token_ids" not in attributes:
+                if hasattr(first_choice, "token_ids"):
+                    attributes["response_token_ids"] = list(first_choice.token_ids)
+                # newer versions of OpenAI client SDK
+                elif (
+                    hasattr(first_choice, "provider_specific_fields")
+                    and "token_ids" in first_choice.provider_specific_fields
+                ):
+                    attributes["response_token_ids"] = list(first_choice.provider_specific_fields["token_ids"])
+
+            # log probability
+            # This is temporarily. We need a unified conventions for classifying and naming logprobs.
+            if hasattr(first_choice, "logprobs"):
+                if first_choice.logprobs.content:
+                    attributes["logprobs.content"] = json.dumps(
+                        [logprob.model_dump() for logprob in first_choice.logprobs.content]
+                    )
+                if first_choice.logprobs.refusal:
+                    attributes["logprobs.refusal"] = json.dumps(
+                        [logprob.model_dump() for logprob in first_choice.logprobs.refusal]
+                    )
 
         # For LiteLLM, response is a openai._legacy_response.LegacyAPIResponse
         if (
             return_value is not None
-            and hasattr(return_value, "http_response")  # type: ignore
-            and return_value.http_response is not None  # type: ignore
-            and hasattr(return_value.http_response, "json")  # type: ignore
+            and hasattr(return_value, "http_response")
+            and return_value.http_response is not None
+            and hasattr(return_value.http_response, "json")
         ):
-            json_data = return_value.http_response.json()  # type: ignore
+            json_data = return_value.http_response.json()
             if isinstance(json_data, dict):
                 if "prompt_token_ids" in json_data:
-                    attributes["prompt_token_ids"] = list(json_data["prompt_token_ids"])  # type: ignore
+                    attributes["prompt_token_ids"] = list(json_data["prompt_token_ids"])
                 if "response_token_ids" in json_data:
-                    attributes["response_token_ids"] = list(json_data["response_token_ids"][0])  # type: ignore
+                    attributes["response_token_ids"] = list(json_data["response_token_ids"][0])
 
         return attributes
 
