@@ -23,7 +23,6 @@ from tinker_cookbook.renderers import get_renderer
 from tinker_cookbook.rl.data_processing import (
     assemble_training_data,
     compute_advantages,
-    remove_constant_reward_groups,
 )
 from tinker_cookbook.rl.metric_util import compute_trajectory_metrics
 from tinker_cookbook.rl.metrics import incorporate_kl_penalty
@@ -44,9 +43,9 @@ from tinker_cookbook.utils.trace import get_scope_context, scope, trace_init
 
 from agentlightning import LightningStore, LightningStoreClient, LLMProxy, TracerTraceToTriplet, TraceToTripletBase
 
-from .env import AGLDataset, AGLDatasetBuilder, AGLDummyEnvGroupBuilder
+from .env import AGLDataset, AGLDatasetBuilder
 from .llm import TinkerLLM
-from .rollout import AGLTestSetEvaluator, agl_group_rollout
+from .rollout import AGLTestSetEvaluator, do_group_of_group_rollouts
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +73,9 @@ class Config:
     store_address: str = "http://localhost:4747"
     adapter_agent_match: str | None = None
 
+    # Concurrency parameters (mainly for controlling max queue length)
+    concurrency: int = 16
+
     # Loss function to use for training: "importance_sampling" or "ppo"
     loss_fn: Literal["importance_sampling", "ppo"] = "importance_sampling"
 
@@ -92,26 +94,6 @@ class Config:
     eval_every: int = 20
     save_every: int = 20
     load_checkpoint_path: str | None = None
-
-
-@scope
-async def do_group_rollout_and_filter_constant_reward(
-    llm_resources_id: str,
-    env_group_builder: AGLDummyEnvGroupBuilder[Any],
-    *,
-    do_remove_constant_reward_groups: bool,
-    store: LightningStore,
-    adapter: TraceToTripletBase,
-) -> TrajectoryGroup | None:
-    trajectory_group = await agl_group_rollout(env_group_builder, llm_resources_id, store, adapter, "train")
-
-    # Remove if all trajectories have the same reward
-    trajectory_groups = [trajectory_group]
-    if do_remove_constant_reward_groups:
-        trajectory_groups = remove_constant_reward_groups(trajectory_groups)
-    if len(trajectory_groups) == 0:
-        return None
-    return trajectory_groups[0]
 
 
 @scope
@@ -264,7 +246,7 @@ async def do_sync_training(
             logger.info(f"[Batch {i_batch}] Running evaluations")
             with timed("run_evals", metrics):
                 for evaluator in evaluators:
-                    eval_metrics = await evaluator(resources_update.resources_id, store, adapter, "val")
+                    eval_metrics = await evaluator(resources_update.resources_id, store, adapter, "val", i_batch)
                     metrics.update({f"test/{k}": v for k, v in eval_metrics.items()})
 
         # Get batch and sample trajectories
@@ -272,24 +254,16 @@ async def do_sync_training(
         env_group_builders_P = dataset.get_batch(i_batch)
         with timed("sample", metrics):
             logger.info(f"[Batch {i_batch}] Sampling trajectories...")
-            trajectory_groups_P = await asyncio.gather(
-                *[
-                    asyncio.create_task(
-                        do_group_rollout_and_filter_constant_reward(
-                            resources_update.resources_id,
-                            builder,
-                            do_remove_constant_reward_groups=cfg.remove_constant_reward_groups,
-                            store=store,
-                            adapter=adapter,
-                        ),
-                        name=f"sample_task_{i}",
-                    )
-                    for i, builder in enumerate(env_group_builders_P)
-                ],
+            trajectory_groups_P = await do_group_of_group_rollouts(
+                env_group_builders_P,
+                resources_update.resources_id,
+                i_batch,
+                store=store,
+                adapter=adapter,
+                mode="train",
+                do_remove_constant_reward_groups=cfg.remove_constant_reward_groups,
+                concurrency=cfg.concurrency,
             )
-        trajectory_groups_P = [
-            trajectory_group for trajectory_group in trajectory_groups_P if trajectory_group is not None
-        ]
         logger.info(f"[Batch {i_batch}] Trajectories sampled: {len(trajectory_groups_P)}")
 
         # Train step
@@ -343,6 +317,8 @@ async def main_training_loop(
 
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("pylatexenc").setLevel(logging.WARNING)
+    logging.getLogger("LiteLLM").setLevel(logging.WARNING)
+    logging.getLogger("LiteLLM Router").setLevel(logging.WARNING)
 
     resume_info = checkpoint_utils.get_last_checkpoint(cfg.log_path)
     if resume_info:
