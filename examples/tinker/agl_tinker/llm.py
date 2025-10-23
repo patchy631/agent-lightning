@@ -1,7 +1,9 @@
-import uuid
-from typing import Any, List, Literal, TypeGuard, cast
+# Copyright (c) Microsoft. All rights reserved.
 
-import litellm
+import logging
+import uuid
+from typing import Any, List, Literal, TypeGuard
+
 import tinker
 from litellm.llms.custom_llm import CustomLLM
 from litellm.types.utils import ChatCompletionMessageToolCall, ChatCompletionTokenLogprob
@@ -9,21 +11,14 @@ from litellm.types.utils import ChoiceLogprobs as LitellmChoiceLogprobs
 from litellm.types.utils import Choices
 from litellm.types.utils import Message as LitellmMessage
 from litellm.types.utils import ModelResponse
-from litellm.utils import custom_llm_setup
 from pydantic import TypeAdapter
 from tinker.types import ModelInput, SampleResponse, SamplingParams
 from tinker_cookbook.renderers import Message as TinkerMessage
-from tinker_cookbook.renderers import Qwen3Renderer, Renderer
+from tinker_cookbook.renderers import Renderer
 from tinker_cookbook.renderers import ToolCall as TinkerToolCall
 from transformers import PreTrainedTokenizerBase
-from transformers.models.auto.tokenization_auto import AutoTokenizer
 
-from agentlightning.logging import configure_logger
-
-service_client = tinker.ServiceClient()
-sampling_client = service_client.create_sampling_client(base_model="Qwen/Qwen3-30B-A3B-Instruct-2507")
-
-logger = configure_logger(name="agentlightning.tinker")
+logger = logging.getLogger(__name__)
 
 
 def generate_id(prefix: str) -> str:
@@ -31,9 +26,18 @@ def generate_id(prefix: str) -> str:
 
 
 class TinkerLLM(CustomLLM):
-    def __init__(self, renderer: Renderer, tokenizer: PreTrainedTokenizerBase) -> None:
+    def __init__(
+        self,
+        *,
+        renderer: Renderer,
+        tokenizer: PreTrainedTokenizerBase,
+        sampling_client: tinker.SamplingClient,
+        default_max_tokens: int = 2048,
+    ) -> None:
         self.renderer = renderer
         self.tokenizer = tokenizer
+        self.sampling_client = sampling_client
+        self.default_max_tokens = default_max_tokens
 
     def _validate_messages(self, messages: Any) -> TypeGuard[List[TinkerMessage]]:
         TypeAdapter(List[TinkerMessage]).validate_python(messages)
@@ -68,7 +72,7 @@ class TinkerLLM(CustomLLM):
         choices: List[Choices] = []
         for seq in response.sequences:
             if seq.logprobs is not None:
-                token_strings: List[str] = self.tokenizer.batch_decode([token] for token in seq.tokens)
+                token_strings: List[str] = self.tokenizer.batch_decode([token] for token in seq.tokens)  # type: ignore
                 logprobs = LitellmChoiceLogprobs(
                     content=[
                         ChatCompletionTokenLogprob(
@@ -115,47 +119,8 @@ class TinkerLLM(CustomLLM):
         )
 
     async def acompletion(self, **kwargs: Any) -> ModelResponse:
+        print(kwargs)
         model_input = self._prepare_model_input(**kwargs)
         params = SamplingParams(max_tokens=20, temperature=0.0, stop=self.renderer.get_stop_sequences())
-        result = await sampling_client.sample_async(prompt=model_input, sampling_params=params, num_samples=1)
+        result = await self.sampling_client.sample_async(prompt=model_input, sampling_params=params, num_samples=1)
         return self._parse_response(model_input, result)
-
-
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-30B-A3B-Instruct-2507")
-print(type(tokenizer))
-
-tinker_llm = TinkerLLM(Qwen3Renderer(tokenizer), tokenizer)
-
-litellm.custom_provider_map = [{"provider": "agl-tinker", "custom_handler": tinker_llm}]
-
-custom_llm_setup()
-
-
-from agentlightning import InMemoryLightningStore
-from agentlightning.llm_proxy import LLMProxy
-
-store = InMemoryLightningStore()
-llm_proxy = LLMProxy(
-    port=4000,
-    store=store,
-    model_list=[
-        {
-            "model_name": "Qwen3-30B-A3B-Instruct-2507",
-            "litellm_params": {"model": "agl-tinker/Qwen3-30B-A3B-Instruct-2507"},
-        }
-    ],
-    num_retries=0,
-)
-
-llm_proxy.start()
-
-import openai
-
-client = openai.OpenAI(base_url="http://localhost:4000/v1", api_key="dummy")
-response = client.chat.completions.create(
-    model="Qwen3-30B-A3B-Instruct-2507",
-    messages=[{"role": "user", "content": "Hello world!"}],
-)
-print(response)
-
-llm_proxy.stop()
