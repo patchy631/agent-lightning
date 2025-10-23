@@ -1,9 +1,12 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+from __future__ import annotations
+
 import logging
 import uuid
 from typing import Any, Callable, Dict, List, Literal, Type, TypeGuard, TypeVar, cast
 
+import litellm
 import tinker
 from litellm.llms.custom_llm import CustomLLM
 from litellm.types.utils import ChatCompletionMessageToolCall, ChatCompletionTokenLogprob
@@ -11,12 +14,15 @@ from litellm.types.utils import ChoiceLogprobs as LitellmChoiceLogprobs
 from litellm.types.utils import Choices
 from litellm.types.utils import Message as LitellmMessage
 from litellm.types.utils import ModelResponse
+from litellm.utils import custom_llm_setup
 from pydantic import TypeAdapter
 from tinker.types import ModelInput, SampleResponse, SamplingParams
 from tinker_cookbook.renderers import Message as TinkerMessage
 from tinker_cookbook.renderers import Renderer
 from tinker_cookbook.renderers import ToolCall as TinkerToolCall
-from transformers import PreTrainedTokenizerBase
+from transformers import PreTrainedTokenizer
+
+from agentlightning.llm_proxy import ModelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +37,9 @@ class TinkerLLM(CustomLLM):
     def __init__(
         self,
         *,
+        model_name: str,
         renderer: Renderer,
-        tokenizer: PreTrainedTokenizerBase,
+        tokenizer: PreTrainedTokenizer,
         sampling_client: tinker.SamplingClient,
         max_tokens: int = 2048,
         temperature: float = 1.0,
@@ -40,6 +47,7 @@ class TinkerLLM(CustomLLM):
         top_p: float = 1.0,
         seed: int = 42,
     ) -> None:
+        self.model_name = model_name
         self.renderer = renderer
         self.tokenizer = tokenizer
         self.sampling_client = sampling_client
@@ -48,6 +56,9 @@ class TinkerLLM(CustomLLM):
         self.top_k = top_k
         self.top_p = top_p
         self.seed = seed
+
+    def update_sampling_client(self, sampling_client: tinker.SamplingClient) -> None:
+        self.sampling_client = sampling_client
 
     def _validate_messages(self, messages: Any) -> TypeGuard[List[TinkerMessage]]:
         TypeAdapter(List[TinkerMessage]).validate_python(messages)
@@ -104,14 +115,18 @@ class TinkerLLM(CustomLLM):
         for seq in response.sequences:
             if seq.logprobs is not None:
                 token_strings: List[str] = self.tokenizer.batch_decode([token] for token in seq.tokens)  # type: ignore
+                # FIXME: This might not be accurate for some corner cases.
+                # But it's not actually used in most cases.
+                bytes_list: List[List[int]] = [list(token.encode("utf-8")) for token in token_strings]
                 logprobs = LitellmChoiceLogprobs(
                     content=[
                         ChatCompletionTokenLogprob(
                             token=token,
+                            bytes=bytes,
                             logprob=logprob,
                             top_logprobs=[],
                         )
-                        for token, logprob in zip(token_strings, seq.logprobs)
+                        for token, bytes, logprob in zip(token_strings, bytes_list, seq.logprobs)
                     ]
                 )
             else:
@@ -150,7 +165,6 @@ class TinkerLLM(CustomLLM):
         )
 
     async def acompletion(self, **kwargs: Any) -> ModelResponse:  # type: ignore
-        print(kwargs)
         max_tokens = self._get_optional_params(
             kwargs, ["max_completion_tokens", "max_tokens"], int, lambda x: x >= 0, self.max_tokens
         )
@@ -172,3 +186,19 @@ class TinkerLLM(CustomLLM):
         )
         result = await self.sampling_client.sample_async(prompt=model_input, sampling_params=params, num_samples=1)
         return self._parse_response(model_input, result)
+
+    def as_model_list(self) -> List[ModelConfig]:
+        return [
+            {
+                "model_name": self.model_name,
+                "litellm_params": {
+                    "model": f"agl-tinker/{self.model_name}",
+                },
+            }
+        ]
+
+    def rewrite_litellm_custom_providers(self) -> TinkerLLM:
+        """Update the custom provider map within LiteLLM."""
+        litellm.custom_provider_map = [{"provider": "agl-tinker", "custom_handler": self}]
+        custom_llm_setup()
+        return self

@@ -21,6 +21,7 @@ import tinker
 from tinker_cookbook import checkpoint_utils
 from tinker_cookbook.completers import TinkerTokenCompleter
 from tinker_cookbook.eval.evaluators import SamplingClientEvaluator, SamplingClientEvaluatorBuilder
+from tinker_cookbook.renderers import get_renderer
 from tinker_cookbook.rl.data_processing import (
     assemble_training_data,
     compute_advantages,
@@ -43,7 +44,10 @@ from tinker_cookbook.utils import ml_log
 from tinker_cookbook.utils.misc_utils import timed
 from tinker_cookbook.utils.trace import get_scope_context, scope, trace_init
 
+from agentlightning import LightningStore, LightningStoreClient, LLMProxy, TracerTraceToTriplet, TraceToTripletBase
+
 from .env import AGLDataset, AGLDatasetBuilder, AGLDummyEnvGroupBuilder
+from .llm import TinkerLLM
 from .rollout import agl_group_rollout
 
 logger = logging.getLogger(__name__)
@@ -54,13 +58,24 @@ class Config:
     learning_rate: float
     dataset_builder: AGLDatasetBuilder[Any]  # also determines batch size
     model_name: str
-    max_tokens: int
+    renderer_name: str
     compute_post_kl: bool = False
     evaluator_builders: list[SamplingClientEvaluatorBuilder] = chz.field(default_factory=list)
     lora_rank: int = 32
+    llm_proxy_port: int = 12306
 
     kl_penalty_coef: float = 0.0
     kl_discount_factor: float = 0.0
+
+    # Sampling parameters
+    max_tokens: int = 2048
+    temperature: float = 1.0
+    top_k: int = -1
+    top_p: float = 1.0
+
+    # Agent-lightning parameters (only used in when running standalone)
+    store_address: str = "http://localhost:4747"
+    adapter_agent_match: str | None = None
 
     # Loss function to use for training: "importance_sampling" or "ppo"
     loss_fn: Literal["importance_sampling", "ppo"] = "importance_sampling"
@@ -88,9 +103,10 @@ async def do_group_rollout_and_filter_constant_reward(
     env_group_builder: AGLDummyEnvGroupBuilder[Any],
     max_tokens: int,
     do_remove_constant_reward_groups: bool,
+    llm_proxy: LLMProxy,
 ) -> TrajectoryGroup | None:
     policy = TinkerTokenCompleter(sampling_client, max_tokens=max_tokens)
-    trajectory_group = await agl_group_rollout(env_group_builder, policy)
+    trajectory_group = await agl_group_rollout(env_group_builder, policy, llm_proxy)
 
     # Remove if all trajectories have the same reward
     trajectory_groups = [trajectory_group]
@@ -193,6 +209,7 @@ async def do_train_step_and_get_sampling_client(
 
 @scope
 async def do_sync_training(
+    *,
     start_batch: int,
     end_batch: int,
     num_batches: int,
@@ -203,6 +220,9 @@ async def do_sync_training(
     dataset: AGLDataset[Any],
     ml_logger: ml_log.Logger,
     tokenizer: Tokenizer,
+    store: LightningStore,
+    adapter: TraceToTripletBase,
+    llm_proxy: LLMProxy,
 ):
     """Implements fully synchronous on-policy training"""
 
@@ -211,6 +231,19 @@ async def do_sync_training(
     sampling_client, _ = await save_checkpoint_and_get_sampling_client(
         training_client, start_batch, cfg.log_path, cfg.save_every
     )
+    logger.info(f"Creating renderer with name {cfg.renderer_name}")
+    renderer = get_renderer(cfg.renderer_name, tokenizer)
+
+    tinker_llm = TinkerLLM(
+        model_name=cfg.model_name,
+        sampling_client=sampling_client,
+        renderer=renderer,
+        tokenizer=tokenizer,
+        max_tokens=cfg.max_tokens,
+        temperature=cfg.temperature,
+        top_k=cfg.top_k,
+        top_p=cfg.top_p,
+    ).rewrite_litellm_custom_providers()
 
     logger.info(f"Starting training from batch {start_batch} to {end_batch}")
     for i_batch in range(start_batch, end_batch):
@@ -221,6 +254,11 @@ async def do_sync_training(
         }
         logger.info(f"[Batch {i_batch}] Starting training step. Learning rate: {cfg.learning_rate}")
         t_start = time.time()
+
+        llm_proxy.update_model_list(tinker_llm.as_model_list())
+        llm_proxy.restart()
+
+        logger.info(f"[Batch {i_batch}] LiteLLM model list: {llm_proxy.model_list}")
 
         # Run evaluations
         if cfg.eval_every > 0 and i_batch % cfg.eval_every == 0:
@@ -243,6 +281,7 @@ async def do_sync_training(
                             builder,
                             max_tokens=cfg.max_tokens,
                             do_remove_constant_reward_groups=cfg.remove_constant_reward_groups,
+                            llm_proxy=llm_proxy,
                         ),
                         name=f"sample_task_{i}",
                     )
@@ -265,6 +304,8 @@ async def do_sync_training(
             env_group_builders_P,
             trajectory_groups_P,
         )
+        # Point Tinker LLM to a new model
+        tinker_llm.update_sampling_client(sampling_client)
 
         # Log metrics
         metrics.update(train_step_metrics)
@@ -272,10 +313,15 @@ async def do_sync_training(
         ml_logger.log_metrics(metrics, step=i_batch)
         logger.info(f"[Batch {i_batch}] Sampling and training completed")
 
+    llm_proxy.stop()
+
 
 @scope
-async def main(
+async def main_training_loop(
     cfg: Config,
+    store: LightningStore,
+    adapter: TraceToTripletBase,
+    llm_proxy: LLMProxy,
 ):
     """Main training loop for MDP RL."""
     ml_logger = ml_log.setup_logging(
@@ -344,6 +390,9 @@ async def main(
         dataset=dataset,
         ml_logger=ml_logger,
         tokenizer=tokenizer,
+        store=store,
+        adapter=adapter,
+        llm_proxy=llm_proxy,
     )
 
     # Save final checkpoint
@@ -362,3 +411,20 @@ async def main(
     # Cleanup
     ml_logger.close()
     logger.info("Training completed successfully")
+
+
+@scope
+async def main(config: Config) -> None:
+    store = LightningStoreClient(config.store_address)
+    adapter = TracerTraceToTriplet(agent_match=config.adapter_agent_match)
+    llm_proxy = LLMProxy(
+        port=config.llm_proxy_port,
+        model_list=[],
+        store=store,
+    )
+
+    await main_training_loop(config, store, adapter, llm_proxy)
+
+
+if __name__ == "__main__":
+    chz.nested_entrypoint(main)

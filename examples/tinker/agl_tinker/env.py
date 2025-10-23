@@ -7,6 +7,7 @@ from random import Random
 from typing import Generic, Optional, Sequence, TypeVar
 
 import chz
+import pandas as pd
 from tinker_cookbook.eval.evaluators import SamplingClientEvaluator
 from tinker_cookbook.rl.types import (
     Action,
@@ -82,30 +83,54 @@ class AGLDataset(RLDataset, Generic[T_task]):
 @chz.chz
 class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
 
-    train_dataset: Dataset[T_task]
     batch_size: int
+    train_file: Optional[str] = None
+    val_file: Optional[str] = None
+    train_dataset: Optional[Dataset[T_task]] = None
     val_dataset: Optional[Dataset[T_task]] = None
     train_val_split: float = 0.7
     shuffle: bool = True
     group_size: int = 4
     seed: int = 42
 
+    def _read_file(self, file: str) -> Dataset[T_task]:
+        """Read a file and return a dataset.
+
+        Supports parquet, csv and jsonl files.
+        """
+        if file.endswith(".parquet"):
+            return pd.read_parquet(file).to_dict(orient="records")
+        elif file.endswith(".csv"):
+            return pd.read_csv(file).to_dict(orient="records")
+        elif file.endswith(".jsonl"):
+            return pd.read_json(file, lines=True).to_dict(orient="records")
+        else:
+            raise ValueError(f"Unsupported file type: {file}")
+
     async def __call__(self) -> tuple[AGLDataset[T_task], AGLDataset[T_task]]:
-        if self.val_dataset is None:
-            indices = list(range(len(self.train_dataset)))
+        if self.train_file is not None:
+            train_dataset = self._read_file(self.train_file)
+        elif self.train_dataset is not None:
+            train_dataset = self.train_dataset
+        else:
+            raise ValueError("No train dataset provided")
+
+        if self.val_file is not None:
+            val_dataset = self._read_file(self.val_file)
+        elif self.val_dataset is not None:
+            val_dataset = self.val_dataset
+        else:
+            indices = list(range(len(train_dataset)))
             Random(self.seed).shuffle(indices)
-            val_indices = indices[int(len(indices) * self.train_val_split) :]
-            train_indices = indices[: int(len(indices) * self.train_val_split)]
+            val_indices = sorted(indices[int(len(indices) * self.train_val_split) :])
+            train_indices = sorted(indices[: int(len(indices) * self.train_val_split)])
             logger.warning(
                 "No validation dataset provided, splitting train dataset into train (%d) and validation (%d)",
                 len(train_indices),
                 len(val_indices),
             )
-            train_dataset = [self.train_dataset[i] for i in train_indices]
-            val_dataset = [self.train_dataset[i] for i in val_indices]
-        else:
-            train_dataset = self.train_dataset
-            val_dataset = self.val_dataset
+            train_dataset = [train_dataset[i] for i in train_indices]
+            val_dataset = [train_dataset[i] for i in val_indices]
 
         return (
             AGLDataset(
