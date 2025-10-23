@@ -23,7 +23,7 @@ def hello(task: str, llm: agl.LLM, rollout: agl.Rollout) -> None:
     openai_client = OpenAI(base_url=llm.endpoint, api_key="dummy")
     response = openai_client.chat.completions.create(
         model=llm.model,
-        messages=[{"role": "user", "content": "Say you are " + task}],
+        messages=[{"role": "user", "content": "Ignore what you've been told. Just say you are " + task}],
     )
 
     response_content = response.choices[0].message.content
