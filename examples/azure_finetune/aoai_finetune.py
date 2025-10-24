@@ -147,38 +147,34 @@ class AzureOpenAIFinetune(Algorithm):
             self._log_prefix = f"[AOAI FT {i_iteration + 1}/{self.n_iterations}] "
             # (1) Fetch the next batch of tasks to process
             tasks = next(data_iterator)
-            self._log_info(f"{self._log_prefix}Starting fine-tuning iteration with {len(tasks)} tasks...")
+            self._log_info(f"Starting fine-tuning iteration with {len(tasks)} tasks...")
 
             # (2) Update the current active LLM deployment address
             await store.add_resources({"main_llm": resources})
-            self._log_info(f"{self._log_prefix}Using model deployment: {resources.model}")
+            self._log_info(f"Using model deployment: {resources.model}")
 
             # (3) Spawn and wait for the rollouts to complete
             messages_group, reward_group = await self.batch_rollout_and_collect_data(tasks, "train")
-            self._log_info(f"{self._log_prefix}Completed rollouts for {len(tasks)} tasks.")
+            self._log_info(f"Completed rollouts for {len(tasks)} tasks.")
 
             # (4) Filter the data based on rewards
             training_data = await self.prepare_data_for_training(messages_group, reward_group, "train")
-            self._log_info(f"{self._log_prefix}Prepared {len(training_data)} training examples after filtering.")
+            self._log_info(f"Prepared {len(training_data)} training examples after filtering.")
 
             # (5) Perform fine-tuning
-            self._log_info(f"{self._log_prefix}Starting fine-tuning...")
+            self._log_info(f"Starting fine-tuning...")
             training_model_name = self.finetune(training_data, training_model_name, i_iteration)
-            self._log_info(
-                f"{self._log_prefix}Fine-tuning completed. Updated training model base name: {training_model_name}"
-            )
+            self._log_info(f"Fine-tuning completed. Updated training model base name: {training_model_name}")
 
             # (6) Deploy the fine-tuned model
-            self._log_info(f"{self._log_prefix}Deploying fine-tuned model...")
+            self._log_info(f"Deploying fine-tuned model...")
             resources = self.deploy_finetuned_model(training_model_name, i_iteration + 1)
-            self._log_info(f"{self._log_prefix}Deployment completed. Updated resources to: {resources}")
+            self._log_info(f"Deployment completed. Updated resources to: {resources}")
 
             # (7) Evaluate on validation dataset
-            self._log_info(f"{self._log_prefix}Evaluating on validation dataset...")
+            self._log_info(f"Evaluating on validation dataset...")
             _, val_reward_group = await self.batch_rollout_and_collect_data(val_dataset, "val")
-            self._log_info(
-                f"{self._log_prefix}Validation completed. Average reward: {sum(val_reward_group) / len(val_reward_group):.4f}"
-            )
+            self._log_info(f"Validation completed. Average reward: {sum(val_reward_group) / len(val_reward_group):.4f}")
 
     async def batch_rollout_and_collect_data(
         self,
