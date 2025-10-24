@@ -7,10 +7,11 @@ import copy
 import json
 import logging
 import os
+import random
 import subprocess
 import tempfile
 import time
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import requests
 from openai import OpenAI
@@ -51,7 +52,9 @@ class AzureOpenAIFinetune(Algorithm):
         resource_name: Optional[str] = None,
         seed: int = 42,
         n_iterations: int = 3,
-        finetune_epochs: int = 3,
+        finetune_epochs: int = 1,
+        finetune_batch_size: int = 2,
+        finetune_learning_rate: float = 1.0,
         data_filter_ratio: float = 0.5,
     ) -> None:
         """Create a fine-tuning workflow tied to an Azure OpenAI endpoint.
@@ -73,6 +76,8 @@ class AzureOpenAIFinetune(Algorithm):
             seed: Random seed forwarded to the fine-tuning job for reproducibility.
             n_iterations: Number of algorithm iterations (fine-tune → deploy → evaluate).
             finetune_epochs: Number of epochs per fine-tuning job (not the number of epochs to go through `train_dataset`).
+            finetune_batch_size: Batch size to use for the fine-tuning job.
+            finetune_learning_rate: Learning rate to use for the fine-tuning job.
             data_filter_ratio: Fraction of high-reward examples to keep when preparing JSONL data.
         """
         super().__init__()
@@ -111,6 +116,8 @@ class AzureOpenAIFinetune(Algorithm):
         self.seed = seed
         self.n_iterations = n_iterations
         self.finetune_epochs = finetune_epochs
+        self.finetune_batch_size = finetune_batch_size
+        self.finetune_learning_rate = finetune_learning_rate
         self.data_filter_ratio = data_filter_ratio
 
         self.openai_client = OpenAI(
@@ -147,34 +154,36 @@ class AzureOpenAIFinetune(Algorithm):
             self._log_prefix = f"[AOAI FT {i_iteration + 1}/{self.n_iterations}] "
             # (1) Fetch the next batch of tasks to process
             tasks = next(data_iterator)
-            self._log_info(f"Starting fine-tuning iteration with {len(tasks)} tasks...")
+            self._log_info(f"[Stage 1] Starting fine-tuning iteration with {len(tasks)} tasks...")
 
             # (2) Update the current active LLM deployment address
             await store.add_resources({"main_llm": resources})
-            self._log_info(f"Using model deployment: {resources.model}")
+            self._log_info(f"[Stage 2] Using model deployment: {resources.model}")
 
             # (3) Spawn and wait for the rollouts to complete
             messages_group, reward_group = await self.batch_rollout_and_collect_data(tasks, "train")
-            self._log_info(f"Completed rollouts for {len(tasks)} tasks.")
+            self._log_info(f"[Stage 3] Completed rollouts for {len(tasks)} tasks.")
 
             # (4) Filter the data based on rewards
             training_data = await self.prepare_data_for_training(messages_group, reward_group, "train")
-            self._log_info(f"Prepared {len(training_data)} training examples after filtering.")
+            self._log_info(f"[Stage 4] Prepared {len(training_data)} training examples after filtering.")
 
             # (5) Perform fine-tuning
-            self._log_info(f"Starting fine-tuning...")
+            self._log_info(f"[Stage 5] Starting fine-tuning for model {training_model_name}...")
             training_model_name = self.finetune(training_data, training_model_name, i_iteration)
-            self._log_info(f"Fine-tuning completed. Updated training model base name: {training_model_name}")
+            self._log_info(f"[Stage 5] Fine-tuning completed. Updated training model base name: {training_model_name}")
 
             # (6) Deploy the fine-tuned model
-            self._log_info(f"Deploying fine-tuned model...")
+            self._log_info(f"[Stage 6] Deploying fine-tuned model...")
             resources = self.deploy_finetuned_model(training_model_name, i_iteration + 1)
-            self._log_info(f"Deployment completed. Updated resources to: {resources}")
+            self._log_info(f"[Stage 6] Deployment completed. Updated resources to: {resources}")
 
             # (7) Evaluate on validation dataset
-            self._log_info(f"Evaluating on validation dataset...")
+            self._log_info(f"[Stage 7] Evaluating on validation dataset...")
             _, val_reward_group = await self.batch_rollout_and_collect_data(val_dataset, "val")
-            self._log_info(f"Validation completed. Average reward: {sum(val_reward_group) / len(val_reward_group):.4f}")
+            self._log_info(
+                f"[Stage 7] Evaluation completed. Average reward: {sum(val_reward_group) / len(val_reward_group):.4f}"
+            )
 
     async def batch_rollout_and_collect_data(
         self,
@@ -258,6 +267,13 @@ class AzureOpenAIFinetune(Algorithm):
         if not messages_list:
             self._log_error(f"Rollout {rollout_id} produced no OpenAI messages for training.")
 
+        # NOTE: Patch the messages list for AOAI requirements
+        # This should ideally be merged into message adapter
+        for messages in messages_list:
+            for message in messages["messages"]:
+                if "content" in message and message["content"] is None:
+                    message.pop("content")
+
         reward = find_final_reward(spans)
         if reward is None:
             self._log_error(f"Rollout {rollout_id} produced no reward; defaulting to 0.0.")
@@ -292,6 +308,7 @@ class AzureOpenAIFinetune(Algorithm):
                 "messages": messages["messages"],
                 "metadata": {"split": split, "rollout_index": idx},
                 "reward": reward,
+                "reward_jitter": random.uniform(0, 1),
             }
             if messages.get("tools"):
                 example["tools"] = messages["tools"]
@@ -305,9 +322,6 @@ class AzureOpenAIFinetune(Algorithm):
         )
 
         filtered_examples = self._filter_training_data(tagged_examples)
-
-        for example in filtered_examples:
-            example.setdefault("metadata", {}).update({"filter_ratio": self.data_filter_ratio})
 
         self._log_info("Keeping %d example(s) for fine-tuning after reward-based filtering.", len(filtered_examples))
 
@@ -332,7 +346,9 @@ class AzureOpenAIFinetune(Algorithm):
 
         train_file_path: Optional[str] = None
         try:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as handle:
+            with tempfile.NamedTemporaryFile(
+                mode="w", prefix=f"{base_model}_{iteration_idx:02d}_", suffix=".jsonl", delete=False
+            ) as handle:
                 for record in training_data:
                     handle.write(json.dumps(record) + "\n")
                 train_file_path = handle.name
@@ -352,8 +368,12 @@ class AzureOpenAIFinetune(Algorithm):
                 training_file=train_file_id,
                 model=base_model,
                 seed=self.seed,
-                hyperparameters={"n_epochs": self.finetune_epochs},
-                suffix=f"aoai_ft_{next_iteration}",
+                hyperparameters={
+                    "batch_size": self.finetune_batch_size,
+                    "learning_rate_multiplier": self.finetune_learning_rate,
+                    "n_epochs": self.finetune_epochs,
+                },
+                suffix=f"v{next_iteration:02d}",
             )
             job_id = job.id
             self._log_info("Fine-tuning job %s created for base model %s.", job_id, base_model)
@@ -413,7 +433,7 @@ class AzureOpenAIFinetune(Algorithm):
         if self.data_filter_ratio >= 1.0:
             selected = data
         else:
-            sorted_data = sorted(data, key=lambda x: x.get("reward", 0.0), reverse=True)
+            sorted_data = sorted(data, key=lambda x: (x.get("reward", 0.0), x.get("reward_jitter", 0.0)), reverse=True)
             keep_count = max(1, int(len(sorted_data) * self.data_filter_ratio))
             selected = sorted_data[:keep_count]
 
@@ -423,6 +443,8 @@ class AzureOpenAIFinetune(Algorithm):
         for entry in selected:
             entry_copy = copy.deepcopy(entry)
             entry_copy.pop("reward", None)
+            entry_copy.pop("reward_jitter", None)
+            entry_copy.pop("metadata", None)
             filtered.append(entry_copy)
 
         return filtered
@@ -519,6 +541,8 @@ class AzureOpenAIFinetune(Algorithm):
             data=json.dumps(deploy_data),
             timeout=180,
         )
+
+        # TODO: wait for the deployment to be fully active
 
         if response.status_code < 400:
             self._log_info("Deployment %s updated successfully.", self.finetuned_deployment_name)

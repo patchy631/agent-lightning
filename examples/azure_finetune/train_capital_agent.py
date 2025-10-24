@@ -17,6 +17,7 @@ def main():
         finetuned_deployment_name="gpt-4.1-mini-ft",
         base_model_name="gpt-4.1-mini-2025-04-14",
         finetune_every_n_rollouts=24,
+        data_filter_ratio=0.6,
     )
 
     trainer = Trainer(n_runners=2, algorithm=finetune_algo, adapter=TraceToMessages())
