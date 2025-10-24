@@ -1228,6 +1228,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#agentlightning.Trainer.port" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;port
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#agentlightning.Trainer.runner" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;runner
@@ -1634,6 +1643,15 @@
   <a href="#agentlightning.Trainer.n_workers" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;n_workers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agentlightning.Trainer.port" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;port
     </span>
   </a>
   
@@ -2248,6 +2266,28 @@ If not provided, algorithm may create one on its own.</p>
 
 
 
+<h4 id="agentlightning.Trainer.port" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <code class="highlight language-python"><span class="n">port</span> <span class="o">=</span> <span class="n">port</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#agentlightning.Trainer.port" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Port forwarded to <a class="autorefs autorefs-internal" title="            agentlightning.ClientServerExecutionStrategy" href="#agentlightning.ClientServerExecutionStrategy"><code>ClientServerExecutionStrategy</code></a>.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h4 id="agentlightning.Trainer.runner" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <code class="highlight language-python"><span class="n">runner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_runner</span><span class="p">(</span><span class="n">runner</span><span class="p">)</span></code>
 
@@ -2293,7 +2333,7 @@ If not provided, algorithm may create one on its own.</p>
 
 
 <h4 id="agentlightning.Trainer.strategy" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <code class="highlight language-python"><span class="n">strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">n_runners</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runners</span><span class="p">))</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <code class="highlight language-python"><span class="n">strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">n_runners</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runners</span><span class="p">),</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
@@ -2369,7 +2409,7 @@ Deprecated. Use <a class="autorefs autorefs-internal" title="            adapter
 
 
 <h4 id="agentlightning.Trainer.__init__" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_runners</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_rollouts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_resources</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tracer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">runner</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">llm_proxy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_tasks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">triplet_exporter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hooks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dev</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_runners</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_rollouts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_resources</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tracer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">runner</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">llm_proxy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_tasks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">triplet_exporter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hooks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#agentlightning.Trainer.__init__" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -2380,6 +2420,9 @@ Deprecated. Use <a class="autorefs autorefs-internal" title="            adapter
 <p>Each keyword accepts either a concrete instance, a class, a callable factory, a
 registry string, or a lightweight configuration dictionary (see
 <a class="autorefs autorefs-internal" title="            agentlightning.build_component(spec, *, expected_type, spec_name, default_factory=None, allow_none=False, optional_defaults=None, dict_requires_type=True, dict_default_cls=None, type_error_fmt=None, invalid_spec_error_fmt=None, registry=None)" href="#agentlightning.build_component"><code>build_component()</code></a>).</p>
+<p>When <code>port</code> is provided it is forwarded to
+<a class="autorefs autorefs-internal" title="            agentlightning.ClientServerExecutionStrategy" href="#agentlightning.ClientServerExecutionStrategy"><code>ClientServerExecutionStrategy</code></a>
+instances constructed (or supplied) for the trainer.</p>
 
 
     </div>
