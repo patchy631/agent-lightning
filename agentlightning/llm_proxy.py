@@ -83,6 +83,30 @@ _initialized: bool = False
 _global_store: LightningStore | None = None
 
 
+def _reset_litellm_logging_worker() -> None:
+    """Reset LiteLLM's global logging worker to the current event loop.
+
+    LiteLLM keeps a module-level ``GLOBAL_LOGGING_WORKER`` singleton that owns an
+    ``asyncio.Queue``. The queue is bound to the event loop where it was created.
+    When the proxy is restarted, Uvicorn spins up a brand new event loop in a new
+    thread. If the existing logging worker (and its queue) are reused, LiteLLM
+    raises ``RuntimeError: <Queue ...> is bound to a different event loop`` the
+    next time it tries to log. Recreating the worker ensures that LiteLLM will
+    lazily initialise a fresh queue on the new loop.
+    """
+
+    # ``GLOBAL_LOGGING_WORKER`` is imported in a few LiteLLM modules at runtime.
+    # Update any already-imported references so future calls use the fresh worker.
+    try:
+        import litellm.utils as litellm_utils
+        from litellm.litellm_core_utils import logging_worker as litellm_logging_worker
+
+        litellm_logging_worker.GLOBAL_LOGGING_WORKER = litellm_logging_worker.LoggingWorker()
+        litellm_utils.GLOBAL_LOGGING_WORKER = litellm_logging_worker.GLOBAL_LOGGING_WORKER  # type: ignore[reportAttributeAccessIssue]
+    except Exception:  # pragma: no cover - best-effort hygiene
+        logger.error("Unable to propagate LiteLLM logging worker reset.", exc_info=True)
+
+
 def get_global_store() -> LightningStore:
     """Return the globally registered LightningStore.
 
@@ -167,8 +191,8 @@ class AddReturnTokenIds(CustomLogger):
     This mutates the outgoing request payload to include `return_token_ids=True`
     for backends that support token id return (e.g., vLLM).
 
-    See:
-        https://github.com/vllm-project/vllm/pull/22587
+    See also:
+        [vLLM PR #22587](https://github.com/vllm-project/vllm/pull/22587)
     """
 
     async def async_pre_call_hook(self, *args: Any, **kwargs: Any) -> Optional[Union[Exception, str, Dict[str, Any]]]:
@@ -606,6 +630,9 @@ class LLMProxy:
         # Initialize global middleware and callbacks once.
         initialize()
 
+        # Reset LiteLLM's logging worker so its asyncio.Queue binds to the new loop.
+        _reset_litellm_logging_worker()
+
         # Persist a temp worker config for LiteLLM and point the proxy at it.
         self._config_file = tempfile.NamedTemporaryFile(suffix=".yaml", delete=False).name
         with open(self._config_file, "w") as fp:
@@ -707,7 +734,7 @@ class LLMProxy:
             rollout_id: Rollout identifier used for span attribution. If None, will instantiate a ProxyLLM resource.
             attempt_id: Attempt identifier used for span attribution. If None, will instantiate a ProxyLLM resource.
             model: Logical model name to use. If omitted and exactly one model
-                is configured, that model is used.
+                is configured or all models have the same name, that model is used.
             sampling_parameters: Optional default sampling parameters.
 
         Returns:
@@ -719,10 +746,16 @@ class LLMProxy:
         if model is None:
             if len(self.model_list) == 1:
                 model = self.model_list[0]["model_name"]
+            elif len(self.model_list) == 0:
+                raise ValueError("No models found in model_list. Please specify the model.")
             else:
-                raise ValueError(
-                    f"Multiple or zero models found in model_list: {self.model_list}. Please specify the model."
-                )
+                first_model_name = self.model_list[0]["model_name"]
+                if all(model_config["model_name"] == first_model_name for model_config in self.model_list):
+                    model = first_model_name
+                else:
+                    raise ValueError(
+                        f"Multiple models found in model_list: {self.model_list}. Please specify the model."
+                    )
 
         if rollout_id is None and attempt_id is None:
             return ProxyLLM(

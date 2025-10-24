@@ -5,7 +5,7 @@ module.exports = function triggerOnLabel({ core, context, labelName }) {
     throw new Error("labelName is required");
   }
 
-  if (context.eventName !== "pull_request") {
+  if (context.eventName !== "pull_request_target") {
     core.setOutput("should-run", "true");
     core.notice("Triggering this workflow because event is not a pull request");
     return;
@@ -22,6 +22,11 @@ module.exports = function triggerOnLabel({ core, context, labelName }) {
     core.setOutput("should-run", "true");
     core.notice(
       `Triggering this workflow because pull request has the '${labelName}' label.`
+    );
+  } else if (labels.includes("ci-all")) {
+    core.setOutput("should-run", "true");
+    core.notice(
+      `Triggering this workflow because pull request has the 'ci-all' label.`
     );
   } else {
     core.setOutput("should-run", "false");

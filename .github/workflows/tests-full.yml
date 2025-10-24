@@ -8,7 +8,7 @@ on:
 
   workflow_dispatch:
 
-  pull_request:
+  pull_request_target:
     types: [reopened, ready_for_review]
 
 jobs:
@@ -47,6 +47,8 @@ jobs:
       - name: Check GPU status
         run: nvidia-smi
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.number && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
@@ -77,8 +79,8 @@ jobs:
         run: |
           ./scripts/litellm_run.sh
         env:
-          AZURE_API_BASE: ${{ secrets.AZURE_API_BASE }}
-          AZURE_API_KEY: ${{ secrets.AZURE_API_KEY }}
+          AZURE_API_BASE: ${{ secrets.AZURE_GROUP_SUBSCRIPTION_API_BASE }}
+          AZURE_API_KEY: ${{ secrets.AZURE_GROUP_SUBSCRIPTION_API_KEY }}
 
       - name: Run tests
         run: |
