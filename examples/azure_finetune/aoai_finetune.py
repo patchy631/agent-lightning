@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft. All rights reserved.
+
+"""The Azure OpenAI fine-tuning algorithm implementation."""
+
 import asyncio
 import copy
 import json

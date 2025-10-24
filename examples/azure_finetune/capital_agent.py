@@ -1,3 +1,16 @@
+# Copyright (c) Microsoft. All rights reserved.
+
+"""An example of agent using Azure OpenAI with tool calls to look up capital cities.
+
+Running this script directly will run a few sample tasks using the `capital_agent`,
+which will test the healthiness of your Azure OpenAI setup.
+
+Remember to have the following environment variables set:
+
+- `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key.
+- `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint URL.
+"""
+
 import asyncio
 import json
 import os
@@ -66,7 +79,8 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
 
     Returns 1.0 if output contains expected substring, else 0.0.
     """
-    console.print("[bold blue]Runner[/bold blue] Running task with input:", task)
+    console.print("[bold blue]======== Runner Start ========[/bold blue]")
+    console.print("[bold blue]Runner[/bold blue] [Step 1] Running task with input:", task)
     prompt = task["input"]
     expected = task["output"]
 
@@ -85,9 +99,9 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
         tool_choice="auto",
         temperature=0,
     )
-    console.print("[bold blue]Runner[/bold blue] First call response:", first)
 
     msg = first.choices[0].message
+    console.print("[bold blue]Runner[/bold blue] [Step 2] First call response:", msg)
 
     if msg.tool_calls:
         assistant_tool_calls: List[ChatCompletionMessageFunctionToolCallParam] = []
@@ -121,7 +135,7 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
             }
         )
         messages.extend(tool_results)
-        console.print("[bold blue]Runner[/bold blue] Messages after tool call:", messages)
+        console.print("[bold blue]Runner[/bold blue] [Step 3] Messages after tool call:", messages)
 
         # --- Call #2 ---
         second = openai_client.chat.completions.create(
@@ -129,19 +143,20 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
             messages=messages,
             temperature=0,
         )
-        console.print("[bold blue]Runner[/bold blue] Second call response:", second)
         final_text = second.choices[0].message.content or ""
+        console.print("[bold blue]Runner[/bold blue] [Step 4] Second call response:", final_text)
     else:
-        console.print("[bold blue]Runner[/bold blue] No tool calls made.")
+        console.print("[bold blue]Runner[/bold blue] [Step 3] No tool calls made.")
         final_text = msg.content or ""
 
     final_text = final_text.strip()
     reward = 1.0 if expected.lower() in final_text.lower() else 0.0
-    console.print(f"[bold blue]Runner[/bold blue] Final output: {final_text} | Reward: {reward}")
+    console.print(f"[bold blue]Runner[/bold blue] [Step Final] Final output: {final_text} | Reward: {reward}")
     return reward
 
 
 async def main():
+    # We don't put API key in LLM object for security reasons.
     llm = LLM(
         endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", ""),
         model="gpt-4.1-mini",
