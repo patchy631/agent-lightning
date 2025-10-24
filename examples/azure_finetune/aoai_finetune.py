@@ -62,6 +62,8 @@ class AzureOpenAIFinetune(Algorithm):
         Args:
             base_deployment_name: Deployment used as the base model for the first fine-tuning job.
             deployment_name: Deployment that should serve the fine-tuned weights after each round.
+                Currently, this name is only used as a prefix for the actual deployment created after
+                each fine-tuning job, because multiple versions cannot be assigned to the same deployment.
             base_model_name: On Azure, deployments are instantiated from base models
                 (e.g., "gpt-4.1-mini" deployment is created from "gpt-4.1-mini-2025-04-14").
                 This name is used to identify the latter name when launching fine-tuning jobs.
@@ -398,6 +400,7 @@ class AzureOpenAIFinetune(Algorithm):
 
         Args:
             finetuned_model_id: Identifier returned by the fine-tuning job.
+            iteration_idx: Current iteration index.
 
         Returns:
             `LLM` resource pointing to either the Azure deployment or the direct model id.
@@ -406,17 +409,17 @@ class AzureOpenAIFinetune(Algorithm):
             raise ValueError("finetuned_model_id must be a non-empty string.")
 
         if self.subscription_id and self.resource_group and self.resource_name:
-            try:
-                version = str(iteration_idx)
-                self._deploy_model(finetuned_model_id, version)
-            except Exception:
-                raise RuntimeError("Failed to update Azure deployment; falling back to direct model usage.")
+            # version should be like this: str(iteration_idx)
+            # Because of this issue: {"code":"ModelUpgradeNotSupported","message":"Model updates are not supported for finetuned model deployments."}
+            # We need to concatenate the version to the model name
+            # and version is always "1"
+            deployment_name = f"{self.finetuned_deployment_name}_v{iteration_idx:02d}"
+            self._deploy_model(finetuned_model_id, deployment_name, "1")
+            self._wait_for_deployment_ready(deployment_name, "1")
         else:
             raise RuntimeError("Azure deployment parameters missing; using fine-tuned model id directly.")
 
-        return LLM(
-            endpoint=self.azure_openai_endpoint, model=self.finetuned_deployment_name, api_key=self.azure_openai_api_key
-        )
+        return LLM(endpoint=self.azure_openai_endpoint, model=deployment_name, api_key=self.azure_openai_api_key)
 
     def _filter_training_data(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Select the top-performing examples and strip reward metadata.
@@ -497,11 +500,12 @@ class AzureOpenAIFinetune(Algorithm):
 
             time.sleep(interval)
 
-    def _deploy_model(self, model_name: str, version: str) -> None:
+    def _deploy_model(self, model_name: str, deployment_name: str, version: str) -> None:
         """Deploy the fine-tuned model using Azure's control plane REST API.
 
         Args:
-            model_name: Fine-tuned model identifier returned by Azure OpenAI.
+            model_name: Fine-tuned (training) model identifier returned by Azure OpenAI.
+            deployment_name: Name of the deployment to update.
             version: Version string to stamp on the deployment update.
         """
         token = self._get_azure_token()
@@ -510,7 +514,7 @@ class AzureOpenAIFinetune(Algorithm):
             f"https://management.azure.com/subscriptions/{self.subscription_id}"
             f"/resourceGroups/{self.resource_group}"
             f"/providers/Microsoft.CognitiveServices/accounts/{self.resource_name}"
-            f"/deployments/{self.finetuned_deployment_name}"
+            f"/deployments/{deployment_name}"
         )
 
         headers = {
@@ -530,9 +534,7 @@ class AzureOpenAIFinetune(Algorithm):
             },
         }
 
-        self._log_info(
-            "Deploying model %s (version %s) to deployment %s.", model_name, version, self.finetuned_deployment_name
-        )
+        self._log_info("Deploying model %s (version %s) to deployment %s.", model_name, version, deployment_name)
 
         response = requests.put(
             request_url,
@@ -542,12 +544,75 @@ class AzureOpenAIFinetune(Algorithm):
             timeout=180,
         )
 
-        # TODO: wait for the deployment to be fully active
-
         if response.status_code < 400:
-            self._log_info("Deployment %s updated successfully.", self.finetuned_deployment_name)
+            self._log_info("Deployment %s updated successfully.", deployment_name)
         else:
             self._log_error("Deployment failed: %s %s", response.status_code, response.text)
+
+    def _wait_for_deployment_ready(self, deployment_name: str, version: str, interval: int = 30) -> None:
+        """Poll the deployment status until it is marked as ready.
+
+        Args:
+            deployment_name: Name of the deployment to monitor.
+            interval: Number of seconds between polling attempts.
+        """
+        self._log_info("Waiting for deployment %s to become ready.", deployment_name)
+        while True:
+            request_url = (
+                f"https://management.azure.com/subscriptions/{self.subscription_id}"
+                f"/resourceGroups/{self.resource_group}"
+                f"/providers/Microsoft.CognitiveServices/accounts/{self.resource_name}"
+                f"/deployments/{deployment_name}"
+            )
+
+            token = self._get_azure_token()
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            }
+
+            response = requests.get(
+                request_url,
+                params={"api-version": "2025-06-01"},
+                headers=headers,
+                timeout=60,
+            )
+
+            if response.status_code >= 400:
+                self._log_error(
+                    "Failed to query deployment status. Retry later: %s, %s", response.status_code, response.text
+                )
+            else:
+                deployment_info = response.json()
+                properties = deployment_info.get("properties", {})
+                model_info = properties.get("model", {})
+                provisioning_state = properties.get("provisioningState")
+                self._log_info(
+                    "Waiting for deployment to be ready. Current provisioning state of %s: %s",
+                    deployment_name,
+                    provisioning_state,
+                )
+
+                if provisioning_state == "Succeeded":
+                    version_found = model_info.get("version")
+                    if version_found == version:
+                        self._log_info("Deployment %s is ready with version %s.", deployment_name, version)
+                        return
+                    else:
+                        self._log_warning(
+                            "Deployment succeeded, but version mismatch: expected %s, got %s. Try again later.",
+                            version,
+                            version_found,
+                        )
+                elif provisioning_state == "Cancelled" or provisioning_state == "Failed":
+                    raise RuntimeError(f"Deployment {deployment_name} failed with state {provisioning_state}.")
+                else:
+                    # Just wait and poll again
+                    self._log_debug(
+                        "Deployment %s not ready yet. Current state: %s", deployment_name, provisioning_state
+                    )
+
+            time.sleep(interval)
 
     def _get_azure_token(self) -> str:
         """Request an Azure management token via the Azure CLI.
