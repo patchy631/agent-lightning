@@ -97,7 +97,7 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
         messages=messages,
         tools=TOOLS,
         tool_choice="auto",
-        temperature=0,
+        temperature=1.0,
     )
 
     msg = first.choices[0].message
@@ -141,7 +141,7 @@ def capital_agent(task: CapitalTask, llm: LLM) -> float:
         second = openai_client.chat.completions.create(
             model=llm.model,
             messages=messages,
-            temperature=0,
+            temperature=1.0,
         )
         final_text = second.choices[0].message.content or ""
         console.print("[bold blue]Runner[/bold blue] [Step 4] Second call response:", final_text)

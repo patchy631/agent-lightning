@@ -40,8 +40,9 @@ class AzureOpenAIFinetune(Algorithm):
         self,
         base_deployment_name: str,
         finetuned_deployment_name: str,
+        base_model_name: str,
         *,
-        finetune_every_n_rollouts: int = 10,
+        finetune_every_n_rollouts: int = 32,
         azure_openai_endpoint: Optional[str] = None,
         azure_openai_api_key: Optional[str] = None,
         azure_openai_api_version: Optional[str] = None,
@@ -50,7 +51,7 @@ class AzureOpenAIFinetune(Algorithm):
         resource_name: Optional[str] = None,
         seed: int = 42,
         n_iterations: int = 3,
-        n_epochs: int = 3,
+        finetune_epochs: int = 3,
         data_filter_ratio: float = 0.5,
     ) -> None:
         """Create a fine-tuning workflow tied to an Azure OpenAI endpoint.
@@ -58,16 +59,20 @@ class AzureOpenAIFinetune(Algorithm):
         Args:
             base_deployment_name: Deployment used as the base model for the first fine-tuning job.
             deployment_name: Deployment that should serve the fine-tuned weights after each round.
+            base_model_name: On Azure, deployments are instantiated from base models
+                (e.g., "gpt-4.1-mini" deployment is created from "gpt-4.1-mini-2025-04-14").
+                This name is used to identify the latter name when launching fine-tuning jobs.
             finetune_every_n_rollouts: Number of rollouts grouped together before launching a job.
+                We don't recommend setting this value too low as fine-tuning jobs have a minimum rows requirement.
             azure_openai_endpoint: Azure OpenAI endpoint (e.g. `https://{resource}.openai.azure.com`).
             azure_openai_api_key: API key with access to the Azure OpenAI resource.
             azure_openai_api_version: API version to use when talking to Azure OpenAI.
             subscription_id: Azure subscription that owns the OpenAI resource (used for deployment).
             resource_group: Resource group of the target Azure OpenAI resource.
-            resource_name: Azure OpenAI resource name, required for control-plane deployment.
+            resource_name: Azure OpenAI resource name, usually the Azure OpenAI resource name.
             seed: Random seed forwarded to the fine-tuning job for reproducibility.
             n_iterations: Number of algorithm iterations (fine-tune → deploy → evaluate).
-            n_epochs: Number of epochs per fine-tuning job.
+            finetune_epochs: Number of epochs per fine-tuning job (not the number of epochs to go through `train_dataset`).
             data_filter_ratio: Fraction of high-reward examples to keep when preparing JSONL data.
         """
         super().__init__()
@@ -100,11 +105,12 @@ class AzureOpenAIFinetune(Algorithm):
 
         self.base_deployment_name = base_deployment_name
         self.finetuned_deployment_name = finetuned_deployment_name
+        self.base_model_name = base_model_name
 
         self.finetune_every_n_rollouts = finetune_every_n_rollouts
         self.seed = seed
         self.n_iterations = n_iterations
-        self.n_epochs = n_epochs
+        self.finetune_epochs = finetune_epochs
         self.data_filter_ratio = data_filter_ratio
 
         self.openai_client = OpenAI(
@@ -134,7 +140,7 @@ class AzureOpenAIFinetune(Algorithm):
 
         # This tracks the model name used in training
         # It's different from the deployment name which used for inference
-        training_model_name: str = self.base_deployment_name
+        training_model_name: str = self.base_model_name
 
         data_iterator = batch_iter_over_dataset(train_dataset, self.finetune_every_n_rollouts)
         for i_iteration in range(self.n_iterations):
@@ -158,7 +164,9 @@ class AzureOpenAIFinetune(Algorithm):
             # (5) Perform fine-tuning
             self._log_info(f"{self._log_prefix}Starting fine-tuning...")
             training_model_name = self.finetune(training_data, training_model_name, i_iteration)
-            self._log_info(f"{self._log_prefix}Fine-tuning completed. Updated training model ID: {training_model_name}")
+            self._log_info(
+                f"{self._log_prefix}Fine-tuning completed. Updated training model base name: {training_model_name}"
+            )
 
             # (6) Deploy the fine-tuned model
             self._log_info(f"{self._log_prefix}Deploying fine-tuned model...")
@@ -245,7 +253,10 @@ class AzureOpenAIFinetune(Algorithm):
             adapter = TraceToMessages()
             self.set_adapter(adapter)
         if not isinstance(adapter, TraceToMessages):
-            raise RuntimeError("AzureOpenAIFinetune requires a TraceToMessages adapter.")
+            raise RuntimeError(
+                "The adapter is configured but not a TraceToMessages adapter. "
+                "AzureOpenAIFinetune requires a TraceToMessages adapter. Please set that in Trainer."
+            )
 
         messages_list = adapter.adapt(spans)
         if not messages_list:
@@ -345,7 +356,7 @@ class AzureOpenAIFinetune(Algorithm):
                 training_file=train_file_id,
                 model=base_model,
                 seed=self.seed,
-                hyperparameters={"n_epochs": self.n_epochs},
+                hyperparameters={"n_epochs": self.finetune_epochs},
                 suffix=f"aoai_ft_{next_iteration}",
             )
             job_id = job.id
