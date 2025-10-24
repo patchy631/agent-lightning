@@ -1416,6 +1416,24 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#agentlightning.LLMProxy.get_store" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_store
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agentlightning.LLMProxy.initialize" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;initialize
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#agentlightning.LLMProxy.is_running" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;is_running
@@ -2091,6 +2109,24 @@
   <a href="#agentlightning.LLMProxy.as_resource" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;as_resource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agentlightning.LLMProxy.get_store" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_store
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agentlightning.LLMProxy.initialize" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;initialize
     </span>
   </a>
   
@@ -3792,6 +3828,11 @@ process from the main runner (i.e., tracer from agents).</p>
 <p class="admonition-title">Warning</p>
 <p>The LLM Proxy does support streaming, but the tracing is still problematic when streaming is enabled.</p>
 </div>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>Do not run LLM proxy in the same process as the main runner. It's easy to cause conflicts in the tracer provider
+with tracers like <a class="autorefs autorefs-internal" title="            agentlightning.AgentOpsTracer" href="../runner/#agentlightning.AgentOpsTracer"><code>AgentOpsTracer</code></a>.</p>
+</div>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3964,6 +4005,63 @@ is configured or all models have the same name, that model is used.</p>
           </div>
         </li>
     </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="agentlightning.LLMProxy.get_store" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">get_store</span><span class="p">()</span></code>
+
+<a href="#agentlightning.LLMProxy.get_store" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the store used by the proxy.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="            agentlightning.LightningStore (agentlightning.store.base.LightningStore)" href="../store/#agentlightning.LightningStore">LightningStore</a>]</code>
+          –
+          <div class="doc-md-description">
+            <p>The store used by the proxy.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="agentlightning.LLMProxy.initialize" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">initialize</span><span class="p">()</span></code>
+
+<a href="#agentlightning.LLMProxy.initialize" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize global middleware and LiteLLM callbacks.</p>
+<p>Installs:</p>
+<ul>
+<li>A FastAPI middleware that rewrites /rollout/{rid}/attempt/{aid}/... paths,
+injects rollout/attempt/sequence headers, and forwards downstream.</li>
+<li>LiteLLM callbacks for token ids and OpenTelemetry export.</li>
+</ul>
+<p>The middleware can only be installed once because once the FastAPI app has started,
+the middleware cannot be changed any more.</p>
+<p>This function does not start any server. It only wires global hooks.</p>
 
 
     </div>

@@ -4544,21 +4544,6 @@ the template to perform rollouts. This is particularly useful for prompt optimiz
 </ul>
 
 
-<p><span class="doc-section-title">Parameters:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-            <b><code>store</code></b>
-              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="            agentlightning.LightningStore (agentlightning.store.base.LightningStore)" href="../store/#agentlightning.LightningStore">LightningStore</a>]</code>, default:
-                  <code>None</code>
-)
-          –
-          <div class="doc-md-description">
-            <p>Optional explicit LightningStore. If None, uses <code>get_global_store()</code>.</p>
-          </div>
-        </li>
-    </ul>
-
-
 
 
 
@@ -4674,21 +4659,6 @@ private event loop. Blocks until that flush completes.</p>
   are ordered deterministically even with clock skew across nodes.</li>
 <li>Uses <a class="autorefs autorefs-internal" title="            agentlightning.llm_proxy.LightningSpanExporter" href="#agentlightning.llm_proxy.LightningSpanExporter"><code>LightningSpanExporter</code></a> to persist spans for analytics and training.</li>
 </ul>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-            <b><code>store</code></b>
-              (<code><a class="autorefs autorefs-internal" title="            agentlightning.LightningStore (agentlightning.store.base.LightningStore)" href="../store/#agentlightning.LightningStore">LightningStore</a> | None</code>, default:
-                  <code>None</code>
-)
-          –
-          <div class="doc-md-description">
-            <p>Optional explicit LightningStore for the exporter.</p>
-          </div>
-        </li>
-    </ul>
 
 
 
