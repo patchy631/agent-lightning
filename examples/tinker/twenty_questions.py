@@ -204,18 +204,10 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
     @listen(ask_question)
     async def answer_question(self):
-        agent = CrewAgent(
-            role="Answerer in a game of 20 questions",
-            goal="Answer yes/no questions truthfully about the secret entity; mark correct if guessed exactly.",
-            backstory="Knowledgeable, concise, and JSON-strict; never reveals the entity unless guessed.",
-            llm=self.answer_llm,
-        )
         query = ANSWERER_QUERY_TEMPLATE.format(
             answer=self.state.answer, next_question=self.state.next_question, history=self.state.render_history()
         )
-
-        result = await agent.kickoff_async(query, response_format=AnswererResponse)
-        answerer_response = cast(AnswererResponse, result.pydantic)
+        answerer_response = cast(AnswererResponse, self.answer_llm.call(query))  # type: ignore
         console.print(f"[bold red]Answerer (Turn {self.state.turn_index}):[/bold red] {answerer_response}")
         self.state.interactions.append(Turn(question=self.state.next_question, response=answerer_response.yes_or_no))
         self.state.next_question = ""  # Reset the next question
@@ -247,16 +239,21 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
 flow = TwentyQuestionsFlow(
     player_llm=CrewLLM(model="openai/gpt-4.1-mini"),
-    answer_llm=CrewLLM(model="openai/gpt-4.1-mini"),
+    answer_llm=CrewLLM(model="openai/gpt-5-mini", reasoning_effort="low", response_format=AnswererResponse),
     search_tool=SearchTool(model=CrewLLM(model="openai/gpt-4.1-mini")),
 )
 flow.plot()
 try:
     result = flow.kickoff(
         {
-            "answer": "Violin",
+            "answer": "football",
+            # "answer": "Violin",
             "category": "person",
         }
     )
 except Exception as e:
     raise
+
+# search_tool = SearchTool(model=CrewLLM(model="openai/gpt-4.1-mini"))
+# result = search_tool.run("What is the capital of France?")
+# print(result)
