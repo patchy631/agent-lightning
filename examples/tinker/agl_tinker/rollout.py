@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import itertools
 import logging
+import random
 from typing import Any, Generic, List, Sequence, TypeVar, cast
 
 from tinker.types import ModelInput
@@ -27,6 +28,8 @@ from .env import AGLDataset, AGLDummyEnv, AGLDummyEnvGroupBuilder
 logger = logging.getLogger(__name__)
 
 T_task = TypeVar("T_task")
+
+WAIT_FOR_ROLLOUTS_INTERVAL = 5.0
 
 
 def reconstruct_transitions(
@@ -118,7 +121,9 @@ async def agl_single_rollout(
 
         # Wait until the rollout is completed
         # This should be a slightly large number to avoid busy-waiting.
-        await asyncio.sleep(5.0)
+        # Add a small jitter to avoid synchronized waiting.
+        jitter = random.uniform(0.9, 1.1)
+        await asyncio.sleep(WAIT_FOR_ROLLOUTS_INTERVAL * jitter)
 
     if completed_rollout.status != "succeeded":
         logger.error(f"[Rollout {rollout.rollout_id}] Failed with status {completed_rollout.status}")
