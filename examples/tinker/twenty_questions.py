@@ -1,12 +1,14 @@
+import json
+import traceback
 from typing import Any, List, Literal, Optional, TypedDict, cast
 
+import pandas as pd
 from crewai import LLM as CrewLLM
 from crewai import Agent as CrewAgent
 from crewai import BaseLLM
 from crewai import Task as CrewTask
 from crewai.flow import Flow, listen, router, start
 from crewai.tools import BaseTool
-from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from rich.console import Console
 
@@ -18,7 +20,9 @@ console = Console()
 class AnswererResponse(BaseModel):
     # Keep this short; do NOT ask for chain-of-thought
     brief_reason: Optional[str] = Field(description="1-2 sentences justification (optional, high level only).")
-    yes_or_no: bool = Field(description="Whether the correct answer to the player's question is yes or no.")
+    yes_or_no: Literal["yes", "no", "n/a"] = Field(
+        description="Whether the correct answer to the player's question is yes, no, or not applicable."
+    )
     correct: bool = Field(
         description="Whether the player has correctly guessed the entity, and the game should end now."
     )
@@ -28,7 +32,7 @@ PLAYER_QUERY_TEMPLATE = """You are playing 20 Questions as the **Player**.
 Ask one high-information **yes/no** question that most reduces the remaining possibility space.
 If you think you have figured out the secret entity, ask a direct guess in the form: **"Is it <entity>?"**
 
-THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left.
+THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left. The quicker you make a correct guess, the higher your score.
 
 ## What you have: Game history (Q/A pairs):
 
@@ -39,6 +43,7 @@ THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left.
 - All secret entities are **straightforward, familiar, and commonly known** (e.g., "Apple", "Paris", "Tiger").
 - No complex, conditional, or composite answers. For example, the secret entity will **never** be something like “A door used in a haunted house” or “A Fender-produced guitar.”
 - Each answer refers to a **single, clear concept** — not a variant, version, or situation-dependent form.
+- The answerer may reply **"n/a"** when a yes/no would be meaningless or not publicly knowable.
 
 ## How to decide your next question
 
@@ -60,11 +65,9 @@ THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left.
 Now produce your single best next question."""
 
 
-ANSWERER_QUERY_TEMPLATE = """You are the **Answerer** in 20 Questions. Your secret entity is: "{answer}".
+ANSWERER_QUERY_TEMPLATE = """You are the **Answerer** in 20 Questions. Answer yes/no questions truthfully about the secret entity; mark correct if guessed exactly.
 
-## Game history
-
-{history}
+Your secret entity is: "{answer}".
 
 ## The player's current question
 
@@ -75,12 +78,24 @@ ANSWERER_QUERY_TEMPLATE = """You are the **Answerer** in 20 Questions. Your secr
 - Respond only with a structured yes/no evaluation about the entity.
 - Be concise, objective, and consistent with previous answers.
 - Never reveal the entity unless the player guessed correctly.
+- If you don't know the answer, for example, the information is never publicly known, or the question is irrelevant to the secret entity, answer **"n/a"**.
+
+### Handling unknown or irrelevant questions
+
+- If the question asks about something that is **not publicly known**, **not factual**, **ambiguous**, or **irrelevant** to the entity's nature (e.g., "Does it enjoy music?" for *Mount Everest*), respond with **"n/a"**.
+- Use **"n/a"** only when a yes/no answer would be **misleading or nonsensical**.
+- Examples:
+  - "Does it have parents?" -> *n/a* (not meaningful for a place or object)
+  - "Is it alive?" -> valid for all entities (answer yes/no if possible)
+  - "Is it an animal?" -> *n/a* if the entity is a person, as this can be ambiguous.
+  - "Does it post on social media?" -> *n/a* unless the entity is a living or fictional character known for doing so.
+  - "Is the chair branded by a famous manufacturer?" -> *n/a* for a general object like "chair".
 
 ### Handling ambiguous entities
 
 If the secret entity has multiple common meanings (e.g., "football" can mean both the **sport** and the **ball**):
-- Answer **"yes"** if the question is true for **any major, well-recognized meaning** that does **not contradict** earlier answers.
-- Answer **"no"** only if the question is false for **all reasonable interpretations** or if saying "yes" would **conflict** with prior responses.
+- Answer **"yes"** if the question is true for **any** of the major, well-recognized meanings.
+- Answer **"no"** only if the question is false for **all reasonable interpretations**.
 - Avoid overinterpreting rare or niche meanings — stick to mainstream, widely understood ones.
 
 ### Handling direct guesses
@@ -120,10 +135,11 @@ class SearchTool(BaseTool):
     description: str = (
         "Search the web (mocked). Provide a concise, factual summary of what is known about the given topic."
     )
+    num_called: int = 0
 
     async def _run(self, search_query: str) -> str:
         """Perform a mocked search request using an LLM."""
-
+        self.num_called += 1
         # Safety: ensure input is not too long or empty
         search_query = search_query.strip()
         if not search_query:
@@ -154,21 +170,22 @@ class SearchTool(BaseTool):
 
 class Turn(BaseModel):
     question: str
-    response: bool
+    response: Literal["yes", "no", "n/a"]
 
 
 class TwentyQuestionsGameState(BaseModel):
     answer: str = ""
     category: str = ""
-    next_question: str = ""
     correct: bool = False
+    num_tool_calls: int = 0
+    next_question: str = ""
     turn_index: int = 1
     interactions: List[Turn] = Field(default_factory=list)
 
     def render_history(self) -> str:
         return "\n\n".join(
             [
-                f"Question #{i}: {turn.question}\nResponse #{i}: {'yes' if turn.response else 'no'}"
+                f"Question #{i}: {turn.question}\nResponse #{i}: {turn.response}"
                 for i, turn in enumerate(self.interactions, start=1)
             ]
         )
@@ -184,7 +201,6 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
     @start("next_turn")
     async def ask_question(self):
-        print("Starting flow")
         agent = CrewAgent(
             role="Player in a game of 20 questions",
             goal="Minimize uncertainty and identify the hidden entity within 20 yes/no questions.",
@@ -200,22 +216,26 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
         result = await agent.kickoff_async(query)
         console.print(f"[bold red]Player (Turn {self.state.turn_index}):[/bold red] {result.raw}")
+        if self.search_tool is not None:
+            self.state.num_tool_calls = self.search_tool.num_called
         self.state.next_question = result.raw
 
     @listen(ask_question)
     async def answer_question(self):
-        query = ANSWERER_QUERY_TEMPLATE.format(
-            answer=self.state.answer, next_question=self.state.next_question, history=self.state.render_history()
-        )
+        query = ANSWERER_QUERY_TEMPLATE.format(answer=self.state.answer, next_question=self.state.next_question)
         answerer_response = cast(AnswererResponse, self.answer_llm.call(query))  # type: ignore
         console.print(f"[bold red]Answerer (Turn {self.state.turn_index}):[/bold red] {answerer_response}")
-        self.state.interactions.append(Turn(question=self.state.next_question, response=answerer_response.yes_or_no))
+        try:
+            turn = Turn(question=self.state.next_question, response=answerer_response.yes_or_no)
+            correct = answerer_response.correct
+        except Exception as e:
+            console.print(f"[bold red]Answerer Response Format Error: {e}[/bold red]")
+            # Assuming n/a
+            turn = Turn(question=self.state.next_question, response="n/a")
+            correct = False
+        self.state.interactions.append(turn)
         self.state.next_question = ""  # Reset the next question
-
-        if answerer_response.correct:
-            self.state.correct = True
-        else:
-            self.state.correct = False
+        self.state.correct = correct
 
     @router(answer_question)
     def game_should_continue(self):
@@ -237,23 +257,36 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         console.print("The flow has reached the finished state.")
 
 
-flow = TwentyQuestionsFlow(
-    player_llm=CrewLLM(model="openai/gpt-4.1-mini"),
-    answer_llm=CrewLLM(model="openai/gpt-5-mini", reasoning_effort="low", response_format=AnswererResponse),
-    search_tool=SearchTool(model=CrewLLM(model="openai/gpt-4.1-mini")),
-)
-flow.plot()
-try:
-    result = flow.kickoff(
-        {
-            "answer": "football",
-            # "answer": "Violin",
-            "category": "person",
-        }
-    )
-except Exception as e:
-    raise
+def main():
+    df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
 
-# search_tool = SearchTool(model=CrewLLM(model="openai/gpt-4.1-mini"))
-# result = search_tool.run("What is the capital of France?")
-# print(result)
+    for index, row in df.iterrows():
+        flow = TwentyQuestionsFlow(
+            player_llm=CrewLLM(model="openai/gpt-4.1-mini", timeout=60.0),
+            answer_llm=CrewLLM(
+                model="openai/gpt-5-mini", reasoning_effort="low", response_format=AnswererResponse, timeout=60.0
+            ),
+            search_tool=SearchTool(model=CrewLLM(model="openai/gpt-4.1-mini", timeout=60.0)),
+        )
+        try:
+            flow.kickoff(
+                {
+                    "answer": row["answer"],
+                    "category": row["category"],
+                }
+            )
+            result_json: dict[str, Any] = {"index": index, **flow.state.model_dump()}
+        except Exception as e:
+            result_json = {
+                "index": index,
+                "answer": row["answer"],
+                "category": row["category"],
+                "error": str(e),
+                "exception": traceback.print_exc(),
+            }
+        with open("logs/twenty_questions.jsonl", "a") as f:
+            f.write(json.dumps(result_json) + "\n")
+
+
+if __name__ == "__main__":
+    main()
