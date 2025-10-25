@@ -17,7 +17,7 @@ console = Console()
 
 class AnswererResponse(BaseModel):
     # Keep this short; do NOT ask for chain-of-thought
-    brief_reason: Optional[str] = Field(description="One-sentence justification (optional, high level only).")
+    brief_reason: Optional[str] = Field(description="1-2 sentences justification (optional, high level only).")
     yes_or_no: bool = Field(description="Whether the correct answer to the player's question is yes or no.")
     correct: bool = Field(
         description="Whether the player has correctly guessed the entity, and the game should end now."
@@ -62,21 +62,32 @@ Now produce your single best next question."""
 
 ANSWERER_QUERY_TEMPLATE = """You are the **Answerer** in 20 Questions. Your secret entity is: "{answer}".
 
-## The player's question
+## Game history
+
+{history}
+
+## The player's current question
 
 {next_question}
 
 ## Rules
 
-- Answer **yes_or_no** strictly about the entity.
-- If the secret entity itself is ambiguous, answer **yes** if the question is true for any of the meanings.
-- If the player's question is a direct guess such as "is it ...?" and it matches the entity, set **correct** = true; otherwise false.
-- When matching, the player does not have to say the exact same words, but should be very close in meaning.
-- Do **not** reveal the entity unless the player guessed correctly.
-- Provide at most one-sentence high-level justification in **brief_reason** (optional).
-- **Do not** include chain-of-thought, step-by-step reasoning, citations, or extra fields.
+- Respond only with a structured yes/no evaluation about the entity.
+- Be concise, objective, and consistent with previous answers.
+- Never reveal the entity unless the player guessed correctly.
 
-Respond with the specified response format.
+### Handling ambiguous entities
+
+If the secret entity has multiple common meanings (e.g., "football" can mean both the **sport** and the **ball**):
+- Answer **"yes"** if the question is true for **any major, well-recognized meaning** that does **not contradict** earlier answers.
+- Answer **"no"** only if the question is false for **all reasonable interpretations** or if saying "yes" would **conflict** with prior responses.
+- Avoid overinterpreting rare or niche meanings — stick to mainstream, widely understood ones.
+
+### Handling direct guesses
+
+If the player's question is a direct guess ("Is it ...?"):
+- Set **correct = true** if the guess is a close match in meaning to the secret entity (e.g., “Is it cell phone?” ≈ “Smartphone”).
+- Otherwise, set **correct = false**.
 """
 
 
@@ -199,7 +210,9 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
             backstory="Knowledgeable, concise, and JSON-strict; never reveals the entity unless guessed.",
             llm=self.answer_llm,
         )
-        query = ANSWERER_QUERY_TEMPLATE.format(answer=self.state.answer, next_question=self.state.next_question)
+        query = ANSWERER_QUERY_TEMPLATE.format(
+            answer=self.state.answer, next_question=self.state.next_question, history=self.state.render_history()
+        )
 
         result = await agent.kickoff_async(query, response_format=AnswererResponse)
         answerer_response = cast(AnswererResponse, result.pydantic)
@@ -241,7 +254,7 @@ flow.plot()
 try:
     result = flow.kickoff(
         {
-            "answer": "Taylor Swift",
+            "answer": "Violin",
             "category": "person",
         }
     )
