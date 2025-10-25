@@ -23,6 +23,7 @@ from litellm.integrations.opentelemetry import OpenTelemetry, OpenTelemetryConfi
 from litellm.proxy.proxy_server import app, save_worker_config  # pyright: ignore[reportUnknownVariableType]
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from agentlightning.types import LLM, ProxyLLM
 
@@ -77,12 +78,6 @@ def _get_pre_call_data(args: Any, kwargs: Any) -> Dict[str, Any]:
     return cast(Dict[str, Any], data)
 
 
-# We need global state because litellm is based on a global app.
-# Repeatedly initializing the app with different stores will cause errors.
-_initialized: bool = False
-_global_store: LightningStore | None = None
-
-
 def _reset_litellm_logging_worker() -> None:
     """Reset LiteLLM's global logging worker to the current event loop.
 
@@ -104,85 +99,22 @@ def _reset_litellm_logging_worker() -> None:
         litellm_logging_worker.GLOBAL_LOGGING_WORKER = litellm_logging_worker.LoggingWorker()
         litellm_utils.GLOBAL_LOGGING_WORKER = litellm_logging_worker.GLOBAL_LOGGING_WORKER  # type: ignore[reportAttributeAccessIssue]
     except Exception:  # pragma: no cover - best-effort hygiene
-        logger.error("Unable to propagate LiteLLM logging worker reset.", exc_info=True)
+        logger.warning("Unable to propagate LiteLLM logging worker reset.", exc_info=True)
 
 
-def get_global_store() -> LightningStore:
-    """Return the globally registered LightningStore.
+def _reset_litellm_logging_callback_manager() -> None:
+    """Reset LiteLLM's global callback manager.
 
-    Used by components that are initialized without an explicit store
-    (e.g., exporter created inside OpenTelemetry).
+    To get rid of the warning message: "Cannot add callback - would exceed MAX_CALLBACKS limit of 30."
+    when litellm is restarted multiple times in the same process.
 
-    Returns:
-        LightningStore: The active global store.
-
-    Raises:
-        ValueError: If the global store has not been set by `LLMProxy.start()`.
+    It does not respect existing input/output callbacks.
     """
-    if _global_store is None:
-        raise ValueError("Global store is not initialized. Please start a LLMProxy first.")
-    return _global_store
 
-
-def initialize() -> None:
-    """Initialize global middleware and LiteLLM callbacks once.
-
-    Idempotent. Installs:
-
-    * A FastAPI middleware that rewrites /rollout/{rid}/attempt/{aid}/... paths,
-      injects rollout/attempt/sequence headers, and forwards downstream.
-    * LiteLLM callbacks for token ids and OpenTelemetry export.
-
-    This function does not start any server. It only wires global hooks.
-    """
-    global _initialized
-    if _initialized:
-        return
-
-    # Add middleware here because it relies on the global store.
-    @app.middleware("http")
-    async def rollout_attempt_middleware(  # pyright: ignore[reportUnusedFunction]
-        request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
-        # Decode rollout and attempt from the URL prefix. Example:
-        #   /rollout/r123/attempt/a456/v1/chat/completions
-        # becomes
-        #   /v1/chat/completions
-        # while adding request-scoped headers for trace attribution.
-        path = request.url.path
-
-        match = re.match(r"^/rollout/([^/]+)/attempt/([^/]+)(/.*)?$", path)
-        if match:
-            rollout_id = match.group(1)
-            attempt_id = match.group(2)
-            new_path = match.group(3) if match.group(3) is not None else "/"
-
-            # Rewrite the ASGI scope path so downstream sees a clean OpenAI path.
-            request.scope["path"] = new_path
-            request.scope["raw_path"] = new_path.encode()
-
-            # Allocate a monotonic sequence id per (rollout, attempt).
-            sequence_id = await get_global_store().get_next_span_sequence_id(rollout_id, attempt_id)
-
-            # Inject headers so downstream components and exporters can retrieve them.
-            request.scope["headers"] = list(request.scope["headers"]) + [
-                (b"x-rollout-id", rollout_id.encode()),
-                (b"x-attempt-id", attempt_id.encode()),
-                (b"x-sequence-id", str(sequence_id).encode()),
-            ]
-
-        response = await call_next(request)
-        return response
-
-    # Register callbacks once on the global LiteLLM callback list.
-    litellm.callbacks.extend(  # pyright: ignore[reportUnknownMemberType]
-        [
-            AddReturnTokenIds(),
-            LightningOpenTelemetry(),
-        ]
-    )
-
-    _initialized = True
+    try:
+        litellm.logging_callback_manager._reset_all_callbacks()  # pyright: ignore[reportPrivateUsage]
+    except Exception:  # pragma: no cover - best-effort hygiene
+        logger.warning("Unable to reset LiteLLM logging callback manager.", exc_info=True)
 
 
 class AddReturnTokenIds(CustomLogger):
@@ -229,15 +161,13 @@ class LightningSpanExporter(SpanExporter):
     * Buffer access is protected by a re-entrant lock.
     * Export is synchronous to the caller yet schedules an async flush on the
       internal loop, then waits for completion.
-
-    Args:
-        store: Optional explicit LightningStore. If None, uses `get_global_store()`.
     """
 
-    def __init__(self, store: Optional[LightningStore] = None):
-        self._store = store
+    def __init__(self, _store: Optional[LightningStore] = None):
+        self._store: Optional[LightningStore] = _store  # this is only for testing purposes
         self._buffer: List[ReadableSpan] = []
         self._lock: Optional[threading.RLock] = None
+        self._loop_lock_pid: Optional[int] = None
 
         # Single dedicated event loop running in a daemon thread.
         # This decouples OTEL SDK threads from our async store I/O.
@@ -251,6 +181,7 @@ class LightningSpanExporter(SpanExporter):
         Returns:
             asyncio.AbstractEventLoop: The initialized event loop.
         """
+        self._clear_loop_and_lock()
         if self._loop is None:
             self._loop = asyncio.new_event_loop()
             self._loop_thread = threading.Thread(target=self._run_loop, name="LightningSpanExporterLoop", daemon=True)
@@ -263,22 +194,25 @@ class LightningSpanExporter(SpanExporter):
         Returns:
             threading.RLock: The initialized lock.
         """
+        self._clear_loop_and_lock()
         if self._lock is None:
             self._lock = threading.RLock()
         return self._lock
 
-    def _get_store(self) -> LightningStore:
-        """Return the LightningStore to use.
+    def _clear_loop_and_lock(self) -> None:
+        """Clear the loop and lock.
+        This happens if the exporter was used in a process then used in another process.
 
-        Returns:
-            LightningStore: Explicit store if provided, else the global store.
-
-        Raises:
-            ValueError: If no global store is configured and no explicit store was given.
+        This should only happen in CI.
         """
-        if self._store is None:
-            return get_global_store()
-        return self._store
+        if os.getpid() != self._loop_lock_pid:
+            logger.warning("Loop and lock are not owned by the current process. Clearing them.")
+            self._loop = None
+            self._loop_thread = None
+            self._lock = None
+            self._loop_lock_pid = os.getpid()
+        elif self._loop_lock_pid is None:
+            self._loop_lock_pid = os.getpid()
 
     def _run_loop(self) -> None:
         """Run the private asyncio loop forever on the exporter thread."""
@@ -363,6 +297,11 @@ class LightningSpanExporter(SpanExporter):
             if not subtree_spans:
                 continue
 
+            store = self._store or get_active_llm_proxy().get_store()
+            if store is None:
+                logger.warning("Store is not set in LLMProxy. Cannot log spans to store.")
+                continue
+
             # Merge all custom headers found in the subtree.
             headers_merged: Dict[str, Any] = {}
 
@@ -376,6 +315,9 @@ class LightningSpanExporter(SpanExporter):
                     logger.error(
                         f"metadata.requester_custom_headers is not stored as a string: {headers_str}. Skipping the span."
                     )
+                    continue
+                if not headers_str.strip():
+                    logger.warning("metadata.requester_custom_headers is an empty string. Skipping the span.")
                     continue
                 try:
                     # Use literal_eval to parse the stringified dict safely.
@@ -414,7 +356,7 @@ class LightningSpanExporter(SpanExporter):
 
             # Persist each span in the subtree with the resolved identifiers.
             for span in subtree_spans:
-                await self._get_store().add_otel_span(
+                await store.add_otel_span(
                     rollout_id=rollout_id, attempt_id=attempt_id, sequence_id=sequence_id_decimal, readable_span=span
                 )
 
@@ -484,22 +426,60 @@ class LightningOpenTelemetry(OpenTelemetry):
     * Ensures each request is annotated with a per-attempt sequence id so spans
       are ordered deterministically even with clock skew across nodes.
     * Uses [`LightningSpanExporter`][agentlightning.llm_proxy.LightningSpanExporter] to persist spans for analytics and training.
-
-    Args:
-        store: Optional explicit LightningStore for the exporter.
     """
 
-    def __init__(self, store: LightningStore | None = None):
-        config = OpenTelemetryConfig(exporter=LightningSpanExporter(store))
+    def __init__(self):
+        config = OpenTelemetryConfig(exporter=LightningSpanExporter())
 
         # Check for tracer initialization
-        if (
-            hasattr(trace_api, "_TRACER_PROVIDER")
-            and trace_api._TRACER_PROVIDER is not None  # pyright: ignore[reportPrivateUsage]
-        ):
+        if _check_tracer_provider():
             logger.error("Tracer is already initialized. OpenTelemetry may not work as expected.")
 
         super().__init__(config=config)  # pyright: ignore[reportUnknownMemberType]
+
+
+class RolloutAttemptMiddleware(BaseHTTPMiddleware):
+    """
+    Rewrites /rollout/{rid}/attempt/{aid}/... -> /...
+    and injects x-rollout-id, x-attempt-id, x-sequence-id headers.
+
+    LLMProxy can update store later without rebuilding middleware.
+    """
+
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+        # Decode rollout and attempt from the URL prefix. Example:
+        #   /rollout/r123/attempt/a456/v1/chat/completions
+        # becomes
+        #   /v1/chat/completions
+        # while adding request-scoped headers for trace attribution.
+        path = request.url.path
+
+        match = re.match(r"^/rollout/([^/]+)/attempt/([^/]+)(/.*)?$", path)
+        if match:
+            rollout_id = match.group(1)
+            attempt_id = match.group(2)
+            new_path = match.group(3) if match.group(3) is not None else "/"
+
+            # Rewrite the ASGI scope path so downstream sees a clean OpenAI path.
+            request.scope["path"] = new_path
+            request.scope["raw_path"] = new_path.encode()
+
+            store = get_active_llm_proxy().get_store()
+            if store is not None:
+                # Allocate a monotonic sequence id per (rollout, attempt).
+                sequence_id = await store.get_next_span_sequence_id(rollout_id, attempt_id)
+
+                # Inject headers so downstream components and exporters can retrieve them.
+                request.scope["headers"] = list(request.scope["headers"]) + [
+                    (b"x-rollout-id", rollout_id.encode()),
+                    (b"x-attempt-id", attempt_id.encode()),
+                    (b"x-sequence-id", str(sequence_id).encode()),
+                ]
+            else:
+                logger.warning("Store is not set. Skipping sequence id allocation and header injection.")
+
+        response = await call_next(request)
+        return response
 
 
 class LLMProxy:
@@ -525,6 +505,11 @@ class LLMProxy:
     !!! warning
 
         The LLM Proxy does support streaming, but the tracing is still problematic when streaming is enabled.
+
+    !!! danger
+
+        Do not run LLM proxy in the same process as the main runner. It's easy to cause conflicts in the tracer provider
+        with tracers like [`AgentOpsTracer`][agentlightning.AgentOpsTracer].
 
     Args:
         port: TCP port to bind.
@@ -558,6 +543,14 @@ class LLMProxy:
         self._config_file = None
         self._uvicorn_server = None
         self._ready_event = threading.Event()
+
+    def get_store(self) -> Optional[LightningStore]:
+        """Get the store used by the proxy.
+
+        Returns:
+            The store used by the proxy.
+        """
+        return self.store
 
     def set_store(self, store: LightningStore) -> None:
         """Set the store for the proxy.
@@ -606,6 +599,49 @@ class LLMProxy:
                 break
             time.sleep(0.01)
 
+    def initialize(self):
+        """Initialize global middleware and LiteLLM callbacks.
+
+        Installs:
+
+        * A FastAPI middleware that rewrites /rollout/{rid}/attempt/{aid}/... paths,
+        injects rollout/attempt/sequence headers, and forwards downstream.
+        * LiteLLM callbacks for token ids and OpenTelemetry export.
+
+        The middleware can only be installed once because once the FastAPI app has started,
+        the middleware cannot be changed any more.
+
+        This function does not start any server. It only wires global hooks.
+        """
+        if self.store is None:
+            raise ValueError("Store is not set. Please set the store before initializing the LLMProxy.")
+
+        if _global_llm_proxy is not None:
+            logger.warning("A global LLMProxy is already set. Overwriting it with the new instance.")
+
+        # Set the global LLMProxy reference for middleware/exporter access.
+        set_active_llm_proxy(self)
+
+        # Install middleware if it's not already installed.
+        installed: bool = False
+        for mw in app.user_middleware:
+            if mw.cls is RolloutAttemptMiddleware:
+                # Check whether the middleware is installed.
+                # It could be installed by other LLM Proxy instances, but it doesn't matter.
+                logger.info("Found existing RolloutAttemptMiddleware installed. Will not install a new one.")
+                installed = True
+                break
+
+        if not installed:
+            # Fallback to adding a new middleware
+            logger.info("Adding a new middleware to the FastAPI app.")
+            app.add_middleware(RolloutAttemptMiddleware)
+
+        if not initialize_llm_callbacks():
+            # If it's not the first time to initialize the callbacks, also
+            # reset LiteLLM's logging worker so its asyncio.Queue binds to the new loop.
+            _reset_litellm_logging_worker()
+
     def start(self):
         """Start the proxy server thread and initialize global wiring.
 
@@ -623,15 +659,8 @@ class LLMProxy:
         if not self.store:
             raise ValueError("Store is not set. Please set the store before starting the LLMProxy.")
 
-        global _global_store
-
-        _global_store = self.store
-
-        # Initialize global middleware and callbacks once.
-        initialize()
-
-        # Reset LiteLLM's logging worker so its asyncio.Queue binds to the new loop.
-        _reset_litellm_logging_worker()
+        # Initialize global middleware and callbacks.
+        self.initialize()
 
         # Persist a temp worker config for LiteLLM and point the proxy at it.
         self._config_file = tempfile.NamedTemporaryFile(suffix=".yaml", delete=False).name
@@ -734,7 +763,7 @@ class LLMProxy:
             rollout_id: Rollout identifier used for span attribution. If None, will instantiate a ProxyLLM resource.
             attempt_id: Attempt identifier used for span attribution. If None, will instantiate a ProxyLLM resource.
             model: Logical model name to use. If omitted and exactly one model
-                is configured, that model is used.
+                is configured or all models have the same name, that model is used.
             sampling_parameters: Optional default sampling parameters.
 
         Returns:
@@ -746,10 +775,16 @@ class LLMProxy:
         if model is None:
             if len(self.model_list) == 1:
                 model = self.model_list[0]["model_name"]
+            elif len(self.model_list) == 0:
+                raise ValueError("No models found in model_list. Please specify the model.")
             else:
-                raise ValueError(
-                    f"Multiple or zero models found in model_list: {self.model_list}. Please specify the model."
-                )
+                first_model_name = self.model_list[0]["model_name"]
+                if all(model_config["model_name"] == first_model_name for model_config in self.model_list):
+                    model = first_model_name
+                else:
+                    raise ValueError(
+                        f"Multiple models found in model_list: {self.model_list}. Please specify the model."
+                    )
 
         if rollout_id is None and attempt_id is None:
             return ProxyLLM(
@@ -765,6 +800,71 @@ class LLMProxy:
             )
         else:
             raise ValueError("Either rollout_id and attempt_id must be provided, or neither.")
+
+
+_global_llm_proxy: Optional[LLMProxy] = None
+_callbacks_before_litellm_start: Optional[List[Any]] = None
+
+
+def get_active_llm_proxy() -> LLMProxy:
+    """Get the current global LLMProxy instance.
+
+    Returns:
+        Optional[LLMProxy]: The current LLMProxy if set, else None.
+    """
+    if _global_llm_proxy is None:
+        raise ValueError("Global LLMProxy is not set. Please call llm_proxy.start() first.")
+    return _global_llm_proxy
+
+
+def set_active_llm_proxy(proxy: LLMProxy) -> None:
+    """Set the current global LLMProxy instance.
+
+    Args:
+        proxy: The LLMProxy instance to set as global.
+    """
+    global _global_llm_proxy
+    _global_llm_proxy = proxy
+
+
+def initialize_llm_callbacks() -> bool:
+    """Restore `litellm.callbacks` to a state that is just initialized by agent-lightning.
+
+    When litellm is restarted multiple times in the same process, more and more callbacks
+    will be appended to `litellm.callbacks`, which may exceed the MAX_CALLBACKS limit.
+    This function remembers the initial state of `litellm.callbacks` and always restore to that state.
+
+    Returns:
+        Whether the callbacks are initialized for the first time.
+    """
+    global _callbacks_before_litellm_start
+
+    if _callbacks_before_litellm_start is None:
+        litellm.callbacks.extend(  # type: ignore
+            [
+                AddReturnTokenIds(),
+                LightningOpenTelemetry(),
+            ]
+        )
+        _callbacks_before_litellm_start = [*litellm.callbacks]  # type: ignore
+        return True
+
+    _reset_litellm_logging_callback_manager()
+
+    # Check if tracer provider is malformed due to global tracer clear in tests.
+    if not _check_tracer_provider():
+        logger.warning(
+            "Global tracer provider might have been cleared outside. Re-initializing OpenTelemetry callback."
+        )
+        _callbacks_before_litellm_start = [
+            cb for cb in _callbacks_before_litellm_start if not isinstance(cb, LightningOpenTelemetry)
+        ] + [LightningOpenTelemetry()]
+    else:
+        logger.debug("Global tracer provider is valid. Reusing existing OpenTelemetry callback.")
+
+    litellm.callbacks.clear()  # type: ignore
+    litellm.callbacks.extend(_callbacks_before_litellm_start)  # type: ignore
+    return False
 
 
 def _get_default_ipv4_address() -> str:
@@ -794,3 +894,19 @@ def _check_port(host: str, port: int) -> bool:
         s.settimeout(1)
         result = s.connect_ex((host, port))
         return result != 0  # True if unavailable
+
+
+def _check_tracer_provider() -> bool:
+    """Check if the global tracer provider is properly initialized.
+
+    We don't guarantee the tracer provider is our tracer provider.
+
+    Returns:
+        bool: True if the tracer provider is valid, else False.
+    """
+    if (
+        hasattr(trace_api, "_TRACER_PROVIDER")
+        and trace_api._TRACER_PROVIDER is not None  # pyright: ignore[reportPrivateUsage]
+    ):
+        return True
+    return False

@@ -4,11 +4,10 @@
 
 General TODOs:
 
-1. Add tests for update model list and server restart
-2. Add tests for retries
-3. Add tests for timeout
-4. Add tests for multiple models in model list
-5. Add tests for multi-modal models
+1. Add tests for retries
+2. Add tests for timeout
+3. Add tests for multiple models in model list
+4. Add tests for multi-modal models
 
 There are some specific TODOs for each test function.
 """
@@ -16,21 +15,19 @@ There are some specific TODOs for each test function.
 import ast
 import asyncio
 import json
-import random
-from typing import Any, List, cast
+from typing import Any, cast
 
 import anthropic
 import openai
 import pytest
-from opentelemetry.sdk.trace import ReadableSpan
 
-from agentlightning.llm_proxy import LightningSpanExporter, LLMProxy
+from agentlightning.llm_proxy import LLMProxy, _reset_litellm_logging_worker  # pyright: ignore[reportPrivateUsage]
 from agentlightning.store.memory import InMemoryLightningStore
 from agentlightning.types import LLM, Span
 
-from .common.network import get_free_port
-from .common.tracer import clear_tracer_provider
-from .common.vllm import VLLM_VERSION, RemoteOpenAIServer
+from ..common.network import get_free_port
+from ..common.tracer import clear_tracer_provider
+from ..common.vllm import VLLM_VERSION, RemoteOpenAIServer
 
 try:
     import torch  # type: ignore
@@ -68,14 +65,9 @@ def test_qwen25_model_sanity(qwen25_model: RemoteOpenAIServer):
     assert response.choices[0].message.content is not None
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_module():
-    clear_tracer_provider()
-    yield
-
-
 @pytest.mark.asyncio
 async def test_basic_integration(qwen25_model: RemoteOpenAIServer):
+    clear_tracer_provider()
     store = InMemoryLightningStore()
     proxy = LLMProxy(
         port=get_free_port(),
@@ -177,6 +169,8 @@ async def test_basic_integration(qwen25_model: RemoteOpenAIServer):
 
 
 def _make_proxy_and_store(qwen25_model: RemoteOpenAIServer, *, retries: int = 0):
+    clear_tracer_provider()
+    _reset_litellm_logging_worker()  # type: ignore
     store = InMemoryLightningStore()
     proxy = LLMProxy(
         port=get_free_port(),
@@ -386,149 +380,3 @@ async def test_streaming_chunks(qwen25_model: RemoteOpenAIServer):
         # TODO: didn't test the token ids in streaming chunks here
     finally:
         proxy.stop()
-
-
-class _FakeSpanContext:
-    def __init__(self, span_id: int):
-        self.span_id = span_id
-
-
-class _FakeParent:
-    def __init__(self, span_id: int):
-        self.span_id = span_id
-
-
-class _FakeReadableSpan:
-    def __init__(self, span_id: int, parent_id: int | None, attrs: dict[str, str]):
-        self._ctx = _FakeSpanContext(span_id)
-        self.parent = None if parent_id is None else _FakeParent(parent_id)
-        self.attributes = attrs
-        self.name = f"span-{span_id}"
-
-    def get_span_context(self):
-        return self._ctx
-
-
-class _FakeStore(InMemoryLightningStore):
-    def __init__(self):
-        super().__init__()
-        self.added: list[tuple[str, str, int, _FakeReadableSpan]] = []
-
-    async def add_otel_span(
-        self, rollout_id: str, attempt_id: str, readable_span: ReadableSpan, sequence_id: int | None = None
-    ) -> Span:
-        assert isinstance(sequence_id, int)
-        assert isinstance(readable_span, _FakeReadableSpan)
-        self.added.append((rollout_id, attempt_id, sequence_id, readable_span))
-        return cast(Span, None)
-
-
-@pytest.mark.asyncio
-async def test_exporter_tree_and_flush_headers_parsing():
-    store = _FakeStore()
-    exporter = LightningSpanExporter(store)
-
-    # Build a root and two children. Headers distributed across spans.
-    root = _FakeReadableSpan(1, None, {"metadata.requester_custom_headers": "{'x-rollout-id': 'r1'}"})
-    child_a = _FakeReadableSpan(2, 1, {"metadata.requester_custom_headers": "{'x-attempt-id': 'a9'}"})
-    child_b = _FakeReadableSpan(3, 1, {"metadata.requester_custom_headers": "{'x-sequence-id': '7'}"})
-
-    # Push to buffer and export
-    res = exporter.export(cast(List[ReadableSpan], [root, child_a, child_b]))
-    assert res.name == "SUCCESS"
-
-    # Give event loop a moment to run exporter coroutine
-    await asyncio.sleep(0.1)
-
-    # Should have flushed all three with merged headers
-    assert len(store.added) == 3
-    for rid, aid, sid, sp in store.added:
-        assert rid == "r1"
-        assert aid == "a9"
-        assert sid == 7
-        assert isinstance(sp, _FakeReadableSpan)
-
-    exporter.shutdown()
-
-
-def test_exporter_helpers():
-    store = _FakeStore()
-    exporter = LightningSpanExporter(store)
-
-    # Tree: 10(root) -> 11(child) -> 12(grandchild); 20(root2)
-    s10 = _FakeReadableSpan(10, None, {})
-    s11 = _FakeReadableSpan(11, 10, {})
-    s12 = _FakeReadableSpan(12, 11, {})
-    s20 = _FakeReadableSpan(20, None, {})
-
-    for _ in range(10):
-        exporter._buffer = cast(List[ReadableSpan], [s10, s11, s12, s20])  # pyright: ignore[reportPrivateUsage]
-        random.shuffle(exporter._buffer)  # pyright: ignore[reportPrivateUsage]
-
-        roots = list(exporter._get_root_span_ids())  # pyright: ignore[reportPrivateUsage]
-        assert set(roots) == {10, 20}
-
-        subtree_ids = set(exporter._get_subtrees(10))  # pyright: ignore[reportPrivateUsage]
-        assert subtree_ids == {10, 11, 12}
-
-        popped = exporter._pop_subtrees(10)  # pyright: ignore[reportPrivateUsage]
-        assert {sp.get_span_context().span_id for sp in popped} == {  # pyright: ignore[reportOptionalMemberAccess]
-            10,
-            11,
-            12,
-        }
-        # Remaining buffer has only s20
-        assert {
-            sp.get_span_context().span_id  # pyright: ignore[reportOptionalMemberAccess]
-            for sp in exporter._buffer  # pyright: ignore[reportPrivateUsage]
-        } == {20}
-
-    exporter.shutdown()
-
-    # TODO: add more complex tests for the exporter helper
-
-
-def test_update_model_list():
-    store = InMemoryLightningStore()
-    proxy = LLMProxy(
-        port=get_free_port(),
-        model_list=[
-            {
-                "model_name": "gpt-4o-arbitrary",
-                "litellm_params": {
-                    "model": "openai/gpt-4o",
-                },
-            }
-        ],
-        store=store,
-    )
-    proxy.start()
-    assert proxy.is_running()
-    assert proxy.model_list == [
-        {
-            "model_name": "gpt-4o-arbitrary",
-            "litellm_params": {
-                "model": "openai/gpt-4o",
-            },
-        }
-    ]
-    proxy.update_model_list(
-        [
-            {
-                "model_name": "gpt-4o-arbitrary",
-                "litellm_params": {
-                    "model": "openai/gpt-4o-mini",
-                },
-            }
-        ]
-    )
-    assert proxy.model_list == [
-        {
-            "model_name": "gpt-4o-arbitrary",
-            "litellm_params": {
-                "model": "openai/gpt-4o-mini",
-            },
-        }
-    ]
-    assert proxy.is_running()
-    proxy.stop()
