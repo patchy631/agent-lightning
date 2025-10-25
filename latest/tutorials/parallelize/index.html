@@ -701,6 +701,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#launching-algorithm-and-runner-roles-on-separate-machines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Launching Algorithm and Runner Roles on Separate Machines
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#shared-memory-strategy" class="md-nav__link">
     <span class="md-ellipsis">
       Shared-memory Strategy
@@ -1295,6 +1304,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#launching-algorithm-and-runner-roles-on-separate-machines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Launching Algorithm and Runner Roles on Separate Machines
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#shared-memory-strategy" class="md-nav__link">
     <span class="md-ellipsis">
       Shared-memory Strategy
@@ -1375,7 +1393,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 18, 2025 12:48:04 UTC"><span class="timeago" datetime="2025-10-18T12:48:04+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 18, 2025 12:48:04 UTC">2025-10-18</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="October 25, 2025 06:16:27 UTC"><span class="timeago" datetime="2025-10-25T06:16:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 25, 2025 06:16:27 UTC">2025-10-25</span>
   </span>
 
     
@@ -1419,7 +1437,7 @@
 <p class="admonition-title">Note</p>
 <p>One of the most important features of <a class="autorefs autorefs-internal" title="            agentlightning.Trainer" href="../../reference/trainer/#agentlightning.Trainer"><code>Trainer</code></a> is the ability to abort things gracefully. For example, if you press <code>Ctrl+C</code> in the terminal, the algorithm will abort and the runners will stop executing. If the algorithm crashes, the runners will also stop executing.</p>
 </div>
-<p>Increase throughput by setting <code>n_runners</code> when constructing the trainer. The following example comes from <a href="https://github.com/microsoft/agent-lightning/tree/675fc8672779be76aa3e06f4b3015169bc44ce27/examples/calc_x/train_calc_agent.py">train_calc_agent.py</a>. Since backend LLMs usually use techniques like <a href="https://docs.vllm.ai/en/latest/">continuous batching</a> to increase throughput, you do not have to worry about overwhelming the backend with too many requests.</p>
+<p>Increase throughput by setting <code>n_runners</code> when constructing the trainer. The following example comes from <a href="https://github.com/microsoft/agent-lightning/tree/df2a159b00b2d014e8e1fcc214afcd24a907d5dd/examples/calc_x/train_calc_agent.py">train_calc_agent.py</a>. Since backend LLMs usually use techniques like <a href="https://docs.vllm.ai/en/latest/">continuous batching</a> to increase throughput, you do not have to worry about overwhelming the backend with too many requests.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">agentlightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">agl</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span> <span class="k">as</span> <span class="n">HFDataset</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">calc_agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_agent</span>
@@ -1537,14 +1555,34 @@ swaps in a different adapter. Passing a dict lets you tweak the init parameters 
 </code></pre></div>
 <p>Set <code>AGL_SERVER_HOST</code> and <code>AGL_SERVER_PORT</code> if you prefer environment-based configuration. You can also use <code>AGL_MANAGED_STORE</code> if you do not want the execution strategy to wrap the store for you. An example is shown in <a class="autorefs autorefs-internal" title="Debug the Algorithm-Runner Boundary" href="../debug/#debug-with-external-store">Debugging with External Store</a>.</p>
 <p>Algorithms sometimes require heterogeneous computation resources, such as GPU accelerators, while runners sometimes require a specific environment to run because many agent frameworks are fragile in their dependencies. A role-based launch pattern helps you place the algorithm on a dedicated machine with more GPU memory, while runners can live on another machine with more flexible dependencies. This is possible via <code>AGL_CURRENT_ROLE="algorithm"</code> or <code>AGL_CURRENT_ROLE="runner"</code> environment variables. When running on different machines, you also need to set <code>AGL_SERVER_HOST</code> and <code>AGL_SERVER_PORT</code> to the IP address and port of the algorithm machine. You might recognize that this convention is very similar to <code>MASTER_ADDR</code> and <code>MASTER_PORT</code> in <a href="https://docs.pytorch.org/docs/stable/notes/ddp.html">PyTorch distributed training</a>.</p>
+<h3 id="launching-algorithm-and-runner-roles-on-separate-machines">Launching Algorithm and Runner Roles on Separate Machines<a class="headerlink" href="#launching-algorithm-and-runner-roles-on-separate-machines" title="Permanent link">&para;</a></h3>
+<p>When you want to stretch the algorithm onto a GPU-rich machine and keep rollout workers close to the data source (or on machines with a more permissive dependency stack), launch the same training script in different terminals with role-specific environment variables. The client–server strategy will route each process to the right side of the queue as long as they share the same <code>AGL_SERVER_HOST</code>/<code>AGL_SERVER_PORT</code> pair.</p>
+<p><strong>1. Pick an address and port for the store.</strong> Decide which machine will host the algorithm. Choose a TCP port that can be reached by the runner machines (for example, open it in your firewall configuration). In this example we will use <code>10.0.0.4:4747</code>.</p>
+<p><strong>2. Start the algorithm process.</strong> On the machine that should run the algorithm, expose the store by binding to all network interfaces and mark the role as <code>algorithm</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGL_SERVER_HOST</span><span class="o">=</span><span class="m">0</span>.0.0.0
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGL_SERVER_PORT</span><span class="o">=</span><span class="m">4747</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGL_CURRENT_ROLE</span><span class="o">=</span>algorithm
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>python<span class="w"> </span>train_calc_agent.py
+</code></pre></div>
+<p>Leaving <code>AGL_MANAGED_STORE</code> unset (or setting it to <code>1</code>) lets the strategy create the <a class="autorefs autorefs-internal" title="            agentlightning.LightningStoreServer" href="../../reference/store/#agentlightning.LightningStoreServer"><code>LightningStoreServer</code></a> for you. Otherwise, you can use the method in the previous section to create a store on your own.</p>
+<p><strong>3. Start rollout workers on remote machines.</strong> Every runner machine should point to the algorithm host and declare itself as the <code>runner</code> role. You can start multiple processes per machine or repeat the command on additional hosts.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGL_SERVER_HOST</span><span class="o">=</span><span class="m">10</span>.0.0.4
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGL_SERVER_PORT</span><span class="o">=</span><span class="m">4747</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGL_CURRENT_ROLE</span><span class="o">=</span>runner
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>python<span class="w"> </span>train_calc_agent.py<span class="w"> </span>--n-runners<span class="w"> </span><span class="m">4</span>
+</code></pre></div>
+<p>The runner process automatically connects via <a class="autorefs autorefs-internal" title="            agentlightning.LightningStoreClient" href="../../reference/store/#agentlightning.LightningStoreClient"><code>LightningStoreClient</code></a>. Adjust <code>--n-runners</code> to spawn the desired number of worker processes on that machine.</p>
+<p><strong>4. Scale out as needed.</strong> Repeat step 3 on as many machines as you need. When you are done, stop the algorithm process. However, since the runners are on different machines, the strategy WILL NOT send a cooperative stop signal to the connected runners. So you need to kill the runners on your own.</p>
+<p>This role-based launch mirrors what <a class="autorefs autorefs-internal" title="            fit(agent, train_dataset=None, *, val_dataset=None)" href="../../reference/trainer/#agentlightning.Trainer.fit"><code>Trainer.fit</code></a> does inside a single machine while letting you spread work across a fleet. Because every process shares the same training script, you keep a single source of truth for dataset loading, adapters, and tracers, but you can tune compute resources independently for the algorithm and rollout workers.</p>
 <h3 id="shared-memory-strategy">Shared-memory Strategy<a class="headerlink" href="#shared-memory-strategy" title="Permanent link">&para;</a></h3>
 <p><a class="autorefs autorefs-internal" title="            agentlightning.SharedMemoryExecutionStrategy" href="../../reference/trainer/#agentlightning.SharedMemoryExecutionStrategy"><code>SharedMemoryExecutionStrategy</code></a> keeps everything inside one process. The runner runs on the main thread (by default) while the algorithm lives on a Python thread guarded by <a class="autorefs autorefs-internal" title="            agentlightning.LightningStoreThreaded" href="../../reference/store/#agentlightning.LightningStoreThreaded"><code>LightningStoreThreaded</code></a>.</p>
 <p>Use it when you want easier debugging with shared breakpoints and no serialization overhead, or minimal startup time for unit tests. It's not a good choice for many algorithms that require heavy model training because <a class="autorefs autorefs-internal" title="            agentlightning.LightningStoreThreaded" href="../../reference/store/#agentlightning.LightningStoreThreaded"><code>LightningStoreThreaded</code></a> does not work for multiprocessing. Using it with multiprocessing algorithms will lead to undefined behavior.</p>
 <p>Sample configuration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">agl</span><span class="o">.</span><span class="n">Trainer</span><span class="p">(</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;shm&quot;</span><span class="p">,</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">trainer</span> <span class="o">=</span> <span class="n">agl</span><span class="o">.</span><span class="n">Trainer</span><span class="p">(</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;shm&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="p">)</span>
 </code></pre></div>
 <p>You can further customize the init parameters of <a class="autorefs autorefs-internal" title="            agentlightning.SharedMemoryExecutionStrategy" href="../../reference/trainer/#agentlightning.SharedMemoryExecutionStrategy"><code>SharedMemoryExecutionStrategy</code></a>. With <code>main_thread="runner"</code>, the runner occupies the main thread and <code>n_runners</code> must be <code>1</code>. The strategy respects <code>AGL_MANAGED_STORE</code>; set it to <code>0</code> to opt out of the <code>LightningStoreThreaded</code> wrapper.</p>
 <h2 id="parallelizing-algorithms">Parallelizing Algorithms<a class="headerlink" href="#parallelizing-algorithms" title="Permanent link">&para;</a></h2>
