@@ -34,11 +34,19 @@ THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left.
 
 {history}
 
+## Important assumptions
+
+- All secret entities are **straightforward, familiar, and commonly known** (e.g., "Apple", "Paris", "Tiger").
+- No complex, conditional, or composite answers. For example, the secret entity will **never** be something like “A door used in a haunted house” or “A Fender-produced guitar.”
+- Each answer refers to a **single, clear concept** — not a variant, version, or situation-dependent form.
+
 ## How to decide your next question
 
 - Use binary-splitting logic: prefer questions that partition the remaining candidates roughly in half.
 - Start broad then focus (category -> traits -> unique identifiers).
 - Take the remaining turns into account. If you have only one turn left, ask a direct guess.
+- Do **not** ask about entities that directly name or define the answer (e.g., "Is it a type of pizza?" if "Pizza" is an option).
+- Avoid questions that depend on subjective or situational conditions (e.g., "Would most people consider it artistic?").
 - Avoid redundant, overlapping, or trivially true/false questions.
 - If you use the search tool, do so only to verify factual implications behind your candidate question; do **not** paste search results. Think privately, then output just the question.
 
@@ -61,7 +69,7 @@ ANSWERER_QUERY_TEMPLATE = """You are the **Answerer** in 20 Questions. Your secr
 ## Rules
 
 - Answer **yes_or_no** strictly about the entity.
-- If the entity has multiple meanings, answer **yes** if the question is true for any of the meanings.
+- If the secret entity itself is ambiguous, answer **yes** if the question is true for any of the meanings.
 - If the player's question is a direct guess such as "is it ...?" and it matches the entity, set **correct** = true; otherwise false.
 - When matching, the player does not have to say the exact same words, but should be very close in meaning.
 - Do **not** reveal the entity unless the player guessed correctly.
@@ -233,8 +241,8 @@ flow.plot()
 try:
     result = flow.kickoff(
         {
-            "answer": "football",
-            "category": "object",
+            "answer": "Taylor Swift",
+            "category": "person",
         }
     )
 except Exception as e:
