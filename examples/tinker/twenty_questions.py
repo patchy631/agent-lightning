@@ -34,16 +34,15 @@ If you think you have figured out the secret entity, ask a direct guess in the f
 
 THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left. The quicker you make a correct guess, the higher your score.
 
+## Important assumptions
+
+- All answers must belong to one of the following categories: {categories}.
+- All answers are **straightforward, familiar, and commonly known**. They can be at most 3 words long (and only one word long in a majority of cases).
+- Each answer refers to a **single, clear concept** — not a variant, version, or situation-dependent form.  They will **never** be something like "A door used in a haunted house" or "A Fender-produced guitar".
+
 ## What you have: Game history (Q/A pairs):
 
 {history}
-
-## Important assumptions
-
-- All secret entities are **straightforward, familiar, and commonly known** (e.g., "Apple", "Paris", "Tiger").
-- No complex, conditional, or composite answers. For example, the secret entity will **never** be something like “A door used in a haunted house” or “A Fender-produced guitar.”
-- Each answer refers to a **single, clear concept** — not a variant, version, or situation-dependent form.
-- The answerer may reply **"n/a"** when a yes/no would be meaningless or not publicly knowable.
 
 ## How to decide your next question
 
@@ -51,9 +50,9 @@ THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left. The qui
 - Start broad then focus (category -> traits -> unique identifiers).
 - Take the remaining turns into account. If you have only one turn left, ask a direct guess.
 - Do **not** ask about entities that directly name or define the answer (e.g., "Is it a type of pizza?" if "Pizza" is an option).
+- The answerer may reply **"n/a"** when a yes/no would be meaningless or not publicly knowable. Use this to your advantage.
 - Avoid questions that depend on subjective or situational conditions (e.g., "Would most people consider it artistic?").
-- Avoid redundant, overlapping, or trivially true/false questions.
-- If you use the search tool, do so only to verify factual implications behind your candidate question; do **not** paste search results. Think privately, then output just the question.
+- You are encourage to use the search tool to verify factual implications behind your candidate question. This will also help you thinking more deeply and avoiding asking irrelevant or trivial questions.
 
 ## Output format (critical)
 
@@ -197,6 +196,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         self.player_llm = cast(CrewLLM, kwargs.pop("player_llm"))
         self.answer_llm = cast(CrewLLM, kwargs.pop("answer_llm"))
         self.search_tool = cast(Optional[SearchTool], kwargs.pop("search_tool", None))
+        self.categories = cast(List[str], kwargs.pop("categories"))
         super().__init__(*args, **kwargs)
 
     @start("next_turn")
@@ -212,6 +212,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
             history=self.state.render_history(),
             turn_index=self.state.turn_index,
             remaining_turns=20 - self.state.turn_index + 1,
+            categories=", ".join(self.categories),
         )
 
         result = await agent.kickoff_async(query)
@@ -259,14 +260,16 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
 def main():
     df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
+    categories = cast(List[str], df["category"].unique().tolist())  # type: ignore
 
-    for index, row in df.iterrows():
+    for index, row in df.sample(n=len(df)).iterrows():  # type: ignore
         flow = TwentyQuestionsFlow(
-            player_llm=CrewLLM(model="openai/gpt-4.1-mini", timeout=60.0),
+            player_llm=CrewLLM(model="openai/gpt-4.1", timeout=60.0),
             answer_llm=CrewLLM(
                 model="openai/gpt-5-mini", reasoning_effort="low", response_format=AnswererResponse, timeout=60.0
             ),
             search_tool=SearchTool(model=CrewLLM(model="openai/gpt-4.1-mini", timeout=60.0)),
+            categories=categories,
         )
         try:
             flow.kickoff(
