@@ -17,7 +17,7 @@ from rich.console import Console
 from tinker_cookbook.renderers import get_renderer
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
-from agentlightning.llm_proxy import LLMProxy
+from agentlightning.llm_proxy import LLMProxy, ModelConfig
 from agentlightning.store import InMemoryLightningStore
 
 llm = CrewLLM(model="openai/gpt-4o-mini")
@@ -276,19 +276,24 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
 @contextmanager
 def prepare_llm(model_name: str, port: int):
-    service_client = tinker.ServiceClient()
-    sampling_client = service_client.create_sampling_client(base_model=model_name)
-    tokenizer = cast(PreTrainedTokenizer, AutoTokenizer.from_pretrained(model_name))  # type: ignore
-    tinker_llm = TinkerLLM(
-        model_name=model_name,
-        sampling_client=sampling_client,
-        renderer=get_renderer("qwen3", tokenizer),
-        tokenizer=tokenizer,
-    )
-    tinker_llm.rewrite_litellm_custom_providers()
-
     store = InMemoryLightningStore()
-    model_list = tinker_llm.as_model_list()
+    if model_name.startswith("Qwen/"):
+        service_client = tinker.ServiceClient()
+        sampling_client = service_client.create_sampling_client(base_model=model_name)
+        tokenizer = cast(PreTrainedTokenizer, AutoTokenizer.from_pretrained(model_name))  # type: ignore
+        tinker_llm = TinkerLLM(
+            model_name=model_name,
+            sampling_client=sampling_client,
+            renderer=get_renderer("qwen3", tokenizer),
+            tokenizer=tokenizer,
+        )
+        tinker_llm.rewrite_litellm_custom_providers()
+
+        model_list = tinker_llm.as_model_list()
+    else:
+        model_list: List[ModelConfig] = [
+            {"model_name": model_name, "litellm_params": {"model": model_name}},
+        ]
     model_list.extend(
         [
             {"model_name": "gpt-4.1", "litellm_params": {"model": "openai/gpt-4.1"}},
