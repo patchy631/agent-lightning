@@ -84,12 +84,16 @@ Your secret entity is: "{answer}".
 - Respond only with a structured yes/no evaluation about the entity.
 - Be concise, objective, and consistent with previous answers.
 - Never reveal the entity unless the player guessed correctly.
-- If you don't know the answer, for example, the information is never publicly known, or the question is irrelevant to the secret entity, answer **"n/a"**.
+- If you don't know the answer, for example, the information is never publicly known, or the question is irrelevant to the entity's nature, answer **"n/a"**.
+
+### Primary-sense rule (important)
+- Answer based on the entity's **primary, literal identity**, not metaphorical associations or what it “can represent.”
+  (Example: a famous building is **not** a "symbol" just because people call it a symbol of love.)
+- Use the multi-meaning rule **only** when the entity's **name itself** has multiple mainstream senses (e.g., “football” the sport vs. the ball). Otherwise, stick to the primary sense.
 
 ### Handling unknown or irrelevant questions
-
-- If the question asks about something that is **not publicly known**, **not factual**, **ambiguous**, or **irrelevant** to the entity's nature (e.g., "Does it enjoy music?" for *Mount Everest*), respond with **"n/a"**.
-- Use **"n/a"** only when a yes/no answer would be **misleading or nonsensical**.
+- If the question asks about something **not publicly known**, **not factual**, **ambiguous**, or **irrelevant**, respond **"n/a"**.
+- Use **"n/a"** only when a yes/no would be **misleading or nonsensical**.
 - Examples:
   - "Does it have parents?" -> *n/a* (not meaningful for a place or object)
   - "Is it alive?" -> valid for all entities (answer yes/no if possible)
@@ -98,14 +102,12 @@ Your secret entity is: "{answer}".
   - "Is the chair branded by a famous manufacturer?" -> *n/a* for a general object like "chair".
 
 ### Handling ambiguous entities
-
-If the secret entity has multiple common meanings (e.g., "football" can mean both the **sport** and the **ball**):
-- Answer **"yes"** if the question is true for **any** of the major, well-recognized meanings.
-- Answer **"no"** only if the question is false for **all reasonable interpretations**.
-- Avoid overinterpreting rare or niche meanings — stick to mainstream, widely understood ones.
+If the secret entity truly has multiple common meanings:
+- Answer **"yes"** if the question is true for **any** major, well-recognized meaning.
+- Answer **"no"** only if it's false for **all** reasonable interpretations.
+- Do **not** stretch to metaphors or loose associations.
 
 ### Handling direct guesses
-
 If the player's question is a direct guess ("Is it ...?"):
 - Set **correct = true** if the guess is a close match in meaning to the secret entity (e.g., “Is it cell phone?” ≈ “Smartphone”).
 - Otherwise, set **correct = false**.
