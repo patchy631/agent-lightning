@@ -1,4 +1,5 @@
 import json
+import re
 import traceback
 from contextlib import contextmanager
 from typing import Any, List, Literal, Optional, TypedDict, cast
@@ -43,33 +44,31 @@ If you think you have figured out the secret entity, ask a direct guess in the f
 THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left. The quicker you make a correct guess, the higher your score.
 
 ## Important assumptions
-
 - All answers must belong to one of the following categories: {categories}.
 - All answers are **straightforward, familiar, and commonly known**. They can be at most 3 words long (and only one word long in a majority of cases).
-- Each answer refers to a **single, clear concept** — not a variant, version, or situation-dependent form.  They will **never** be something like "A door used in a haunted house" or "A Fender-produced guitar".
+- Each answer refers to a **single, clear concept** — not a variant, version, or situation-dependent form.
 
 ## What you have: Game history (Q/A pairs):
 
 {history}
 
-## How to decide your next question
+## Strategy guidelines (concise, practical)
+- **Start broad, then narrow**: prioritize category-level splits first ({categories}), then mid-level properties, then identifiers.
+- **Binary partitioning**: prefer questions that split the remaining set near the middle.
+- **Property over identity**: ask about features/roles/usages before naming brands, species, or specific titles.
+- **Contradiction guard**: if past answers imply a contradiction, ask a short reset/sanity-check question to reconcile.
+- **n/a handling**: if the last answer was **n/a**, pivot wording to a clearer, factual property.
+- **Endgame**: if you have only one turn left, make a direct guess.
 
-- Use binary-splitting logic: prefer questions that partition the remaining candidates roughly in half.
-- Start broad then focus (category -> traits -> unique identifiers).
-- Take the remaining turns into account. If you have only one turn left, ask a direct guess.
-- Do **not** ask about entities that directly name or define the answer (e.g., "Is it a type of pizza?" if "Pizza" is an option).
-- The answerer may reply **"n/a"** when a yes/no would be meaningless or not publicly knowable. Use this to your advantage.
-- Avoid questions that depend on subjective or situational conditions (e.g., "Would most people consider it artistic?").
-- You are encourage to use the search tool to verify factual implications behind your candidate question. This will also help you thinking more deeply and avoiding asking irrelevant or trivial questions.
+## Think first, then answer
+- In a scratchpad, briefly reason about (a) the most informative split now, (b) 1-2 alternates you considered, and (c) why you chose the final question.
+- Write the scratchpad exactly in the required output format below.
 
 ## Output format (critical)
-
-- Output **only** one yes/no question on a single line.
-- No preamble, no numbering, no quotes, no meta commentary.
-- Keep it concise, under 50 words.
-- If guessing: use the form **Is it <entity>?**
-
-Now produce your single best next question."""
+- Return **exactly one line** with this pattern:
+<scratchpad>...</scratchpad> My next question is: ...?
+- Keep the whole output under 150 words. No quotes, no extra fields, no newlines.
+"""
 
 
 ANSWERER_QUERY_TEMPLATE = """You are the **Answerer** in 20 Questions. Answer yes/no questions truthfully about the secret entity; mark correct if guessed exactly.
@@ -176,6 +175,7 @@ class SearchTool(BaseTool):
 
 
 class Turn(BaseModel):
+    thinking: Optional[str]
     question: str
     response: Literal["yes", "no", "n/a"]
 
@@ -186,6 +186,7 @@ class TwentyQuestionsGameState(BaseModel):
     correct: bool = False
     num_tool_calls: int = 0
     next_question: str = ""
+    thinking_before_next_question: Optional[str] = None
     turn_index: int = 1
     interactions: List[Turn] = Field(default_factory=list)
 
@@ -212,10 +213,10 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         agent = CrewAgent(
             role="Player in a game of 20 questions",
             goal="Minimize uncertainty and identify the hidden entity within 20 yes/no questions.",
-            backstory="A focused reasoner who uses binary-partition questions and only outputs one concise yes/no question per turn.",
+            backstory="A focused reasoner who uses binary-partition questions to narrow down the remaining possibilities.",
             tools=[self.search_tool] if self.search_tool else [],
             llm=self.player_llm,
-            max_iter=10,  # Maximum iterations of tool calls
+            max_iter=10,
         )
         query = PLAYER_QUERY_TEMPLATE.format(
             history=self.state.render_history(),
@@ -225,10 +226,30 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         )
 
         result = agent.kickoff(query)
-        console.print(f"[bold red]Player (Turn {self.state.turn_index}):[/bold red] {result.raw}")
+        raw = result.raw.strip()
+        console.print(f"[bold red]Player (Turn {self.state.turn_index}) raw:[/bold red] {raw}")
+
+        thinking = ""
+        question = raw  # fallback: if no match, send whole generation to answerer
+        m = re.match(r"^(?P<thinking>.+?)\s*My next question is:\s*(?P<q>.+?)\s*$", raw)
+        if m:
+            thinking = m.group("thinking").strip()
+            q = m.group("q").strip()
+            if q:
+                question = q
+        else:
+            console.print(
+                f"[bold red]Player (Turn {self.state.turn_index})[/bold red] [bold orange]No thinking match![/bold orange]"
+            )
+
         if self.search_tool is not None:
             self.state.num_tool_calls = self.search_tool.num_called
-        self.state.next_question = result.raw
+
+        self.state.thinking_before_next_question = thinking
+        self.state.next_question = question
+        console.print(
+            f"[bold red]Player (Turn {self.state.turn_index}) question:[/bold red] {self.state.next_question}"
+        )
 
     @listen(ask_question)
     def answer_question(self):
@@ -236,12 +257,18 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         answerer_response = cast(AnswererResponse, self.answer_llm.call(query))  # type: ignore
         console.print(f"[bold red]Answerer (Turn {self.state.turn_index}):[/bold red] {answerer_response}")
         try:
-            turn = Turn(question=self.state.next_question, response=answerer_response.yes_or_no)
+            turn = Turn(
+                thinking=self.state.thinking_before_next_question,
+                question=self.state.next_question,
+                response=answerer_response.yes_or_no,
+            )
             correct = answerer_response.correct
         except Exception as e:
             console.print(f"[bold red]Answerer Response Format Error: {e}[/bold red]")
             # Assuming n/a
-            turn = Turn(question=self.state.next_question, response="n/a")
+            turn = Turn(
+                thinking=self.state.thinking_before_next_question, question=self.state.next_question, response="n/a"
+            )
             correct = False
         self.state.interactions.append(turn)
         self.state.next_question = ""  # Reset the next question
