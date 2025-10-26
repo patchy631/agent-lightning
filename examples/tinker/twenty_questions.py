@@ -76,7 +76,7 @@ Now produce your single best next question."""
 
 ANSWERER_QUERY_TEMPLATE = """You are the **Answerer** in 20 Questions. Answer yes/no questions truthfully about the secret entity; mark correct if guessed exactly.
 
-Your secret entity is: "{answer}".
+Your secret entity is: "{answer}". It belongs to the category of "{category}".
 
 ## The player's current question
 
@@ -235,7 +235,11 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
     @listen(ask_question)
     def answer_question(self):
-        query = ANSWERER_QUERY_TEMPLATE.format(answer=self.state.answer, next_question=self.state.next_question)
+        query = ANSWERER_QUERY_TEMPLATE.format(
+            answer=self.state.answer, next_question=self.state.next_question, category=self.state.category
+        )
+        # NOTE: We can also ground the answerer with a search tool.
+        # But it would make the example too complicated for now.
         answerer_response = cast(AnswererResponse, self.answer_llm.call(query))  # type: ignore
         console.print(f"[bold red]Answerer (Turn {self.state.turn_index}):[/bold red] {answerer_response}")
         try:
