@@ -208,7 +208,6 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         self.player_llm = cast(CrewLLM, kwargs.pop("player_llm"))
         self.answer_llm = cast(CrewLLM, kwargs.pop("answer_llm"))
         self.search_tool = cast(Optional[SearchTool], kwargs.pop("search_tool", None))
-        self.categories = cast(List[str], kwargs.pop("categories"))
         super().__init__(*args, **kwargs)
 
     @start("next_turn")
@@ -225,7 +224,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
             history=self.state.render_history(),
             turn_index=self.state.turn_index,
             remaining_turns=20 - self.state.turn_index + 1,
-            categories=", ".join(self.categories),
+            category=self.state.category,
         )
 
         result = agent.kickoff(query)
@@ -324,14 +323,10 @@ def prepare_llm(model_name: str, port: int):
 
 def main(model_name: str, output_file: str, port: int = 4000):
     df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
-    categories = cast(List[str], df["category"].unique().tolist())  # type: ignore
 
     with prepare_llm(model_name, port) as llm_config:
         for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
-            flow = TwentyQuestionsFlow(
-                **llm_config,
-                categories=categories,
-            )
+            flow = TwentyQuestionsFlow(**llm_config)
             try:
                 flow.kickoff(
                     {
