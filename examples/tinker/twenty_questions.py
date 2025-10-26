@@ -1,8 +1,11 @@
 import json
 import traceback
+from contextlib import contextmanager
 from typing import Any, List, Literal, Optional, TypedDict, cast
 
 import pandas as pd
+import tinker
+from agl_tinker.llm import TinkerLLM
 from crewai import LLM as CrewLLM
 from crewai import Agent as CrewAgent
 from crewai import BaseLLM
@@ -11,6 +14,11 @@ from crewai.flow import Flow, listen, router, start
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 from rich.console import Console
+from tinker_cookbook.renderers import get_renderer
+from transformers import AutoTokenizer, PreTrainedTokenizer
+
+from agentlightning.llm_proxy import LLMProxy
+from agentlightning.store import InMemoryLightningStore
 
 llm = CrewLLM(model="openai/gpt-4o-mini")
 
@@ -136,7 +144,7 @@ class SearchTool(BaseTool):
     )
     num_called: int = 0
 
-    async def _run(self, search_query: str) -> str:
+    def _run(self, search_query: str) -> str:
         """Perform a mocked search request using an LLM."""
         self.num_called += 1
         # Safety: ensure input is not too long or empty
@@ -163,7 +171,7 @@ class SearchTool(BaseTool):
         )
 
         prompt = SEARCH_PROMPT_TEMPLATE.format(search_query=search_query)
-        result = await agent.kickoff_async(prompt)
+        result = agent.kickoff(prompt)
         return result.raw.strip()
 
 
@@ -200,13 +208,14 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         super().__init__(*args, **kwargs)
 
     @start("next_turn")
-    async def ask_question(self):
+    def ask_question(self):
         agent = CrewAgent(
             role="Player in a game of 20 questions",
             goal="Minimize uncertainty and identify the hidden entity within 20 yes/no questions.",
             backstory="A focused reasoner who uses binary-partition questions and only outputs one concise yes/no question per turn.",
             tools=[self.search_tool] if self.search_tool else [],
             llm=self.player_llm,
+            max_iter=10,  # Maximum iterations of tool calls
         )
         query = PLAYER_QUERY_TEMPLATE.format(
             history=self.state.render_history(),
@@ -215,14 +224,14 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
             categories=", ".join(self.categories),
         )
 
-        result = await agent.kickoff_async(query)
+        result = agent.kickoff(query)
         console.print(f"[bold red]Player (Turn {self.state.turn_index}):[/bold red] {result.raw}")
         if self.search_tool is not None:
             self.state.num_tool_calls = self.search_tool.num_called
         self.state.next_question = result.raw
 
     @listen(ask_question)
-    async def answer_question(self):
+    def answer_question(self):
         query = ANSWERER_QUERY_TEMPLATE.format(answer=self.state.answer, next_question=self.state.next_question)
         answerer_response = cast(AnswererResponse, self.answer_llm.call(query))  # type: ignore
         console.print(f"[bold red]Answerer (Turn {self.state.turn_index}):[/bold red] {answerer_response}")
@@ -258,37 +267,86 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         console.print("The flow has reached the finished state.")
 
 
+@contextmanager
+def prepare_llm(model_name: str):
+    service_client = tinker.ServiceClient()
+    sampling_client = service_client.create_sampling_client(base_model=model_name)
+    tokenizer = cast(PreTrainedTokenizer, AutoTokenizer.from_pretrained(model_name))  # type: ignore
+    tinker_llm = TinkerLLM(
+        model_name=model_name,
+        sampling_client=sampling_client,
+        renderer=get_renderer("qwen3", tokenizer),
+        tokenizer=tokenizer,
+    )
+    tinker_llm.rewrite_litellm_custom_providers()
+
+    store = InMemoryLightningStore()
+    model_list = tinker_llm.as_model_list()
+    model_list.extend(
+        [
+            {"model_name": "gpt-4.1", "litellm_params": {"model": "openai/gpt-4.1"}},
+            {"model_name": "gpt-5-mini", "litellm_params": {"model": "openai/gpt-5-mini"}},
+        ]
+    )
+    console.print("Model list:", model_list)
+
+    llm_proxy = LLMProxy(
+        port=4000,
+        store=store,
+        model_list=model_list,
+        num_retries=2,
+        _add_return_token_ids=False,
+    )
+    llm_proxy.start()
+    yield {
+        "player_llm": CrewLLM(
+            model="openai/" + model_name, base_url=f"http://localhost:4000/v1", api_key="dummy", timeout=60.0
+        ),
+        "answer_llm": CrewLLM(
+            model="openai/gpt-5-mini",
+            base_url=f"http://localhost:4000/v1",
+            api_key="dummy",
+            reasoning_effort="low",
+            response_format=AnswererResponse,
+            timeout=60.0,
+        ),
+        # "search_tool": SearchTool(
+        #     model=CrewLLM(model="openai/gpt-4.1", base_url=f"http://localhost:4000/v1", api_key="dummy", timeout=60.0)
+        # ),
+    }
+
+    llm_proxy.stop()
+
+
 def main():
     df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     categories = cast(List[str], df["category"].unique().tolist())  # type: ignore
 
-    for index, row in df.sample(n=len(df)).iterrows():  # type: ignore
-        flow = TwentyQuestionsFlow(
-            player_llm=CrewLLM(model="openai/gpt-4.1", timeout=60.0),
-            answer_llm=CrewLLM(
-                model="openai/gpt-5-mini", reasoning_effort="low", response_format=AnswererResponse, timeout=60.0
-            ),
-            search_tool=SearchTool(model=CrewLLM(model="openai/gpt-4.1-mini", timeout=60.0)),
-            categories=categories,
-        )
-        try:
-            flow.kickoff(
-                {
+    with prepare_llm("Qwen/Qwen3-235B-A22B-Instruct-2507") as llm_config:
+        for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
+            flow = TwentyQuestionsFlow(
+                **llm_config,
+                categories=categories,
+            )
+            try:
+                flow.kickoff(
+                    {
+                        "answer": row["answer"],
+                        "category": row["category"],
+                    }
+                )
+                result_json: dict[str, Any] = {"index": index, **flow.state.model_dump()}
+            except Exception as e:
+                result_json = {
+                    "index": index,
                     "answer": row["answer"],
                     "category": row["category"],
+                    "error": str(e),
+                    "exception": traceback.print_exc(),
                 }
-            )
-            result_json: dict[str, Any] = {"index": index, **flow.state.model_dump()}
-        except Exception as e:
-            result_json = {
-                "index": index,
-                "answer": row["answer"],
-                "category": row["category"],
-                "error": str(e),
-                "exception": traceback.print_exc(),
-            }
-        with open("logs/twenty_questions.jsonl", "a") as f:
-            f.write(json.dumps(result_json) + "\n")
+            with open("logs/twenty_questions.jsonl", "a") as f:
+                f.write(json.dumps(result_json) + "\n")
+            break
 
 
 if __name__ == "__main__":
