@@ -216,7 +216,11 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
             backstory="A focused reasoner who uses binary-partition questions to narrow down the remaining possibilities.",
             tools=[self.search_tool] if self.search_tool else [],
             llm=self.player_llm,
-            max_iter=5,  # Maximum iterations of tool calls
+            max_iter=3,  # Maximum iterations of tool calls
+            # Agent is instructed to use at most 1 search tool call per question.
+            # but here it's allowed up to 3 chances.
+            # Otherwise, the agent will be forced by CrewAI to give the "BEST Final answer"
+            # which is not even a question that we want.
         )
         query = PLAYER_QUERY_TEMPLATE.format(
             history=self.state.render_history(),
@@ -325,7 +329,7 @@ def prepare_llm(model_name: str, port: int, search_tool: bool = False):
     if search_tool:
         llms["search_tool"] = SearchTool(
             model=CrewLLM(
-                model="openai/gpt-5-mini",
+                model="openai/gpt-4.1",
                 base_url=f"http://localhost:{port}/v1",
                 api_key="dummy",
                 reasoning_effort="none",
