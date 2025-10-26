@@ -268,7 +268,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
 
 @contextmanager
-def prepare_llm(model_name: str):
+def prepare_llm(model_name: str, port: int):
     service_client = tinker.ServiceClient()
     sampling_client = service_client.create_sampling_client(base_model=model_name)
     tokenizer = cast(PreTrainedTokenizer, AutoTokenizer.from_pretrained(model_name))  # type: ignore
@@ -291,7 +291,7 @@ def prepare_llm(model_name: str):
     console.print("Model list:", model_list)
 
     llm_proxy = LLMProxy(
-        port=4000,
+        port=port,
         store=store,
         model_list=model_list,
         num_retries=2,
@@ -300,11 +300,11 @@ def prepare_llm(model_name: str):
     llm_proxy.start()
     yield {
         "player_llm": CrewLLM(
-            model="openai/" + model_name, base_url=f"http://localhost:4000/v1", api_key="dummy", timeout=60.0
+            model="openai/" + model_name, base_url=f"http://localhost:{port}/v1", api_key="dummy", timeout=60.0
         ),
         "answer_llm": CrewLLM(
             model="openai/gpt-5-mini",
-            base_url=f"http://localhost:4000/v1",
+            base_url=f"http://localhost:{port}/v1",
             api_key="dummy",
             reasoning_effort="low",
             response_format=AnswererResponse,
@@ -318,11 +318,11 @@ def prepare_llm(model_name: str):
     llm_proxy.stop()
 
 
-def main(model_name: str, output_file: str):
+def main(model_name: str, output_file: str, port: int = 4000):
     df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     categories = cast(List[str], df["category"].unique().tolist())  # type: ignore
 
-    with prepare_llm(model_name) as llm_config:
+    with prepare_llm(model_name, port) as llm_config:
         for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
             flow = TwentyQuestionsFlow(
                 **llm_config,
