@@ -322,7 +322,7 @@ def main():
     df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     categories = cast(List[str], df["category"].unique().tolist())  # type: ignore
 
-    with prepare_llm("Qwen/Qwen3-235B-A22B-Instruct-2507") as llm_config:
+    with prepare_llm("Qwen/Qwen3-30B-A3B-Instruct-2507") as llm_config:
         for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
             flow = TwentyQuestionsFlow(
                 **llm_config,
@@ -344,7 +344,7 @@ def main():
                     "error": str(e),
                     "exception": traceback.print_exc(),
                 }
-            with open("logs/twenty_questions.jsonl", "a") as f:
+            with open("test-results/twenty_questions_qwen30b_notool_gpt5mini_20251026.jsonl", "a") as f:
                 f.write(json.dumps(result_json) + "\n")
             break
 
