@@ -318,11 +318,11 @@ def prepare_llm(model_name: str):
     llm_proxy.stop()
 
 
-def main():
+def main(model_name: str, output_file: str):
     df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     categories = cast(List[str], df["category"].unique().tolist())  # type: ignore
 
-    with prepare_llm("Qwen/Qwen3-30B-A3B-Instruct-2507") as llm_config:
+    with prepare_llm(model_name) as llm_config:
         for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
             flow = TwentyQuestionsFlow(
                 **llm_config,
@@ -344,10 +344,12 @@ def main():
                     "error": str(e),
                     "exception": traceback.print_exc(),
                 }
-            with open("test-results/twenty_questions_qwen30b_notool_gpt5mini_20251026.jsonl", "a") as f:
+            with open(output_file, "a") as f:
                 f.write(json.dumps(result_json) + "\n")
-            break
 
 
 if __name__ == "__main__":
-    main()
+    main(
+        model_name="Qwen/Qwen3-30B-A3B-Instruct-2507",
+        output_file="test-results/twenty_questions_qwen30b_notool_gpt5mini_20251026.jsonl",
+    )
