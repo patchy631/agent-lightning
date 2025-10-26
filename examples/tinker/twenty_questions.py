@@ -1,7 +1,7 @@
 import json
 import traceback
 from contextlib import contextmanager
-from typing import Any, List, Literal, Optional, TypedDict, cast
+from typing import Any, Dict, List, Literal, Optional, TypedDict, cast
 
 import pandas as pd
 import tinker
@@ -62,7 +62,7 @@ THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left. The qui
 ## How to ask questions
 - Directly confirm your guess instead of asking about entities that directly name or define the answer (e.g., "Is it a type of pizza?" if "Pizza" is an option).
 - Avoid questions that depend on subjective or situational conditions (e.g., "Would most people consider it artistic?").
-- You are encourage to use the search tool to verify factual implications behind your candidate question. This will also help you thinking more deeply and avoiding asking irrelevant or trivial questions.
+- You are encouraged to use the search tool to check factual details or implications behind your potential question. This helps ensure your reasoning is grounded, accurate, and avoids irrelevant or trivial inquiries. However, you can only use the search tool at most once for each question; you must not use the search tool consecutively without asking a question in between.
 
 ## Output format (critical)
 
@@ -143,9 +143,7 @@ class SearchTool(BaseTool):
 
     model: BaseLLM
     name: str = "search"
-    description: str = (
-        "Search the web (mocked). Provide a concise, factual summary of what is known about the given topic."
-    )
+    description: str = "Search the web. Provide a concise, factual summary of what is known about the given topic."
     num_called: int = 0
 
     def _run(self, search_query: str) -> str:
@@ -218,7 +216,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
             backstory="A focused reasoner who uses binary-partition questions to narrow down the remaining possibilities.",
             tools=[self.search_tool] if self.search_tool else [],
             llm=self.player_llm,
-            max_iter=10,  # Maximum iterations of tool calls
+            max_iter=5,  # Maximum iterations of tool calls
         )
         query = PLAYER_QUERY_TEMPLATE.format(
             history=self.state.render_history(),
@@ -275,7 +273,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
 
 @contextmanager
-def prepare_llm(model_name: str, port: int):
+def prepare_llm(model_name: str, port: int, search_tool: bool = False):
     store = InMemoryLightningStore()
     if model_name.startswith("Qwen/"):
         service_client = tinker.ServiceClient()
@@ -310,7 +308,7 @@ def prepare_llm(model_name: str, port: int):
         _add_return_token_ids=False,
     )
     llm_proxy.start()
-    yield {
+    llms: Dict[str, Any] = {
         "player_llm": CrewLLM(
             model="openai/" + model_name, base_url=f"http://localhost:{port}/v1", api_key="dummy", timeout=60.0
         ),
@@ -322,18 +320,27 @@ def prepare_llm(model_name: str, port: int):
             response_format=AnswererResponse,
             timeout=60.0,
         ),
-        # "search_tool": SearchTool(
-        #     model=CrewLLM(model="openai/gpt-4.1", base_url=f"http://localhost:4000/v1", api_key="dummy", timeout=60.0)
-        # ),
     }
+
+    if search_tool:
+        llms["search_tool"] = SearchTool(
+            model=CrewLLM(
+                model="openai/gpt-5-mini",
+                base_url=f"http://localhost:{port}/v1",
+                api_key="dummy",
+                reasoning_effort="none",
+                timeout=60.0,
+            )
+        )
+    yield llms
 
     llm_proxy.stop()
 
 
-def main(model_name: str, output_file: str, port: int = 4000):
+def main(model_name: str, output_file: str, port: int = 4000, search_tool: bool = False):
     df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
 
-    with prepare_llm(model_name, port) as llm_config:
+    with prepare_llm(model_name, port, search_tool) as llm_config:
         for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
             flow = TwentyQuestionsFlow(**llm_config)
             try:
