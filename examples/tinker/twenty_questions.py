@@ -43,22 +43,24 @@ If you think you have figured out the secret entity, ask a direct guess in the f
 THIS IS TURN #{turn_index} OF 20. You have {remaining_turns} turns left. The quicker you make a correct guess, the higher your score.
 
 ## Important assumptions
-
-- All answers must belong to one of the following categories: {categories}.
-- All answers are **straightforward, familiar, and commonly known**. They can be at most 3 words long (and only one word long in a majority of cases).
-- Each answer refers to a **single, clear concept** — not a variant, version, or situation-dependent form.  They will **never** be something like "A door used in a haunted house" or "A Fender-produced guitar".
+- Your answer BELONGS TO the category of "{category}".
+- The answer is **straightforward, familiar, and commonly known**. They can be at most 3 words long (and only one word long in a majority of cases).
+- The answer refers to a **single, clear entity** — not a variant, version, or situation-dependent form.
 
 ## What you have: Game history (Q/A pairs):
 
 {history}
 
-## How to decide your next question
+## Strategy guidelines (concise, practical)
+- **Start broad, then narrow**: prioritize sub-category-level splits first (within {category}), then mid-level properties, then identifiers.
+- **Binary partitioning**: prefer questions that split the remaining set near the middle.
+- **Property over identity**: ask about features/roles/usages before naming brands, species, or specific titles.
+- **Contradiction guard**: if past answers imply a contradiction, ask a short reset/sanity-check question to reconcile.
+- **n/a handling**: if the last answer was **n/a**, pivot wording to a clearer, factual property.
+- **Endgame**: if you have only one turn left, make a direct guess.
 
-- Use binary-splitting logic: prefer questions that partition the remaining candidates roughly in half.
-- Start broad then focus (category -> traits -> unique identifiers).
-- Take the remaining turns into account. If you have only one turn left, ask a direct guess.
-- Do **not** ask about entities that directly name or define the answer (e.g., "Is it a type of pizza?" if "Pizza" is an option).
-- The answerer may reply **"n/a"** when a yes/no would be meaningless or not publicly knowable. Use this to your advantage.
+## How to ask questions
+- Directly confirm your guess instead of asking about entities that directly name or define the answer (e.g., "Is it a type of pizza?" if "Pizza" is an option).
 - Avoid questions that depend on subjective or situational conditions (e.g., "Would most people consider it artistic?").
 - You are encourage to use the search tool to verify factual implications behind your candidate question. This will also help you thinking more deeply and avoiding asking irrelevant or trivial questions.
 
@@ -85,12 +87,16 @@ Your secret entity is: "{answer}".
 - Respond only with a structured yes/no evaluation about the entity.
 - Be concise, objective, and consistent with previous answers.
 - Never reveal the entity unless the player guessed correctly.
-- If you don't know the answer, for example, the information is never publicly known, or the question is irrelevant to the secret entity, answer **"n/a"**.
+- If you don't know the answer, for example, the information is never publicly known, or the question is irrelevant to the entity's nature, answer **"n/a"**.
+
+### Primary-sense rule (important)
+- Answer based on the entity's **primary, literal identity**, not metaphorical associations or what it “can represent.”
+  (Example: a famous building is **not** a "symbol" just because people call it a symbol of love.)
+- Use the multi-meaning rule **only** when the entity's **name itself** has multiple mainstream senses (e.g., “football” the sport vs. the ball). Otherwise, stick to the primary sense.
 
 ### Handling unknown or irrelevant questions
-
-- If the question asks about something that is **not publicly known**, **not factual**, **ambiguous**, or **irrelevant** to the entity's nature (e.g., "Does it enjoy music?" for *Mount Everest*), respond with **"n/a"**.
-- Use **"n/a"** only when a yes/no answer would be **misleading or nonsensical**.
+- If the question asks about something **not publicly known**, **not factual**, **ambiguous**, or **irrelevant**, respond **"n/a"**.
+- Use **"n/a"** only when a yes/no would be **misleading or nonsensical**.
 - Examples:
   - "Does it have parents?" -> *n/a* (not meaningful for a place or object)
   - "Is it alive?" -> valid for all entities (answer yes/no if possible)
@@ -99,14 +105,12 @@ Your secret entity is: "{answer}".
   - "Is the chair branded by a famous manufacturer?" -> *n/a* for a general object like "chair".
 
 ### Handling ambiguous entities
-
-If the secret entity has multiple common meanings (e.g., "football" can mean both the **sport** and the **ball**):
-- Answer **"yes"** if the question is true for **any** of the major, well-recognized meanings.
-- Answer **"no"** only if the question is false for **all reasonable interpretations**.
-- Avoid overinterpreting rare or niche meanings — stick to mainstream, widely understood ones.
+If the secret entity truly has multiple common meanings:
+- Answer **"yes"** if the question is true for **any** major, well-recognized meaning.
+- Answer **"no"** only if it's false for **all** reasonable interpretations.
+- Do **not** stretch to metaphors or loose associations.
 
 ### Handling direct guesses
-
 If the player's question is a direct guess ("Is it ...?"):
 - Set **correct = true** if the guess is a close match in meaning to the secret entity (e.g., “Is it cell phone?” ≈ “Smartphone”).
 - Otherwise, set **correct = false**.
@@ -212,7 +216,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         agent = CrewAgent(
             role="Player in a game of 20 questions",
             goal="Minimize uncertainty and identify the hidden entity within 20 yes/no questions.",
-            backstory="A focused reasoner who uses binary-partition questions and only outputs one concise yes/no question per turn.",
+            backstory="A focused reasoner who uses binary-partition questions to narrow down the remaining possibilities.",
             tools=[self.search_tool] if self.search_tool else [],
             llm=self.player_llm,
             max_iter=10,  # Maximum iterations of tool calls

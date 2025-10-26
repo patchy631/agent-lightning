@@ -1,201 +1,201 @@
 answer,category
-Taylor Swift,person
-Albert Einstein,person
-Cleopatra,person
-Sherlock Holmes,character
-Batman,character
-Harry Potter,character
-Elon Musk,person
-Oprah Winfrey,person
-Beyoncé,person
-Leonardo da Vinci,person
-Barack Obama,person
-Marilyn Monroe,person
-Steve Jobs,person
-Michael Jordan,person
-Mother Teresa,person
-Isaac Newton,person
-William Shakespeare,person
-Rihanna,person
-Gandhi,person
-Picasso,person
-Paris,place
-Tokyo,place
-Mount Everest,place
-New York,place
-Sydney Opera House,place
-The Great Wall,place
-Sahara Desert,place
-Amazon Rainforest,place
-Eiffel Tower,place
-Big Ben,place
-Taj Mahal,place
-Niagara Falls,place
-Rome,place
-London,place
-Disneyland,place
-The North Pole,place
-Hawaii,place
-Las Vegas,place
-Antarctica,place
-Hollywood,place
-Elephant,animal
-Tiger,animal
-Dolphin,animal
-Penguin,animal
-Giraffe,animal
-Eagle,animal
-Panda,animal
-Kangaroo,animal
-Wolf,animal
-Shark,animal
-Owl,animal
-Horse,animal
 Dog,animal
 Cat,animal
-Snake,animal
-Rabbit,animal
-Bear,animal
-Octopus,animal
-Fox,animal
+Cow,animal
+Pig,animal
+Horse,animal
+Sheep,animal
+Goat,animal
+Chicken,animal
+Duck,animal
+Goose,animal
+Fish,animal
+Shark,animal
 Whale,animal
-Chair,object
-Mirror,object
-Laptop,object
-Guitar,instrument
-Telescope,object
-Camera,object
-Umbrella,object
-Bicycle,object
-Lock,object
-Watch,object
-Book,object
-Television,object
-Candle,object
-Clock,object
-Backpack,object
-Airplane,object
-Piano,instrument
-Violin,instrument
-Harp,instrument
-Trombone,instrument
-Skateboard,object
-Scissors,object
-Smartphone,object
-Pizza,food
-Coffee,food
-Apple,food
-Chocolate,food
-Ice cream,food
-Hamburger,food
-Sushi,food
-Sandwich,food
-Salad,food
-Donut,food
-Watermelon,food
-Popcorn,food
-Spaghetti,food
-Cheese,food
-Bread,food
-Orange juice,food
-Steak,food
-Pancake,food
-Taco,food
-Banana,food
-Freedom,concept
-Love,concept
-Happiness,concept
-Time,concept
-Knowledge,concept
-Friendship,concept
-Justice,concept
-Peace,concept
-Power,concept
-Honesty,concept
-Art,concept
-Technology,concept
-Music,concept
-Science,concept
-War,concept
-Truth,concept
-Nature,concept
-Dream,concept
-Fear,concept
-Memory,concept
-Soccer,sport
-Basketball,sport
-Tennis,sport
-Swimming,sport
-Running,sport
-Golf,sport
-Boxing,sport
-Surfing,sport
-Skiing,sport
-Chess,sport
-Baseball,sport
-Yoga,sport
-Archery,sport
-Fishing,sport
-Skateboarding,sport
-Volleyball,sport
-Climbing,sport
-Dancing,sport
-Hiking,sport
-Billiards,sport
-Lightsaber,fiction
-Iron Man,character
-Millennium Falcon,fiction
-The Simpsons,fiction
-Jurassic Park,fiction
-SpongeBob,fiction
-The Godfather,fiction
-Frozen,fiction
-The Matrix,fiction
-Star Wars,fiction
-Avatar,fiction
-Game of Thrones,fiction
-Spider-Man,character
-Black Panther,character
-Hogwarts,fiction
+Dolphin,animal
+Tiger,animal
+Lion,animal
+Bear,animal
+Wolf,animal
+Fox,animal
+Rabbit,animal
+Deer,animal
+Rat,animal
+Zebra,animal
+Giraffe,animal
+Panda,animal
+Koala,animal
+Camel,animal
+Ant,animal
+Bee,animal
+Butterfly,animal
+Spider,animal
+Crab,animal
+Frog,animal
+Turtle,animal
+Snake,animal
+Owl,animal
+Batman,character
+Superman,character
+Spider Man,character
+Hulk,character
+Aquaman,character
 The Joker,character
+Mario,character
+Luigi,character
 Pikachu,character
-Wonder Woman,character
-The Titanic,fiction
-Stranger Things,fiction
-Rainbow,nature
-Volcano,nature
-Moon,nature
-Sunflower,nature
-Diamond,object
-Lightning,nature
-Ocean,nature
-Cloud,nature
-Tornado,nature
-Robot,object
-Alien,creature
-Treasure,object
-Map,object
-Pirate,character
-Wizard,character
-Unicorn,creature
-Ghost,creature
-Dragon,creature
-Meteor,nature
-Wallet,object
-Headphones,object
-Microwave,object
-Toothbrush,object
-Blanket,object
-Pen,object
-Drone,object
-Car,object
-Air Conditioner,object
-Printer,object
-Lamp,object
-Refrigerator,object
-Washing machine,object
-Credit card,object
-Bed,object
-Mouse,object
-Remote,object
-Sunglasses,object
+Sonic,character
+Shrek,character
+Elsa,character
+Aladdin,character
+Woody,character
+Buzz Lightyear,character
+Nemo,character
+Winnie the Pooh,character
+Mickey Mouse,character
+Goofy,character
+Donald Duck,character
+Gandalf,character
+Frodo Baggins,character
+Albus Dumbledore,character
+Hermione Granger,character
+Harry Potter,character
+Sherlock Holmes,character
+Piano,instrument
+Guitar,instrument
+Violin,instrument
+Cello,instrument
+Flute,instrument
+Clarinet,instrument
+Trumpet,instrument
+Trombone,instrument
+Tuba,instrument
+Saxophone,instrument
+Drums,instrument
+Harp,instrument
+Organ,instrument
+Ukulele,instrument
+Banjo,instrument
+Xylophone,instrument
+Harmonica,instrument
+Tambourine,instrument
+Triangle,instrument
+Recorder,instrument
+Rose,flower
+Tulip,flower
+Lily,flower
+Daisy,flower
+Sunflower,flower
+Orchid,flower
+Violet,flower
+Jasmine,flower
+Marigold,flower
+Lotus,flower
+Lavender,flower
+Peony,flower
+Carnation,flower
+Iris,flower
+Lilac,flower
+Poppy,flower
+Magnolia,flower
+Daffodil,flower
+Pansy,flower
+Petunia,flower
+Pen,stationery
+Pencil,stationery
+Eraser,stationery
+Ruler,stationery
+Marker,stationery
+Highlighter,stationery
+Stapler,stationery
+Tape,stationery
+Glue,stationery
+Notebook,stationery
+Notepad,stationery
+Paperclip,stationery
+Binder,stationery
+Folder,stationery
+Envelope,stationery
+Pushpin,stationery
+Scissors,stationery
+Crayon,stationery
+Sharpener,stationery
+Whiteboard,stationery
+Phone,electronics
+Smartphone,electronics
+Laptop,electronics
+Tablet,electronics
+Camera,electronics
+Television,electronics
+Monitor,electronics
+Headphones,electronics
+Earbuds,electronics
+Speaker,electronics
+Microphone,electronics
+Keyboard,electronics
+Printer,electronics
+Webcam,electronics
+Battery,electronics
+Radio,electronics
+Microwave,electronics
+Refrigerator,electronics
+Toaster,electronics
+Oven,electronics
+Fan,electronics
+Calculator,electronics
+Clock,electronics
+Chair,furniture
+Table,furniture
+Sofa,furniture
+Couch,furniture
+Bed,furniture
+Desk,furniture
+Wardrobe,furniture
+Closet,furniture
+Dresser,furniture
+Cabinet,furniture
+Cupboard,furniture
+Shelf,furniture
+Bookshelf,furniture
+Nightstand,furniture
+Bench,furniture
+Stool,furniture
+Armchair,furniture
+Recliner,furniture
+Ottoman,furniture
+Vanity,furniture
+Mirror,furniture
+Crib,furniture
+Mattress,furniture
+Sideboard,furniture
+Albert Einstein,celebrity
+Isaac Newton,celebrity
+Nikola Tesla,celebrity
+Wolfgang Amadeus Mozart,celebrity
+Ludwig van Beethoven,celebrity
+Johann Sebastian Bach,celebrity
+Pablo Picasso,celebrity
+William Shakespeare,celebrity
+Elvis Presley,celebrity
+Marilyn Monroe,celebrity
+Charlie Chaplin,celebrity
+Mahatma Gandhi,celebrity
+Nelson Mandela,celebrity
+Julius Caesar,celebrity
+Napoleon Bonaparte,celebrity
+Abraham Lincoln,celebrity
+Winston Churchill,celebrity
+John F Kennedy,celebrity
+Princess Diana,celebrity
+Steve Jobs,celebrity
+David Bowie,celebrity
+John Lennon,celebrity
+Michael Jackson,celebrity
+Muhammad Ali,celebrity
+Alfred Hitchcock,celebrity
+Ernest Hemingway,celebrity
+George Orwell,celebrity
+Charles Darwin,celebrity
+Aristotle,celebrity
+Plato,celebrity
+Taylor Swift,celebrity
