@@ -32,17 +32,13 @@ T_task = TypeVar("T_task")
 WAIT_FOR_ROLLOUTS_INTERVAL = 5.0
 
 
-def reconstruct_transitions(
-    spans: List[Span], adapter: TraceToTripletBase, rollout_id: str, identical_credit_assignment: bool = True
-) -> Trajectory:
+def reconstruct_transitions(spans: List[Span], adapter: TraceToTripletBase, rollout_id: str) -> Trajectory:
     """Reconstruct the transitions from the spans.
 
     Args:
         spans: The spans to reconstruct the transitions from.
         adapter: The adapter to use to reconstruct the transitions.
         rollout_id: The ID of the rollout.
-        identical_credit_assignment: Whether to assign the reward from later triplets to earlier triplets.
-            See [Agent-lightning's paper](https://arxiv.org/abs/2508.03680) for details.
 
     Returns:
         Tinker trajectory.
@@ -50,9 +46,6 @@ def reconstruct_transitions(
     triplets: List[AGLTriplet] = adapter.adapt(spans)
     # We need to reconstruct the input and output tokens (+logprobs) from the triplets
     transitions: list[Transition] = []
-
-    # Initialize to a non-zero reward
-    last_reward: float = 0.0
 
     for i_triplet, triplet in reversed(list(enumerate(triplets))):
         if "token_ids" not in triplet.prompt or "token_ids" not in triplet.response:
@@ -79,16 +72,6 @@ def reconstruct_transitions(
                 logprobs = None
         output_tokens_with_logprobs = TokensWithLogprobs(tokens=output_tokens, maybe_logprobs=logprobs)
 
-        if triplet.reward is None:
-            if identical_credit_assignment:
-                # takes from the next non-null reward
-                this_reward = last_reward
-            else:
-                # Assume it to be zero
-                this_reward = 0.0
-        else:
-            this_reward = triplet.reward
-
         # Log extra metrics for the reward in final step
         metrics: Dict[str, float] = {}
         if triplet.reward is not None and i_triplet + 1 == len(triplets):
@@ -99,14 +82,13 @@ def reconstruct_transitions(
             Transition(
                 ob=input_tokens,
                 ac=output_tokens_with_logprobs,
-                reward=this_reward,
+                # For no-reward, we fill it with 0.0.
+                # Later, this step is not taken into trajectory-level advantage calculation.
+                reward=triplet.reward if triplet.reward is not None else 0.0,
                 episode_done=i_triplet + 1 == len(triplets),
                 metrics=metrics,
             )
         )
-
-        if identical_credit_assignment and triplet.reward is not None:
-            last_reward = triplet.reward
 
     # The final observation is empty input tokens
     return Trajectory(transitions=transitions[::-1], final_ob=ModelInput.from_ints([]))
