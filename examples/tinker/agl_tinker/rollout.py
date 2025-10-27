@@ -56,7 +56,11 @@ def reconstruct_transitions(
 
     for i_triplet, triplet in reversed(list(enumerate(triplets))):
         if "token_ids" not in triplet.prompt or "token_ids" not in triplet.response:
-            logger.error(f"[Rollout {rollout_id}] Triplet has no token_ids: {triplet}")
+            logger.error(f"[Rollout {rollout_id}] Triplet has no token_ids: {triplet}. Skipping.")
+            continue
+        # TODO: Sometimes triplet.prompt is an empty list. This might be a bug with the adapter.
+        if not triplet.prompt["token_ids"] or not triplet.response["token_ids"]:
+            logger.error(f"[Rollout {rollout_id}] Triplet has empty token_ids: {triplet}. Skipping.")
             continue
         # Getting the input and output tokens from the triplet
         input_tokens = ModelInput.from_ints(triplet.prompt["token_ids"])
@@ -148,7 +152,7 @@ async def agl_single_rollout(
     reconstructed = reconstruct_transitions(spans, adapter, rollout.rollout_id)
     logger.info(
         f"[Rollout {rollout.rollout_id}] Reconstructed {len(reconstructed.transitions)} transitions from {len(spans)} spans. "
-        f"Rewards are: {[r.reward for r in reconstructed.transitions]}"
+        f"Rewards are: {[r.reward for r in reconstructed.transitions]} (raw triplets rewards: {[t.reward for t in triplets]})"
     )
     return reconstructed
 

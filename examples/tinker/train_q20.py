@@ -1,3 +1,5 @@
+import argparse
+import asyncio
 import os
 import traceback
 from typing import Any, Literal, TypedDict, cast
@@ -68,6 +70,7 @@ async def q20_agent(task: Q20Task, llm: agl.LLM, rollout: agl.Rollout) -> None:
 
     flow = TwentyQuestionsFlow(player_llm=player_llm, answer_llm=answer_llm, search_tool=search_tool)
     try:
+        raise ValueError()
         await flow.kickoff_async(cast(Any, task))
         agl.emit_reward(1.0 if flow.state.correct else 0.0)
     except Exception as e:
@@ -94,7 +97,7 @@ def dry_run():
         llm_proxy.stop()
 
 
-async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen4b"):
+async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen4b", port: int = 4747):
     raw_data = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     raw_data["search_enabled"] = search
     train_data, test_data = _split_by_category(raw_data, 0.7)
@@ -103,7 +106,7 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
     test_dataset = cast(agl.Dataset[Q20Task], test_data.to_dict(orient="records"))  # type: ignore
 
     if model == "qwen4b":
-        model_name = "Qwen/Qwen4B-Instruct-2507"
+        model_name = "Qwen/Qwen3-4B-Instruct-2507"
         renderer_name = "qwen3"
     elif model == "qwen30b":
         model_name = "Qwen/Qwen3-30B-A3B-Instruct-2507"
@@ -132,11 +135,55 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
         eval_every=4,
         wandb_project="AgentLightningQ20",
         wandb_name=experiment_name,
-        store_address="http://localhost:4747",
+        store_address=f"http://localhost:{port}",
     )
     await entrypoint(config)
 
 
-if __name__ == "__main__":
-    agl.configure_logger()
+def runner(port: int = 4747):
+    # Run only the runners without algorithm
+    store = agl.LightningStoreClient(f"http://localhost:{port}")
+    trainer = agl.Trainer(n_runners=2, algorithm=None, store=store)
+    trainer.fit(q20_agent)
+
+
+def _run_dryrun(_args: argparse.Namespace) -> None:
     dry_run()
+
+
+def _run_algo(args: argparse.Namespace) -> None:
+    asyncio.run(algo(model=args.model, port=args.port))
+
+
+def _run_runner(args: argparse.Namespace) -> None:
+    runner(port=args.port)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run the Q20 AgentLightning experiments.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    dryrun_parser = subparsers.add_parser("dryrun", help="Run the in-memory dry run.")
+    dryrun_parser.set_defaults(func=_run_dryrun)
+
+    algo_parser = subparsers.add_parser("algo", help="Launch the full training algorithm.")
+    algo_parser.add_argument("--port", type=int, default=4747, help="Port for the AgentLightning store.")
+    algo_parser.add_argument(
+        "--model",
+        choices=("qwen4b", "qwen30b"),
+        default="qwen4b",
+        help="Model variant to train.",
+    )
+    algo_parser.set_defaults(func=_run_algo)
+
+    runner_parser = subparsers.add_parser("runner", help="Run only the rollout runners.")
+    runner_parser.add_argument("--port", type=int, default=4747, help="Port for the AgentLightning store.")
+    runner_parser.set_defaults(func=_run_runner)
+
+    args = parser.parse_args()
+    agl.configure_logger()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
