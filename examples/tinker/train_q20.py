@@ -106,7 +106,7 @@ def dry_run():
 async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen4b", port: int = 4747):
     raw_data = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     raw_data["search_enabled"] = search
-    train_data, test_data = _split_by_category(raw_data, 0.7)
+    train_data, test_data = _split_by_category(raw_data, 0.8)  # 200*20% = 40 samples for test
 
     train_dataset = cast(agl.Dataset[Q20Task], train_data.to_dict(orient="records"))  # type: ignore
     test_dataset = cast(agl.Dataset[Q20Task], test_data.to_dict(orient="records"))  # type: ignore
