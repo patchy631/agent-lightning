@@ -78,7 +78,7 @@ def _patch_new_agentops():
                     attributes["response_token_ids"] = list(first_choice.provider_specific_fields["token_ids"])
 
             # log probability
-            # This is temporarily. We need a unified conventions for classifying and naming logprobs.
+            # This is temporary. We need a unified convention for classifying and naming logprobs.
             if hasattr(first_choice, "logprobs") and first_choice.logprobs is not None:
                 if hasattr(first_choice.logprobs, "content") and first_choice.logprobs.content is not None:
                     attributes["logprobs.content"] = json.dumps(
