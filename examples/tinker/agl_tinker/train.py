@@ -41,7 +41,14 @@ from tinker_cookbook.utils import ml_log
 from tinker_cookbook.utils.misc_utils import timed
 from tinker_cookbook.utils.trace import get_scope_context, scope, trace_init
 
-from agentlightning import LightningStore, LightningStoreClient, LLMProxy, TracerTraceToTriplet, TraceToTripletBase
+from agentlightning import (
+    LightningStore,
+    LightningStoreClient,
+    LLMProxy,
+    LlmProxyTraceToTriplet,
+    TracerTraceToTriplet,
+    TraceToTripletBase,
+)
 
 from .env import AGLDataset, AGLDatasetBuilder
 from .llm import TinkerLLM
@@ -71,6 +78,9 @@ class Config:
 
     # Agent-lightning parameters (only used in when running standalone)
     store_address: str = "http://localhost:4747"
+    # Using tracing data from LLM proxy instead of client-side tracer
+    # When this is true, adapter_agent_match is ignored
+    adapter_from_llm_proxy: bool = False
     adapter_agent_match: str | None = None
 
     # Concurrency parameters (mainly for controlling max queue length)
@@ -388,7 +398,12 @@ async def main_training_loop(
 @scope
 async def main(config: Config) -> None:
     store = LightningStoreClient(config.store_address)
-    adapter = TracerTraceToTriplet(agent_match=config.adapter_agent_match)
+    if config.adapter_from_llm_proxy:
+        adapter = TracerTraceToTriplet(agent_match=config.adapter_agent_match)
+    else:
+        if config.adapter_agent_match is not None:
+            raise ValueError("adapter_agent_match is not supported when adapter_from_llm_proxy is True")
+        adapter = LlmProxyTraceToTriplet()
     llm_proxy = LLMProxy(
         port=config.llm_proxy_port,
         model_list=[],

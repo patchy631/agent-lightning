@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import os
+import socket
 import traceback
 from typing import Any, Literal, TypedDict, cast
 
@@ -14,6 +15,12 @@ from rich.console import Console
 from twenty_questions import AnswererResponse, SearchTool, TwentyQuestionsFlow
 
 import agentlightning as agl
+
+
+def _find_available_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
 
 
 def _split_by_category(data: pd.DataFrame, split_ratio: float) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -70,7 +77,6 @@ async def q20_agent(task: Q20Task, llm: agl.LLM, rollout: agl.Rollout) -> None:
 
     flow = TwentyQuestionsFlow(player_llm=player_llm, answer_llm=answer_llm, search_tool=search_tool)
     try:
-        raise ValueError()
         await flow.kickoff_async(cast(Any, task))
         agl.emit_reward(1.0 if flow.state.correct else 0.0)
     except Exception as e:
@@ -116,6 +122,8 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
 
     experiment_name = f"q20_{'search' if search else 'no_search'}_{model}"
 
+    llm_proxy_port = _find_available_port()
+
     config = Config(
         learning_rate=1e-5,
         dataset_builder=AGLDatasetBuilder(
@@ -136,6 +144,8 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
         wandb_project="AgentLightningQ20",
         wandb_name=experiment_name,
         store_address=f"http://localhost:{port}",
+        llm_proxy_port=llm_proxy_port,
+        adapter_from_llm_proxy=False,
     )
     await entrypoint(config)
 
@@ -143,7 +153,9 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
 def runner(port: int = 4747):
     # Run only the runners without algorithm
     store = agl.LightningStoreClient(f"http://localhost:{port}")
-    trainer = agl.Trainer(n_runners=2, algorithm=None, store=store)
+    trainer = agl.Trainer(
+        algorithm=None, store=store, strategy={"type": "cs", "managed_store": False, "n_runners": 2, "role": "runner"}
+    )
     trainer.fit(q20_agent)
 
 
