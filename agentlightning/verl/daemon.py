@@ -25,6 +25,89 @@ from agentlightning.types import RolloutConfig, RolloutV2, Task
 
 configure_logger()
 
+from transformers import AutoTokenizer
+model_dir = '/mnt/teamdrive/RAG_RL/models/meta-llama/Llama-3.2-3B'
+tok = AutoTokenizer.from_pretrained(str(model_dir), local_files_only=True, use_fast=True)
+# def _decode(ids, skip_special_tokens=True):
+#     return tok.decode(ids, skip_special_tokens=skip_special_tokens, clean_up_tokenization_spaces=False)
+
+def fuzzy_startswith(full_ids, prefix_ids, tokenizer, special_token_tolerance=0, string_tolerance=0):
+    def _special_token_sequence(ids):
+        return [id for id in ids if id in tokenizer.all_special_ids]
+    
+    def _decode(ids, skip_special_tokens=True):
+        return tokenizer.decode(ids, skip_special_tokens=skip_special_tokens, clean_up_tokenization_spaces=False)
+
+    if special_token_tolerance < 0 or string_tolerance < 0:
+        raise ValueError("tolerance must be non-negative")
+
+    # First, handle special tokens
+    full_special_ids = _special_token_sequence(full_ids)
+    prefix_special_ids = _special_token_sequence(prefix_ids)
+    diff_count = sum(1 for a, b in zip(full_special_ids, prefix_special_ids) if a != b)
+    special_token_tolerance -= diff_count
+    if special_token_tolerance < 0:
+        return False
+
+    # Next, handle string content
+    full_string = _decode(full_ids, skip_special_tokens=True)
+    prefix_string = _decode(prefix_ids, skip_special_tokens=True)
+    m = len(prefix_string)
+    n = len(full_string)
+
+    if m == 0: return True # Empty B always matches (distance 0 to empty prefix)
+    if n == 0: return m <= string_tolerance # B non-empty but A empty: only match if we can delete all of B within tolerance
+    if string_tolerance == 0: return full_string.startswith(prefix_string) # exact match required
+
+    # use DP to compute edit distance with banded optimization
+    min_j = max(0, m - string_tolerance)
+    max_j = min(n, m + string_tolerance)
+    if min_j > max_j: return False  # no possible prefix length
+
+    prev_start = max(0, 0 - string_tolerance)
+    prev_end = min(n, 0 + string_tolerance)
+    prev = [j for j in range(prev_start, prev_end + 1)]
+
+    for j_idx, j in enumerate(range(prev_start, prev_end + 1)):
+        if min_j <= j <= max_j and prev[j_idx] <= string_tolerance:
+            return True
+
+    for i in range(1, m + 1):
+        # valid j range for this row
+        start_j = max(0, i - string_tolerance)
+        end_j = min(n, i + string_tolerance)
+        cur_len = end_j - start_j + 1
+        cur = [0] * cur_len
+
+        for idx, j in enumerate(range(start_j, end_j + 1)):
+            del_cost = None
+            prev_start = max(0, (i - 1) - string_tolerance)
+            prev_end = min(n, (i - 1) + string_tolerance)
+            if prev_start <= j <= prev_end:
+                del_cost = prev[j - prev_start] + 1
+            else:
+                del_cost = abs((i - 1) - j) + 1  # safe over-approximation
+
+            ins_cost = None
+            if j - 1 >= start_j:
+                ins_cost = cur[idx - 1] + 1
+            else:
+                ins_cost = abs(i - (j - 1)) + 1
+
+            sub_cost = None
+            if prev_start <= (j - 1) <= prev_end:
+                sub_cost = prev[(j - 1) - prev_start] + (0 if prefix_string[i - 1] == full_string[j - 1] else 1)
+            else:
+                sub_cost = abs((i - 1) - (j - 1)) + (0 if prefix_string[i - 1] == full_string[j - 1] else 1)
+
+            cur[idx] = min(del_cost, ins_cost, sub_cost)
+
+        for idx, j in enumerate(range(start_j, end_j + 1)):
+            if min_j <= j <= max_j and cur[idx] <= string_tolerance:
+                return True
+        prev = cur
+    return False
+
 
 def get_left_padded_ids_and_attention_mask(
     ids: List[int], max_length: int, pad_token_id: int
@@ -686,7 +769,7 @@ class AgentModeDaemon:
                 current_merged_trace_idx: List[int] = []
                 current_context: List[int] = []
                 for turn_index, trace in enumerate(sample_info["trace_list"]):
-                    if (trace["prompt_ids"] + trace["response_ids"])[: len(current_context)] == current_context:
+                    if fuzzy_startswith(trace["prompt_ids"] + trace["response_ids"], current_context, tok, special_token_tolerance=5):
                         current_context = trace["prompt_ids"] + trace["response_ids"]
                         current_merged_trace_idx.append(turn_index)
                     else:
