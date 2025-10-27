@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from random import Random
-from typing import Generic, Optional, Sequence, TypeVar
+from typing import Generic, List, Optional, Sequence, TypeVar
 
 import chz
 import pandas as pd
@@ -52,35 +52,50 @@ class AGLDataset(RLDataset, Generic[T_task]):
     """A dataset that produces batches of AGLDummyEnvGroupBuilder."""
 
     def __init__(
-        self, dataset: Dataset[T_task], *, batch_size: int, shuffle: bool = True, group_size: int = 4, seed: int = 42
+        self,
+        dataset: Dataset[T_task],
+        *,
+        batch_size: int,
+        shuffle: bool = True,
+        group_size: int = 4,
+        seed: int = 42,
+        n_epochs: int = 1,
     ) -> None:
         self.dataset = dataset
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.group_size = group_size
+        self.n_epochs = n_epochs
 
+        self.indices: List[int] = []
         if shuffle:
-            self.indices = list(range(len(self.dataset)))
-            Random(seed).shuffle(self.indices)
+            random_state = Random(seed)
+            for _ in range(n_epochs):
+                indices = list(range(len(self.dataset)))
+                random_state.shuffle(indices)
+                # Drop last for each epoch
+                self.indices.extend(indices[: len(indices) - len(indices) % self.batch_size])
         else:
-            self.indices = list(range(len(self.dataset)))
+            for _ in range(n_epochs):
+                self.indices.extend(list(range(len(self.dataset))))
 
     def get_batch(self, index: int) -> Sequence[AGLDummyEnvGroupBuilder[T_task]]:
         start_index = index * self.batch_size
-        end_index = min((index + 1) * self.batch_size, len(self.dataset))
+        end_index = min((index + 1) * self.batch_size, len(self.indices))
         return [
             AGLDummyEnvGroupBuilder(self.dataset[self.indices[i]], self.group_size)
             for i in range(start_index, end_index)
         ]
 
     def __len__(self) -> int:
-        return len(self.dataset) // self.batch_size
+        return len(self.indices) // self.batch_size
 
 
 @chz.chz
 class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
 
     batch_size: int
+    n_epochs: int = 1
     train_file: Optional[str] = None
     val_file: Optional[str] = None
     train_dataset: Optional[Dataset[T_task]] = None
@@ -133,6 +148,7 @@ class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
             AGLDataset(
                 train_dataset,
                 batch_size=self.batch_size,
+                n_epochs=self.n_epochs,
                 shuffle=self.shuffle,
                 group_size=self.group_size,
                 seed=self.seed,
