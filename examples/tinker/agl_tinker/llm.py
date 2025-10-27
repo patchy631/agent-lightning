@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any, Callable, Dict, List, Literal, Type, TypeGuard, TypeVar, cast
+from typing import Any, Callable, Dict, List, Literal, Optional, Type, TypeGuard, TypeVar, cast
 
 import litellm
 import tinker
@@ -20,9 +20,11 @@ from tinker.types import ModelInput, SampleResponse, SamplingParams
 from tinker_cookbook.renderers import Message as TinkerMessage
 from tinker_cookbook.renderers import Renderer
 from tinker_cookbook.renderers import ToolCall as TinkerToolCall
-from transformers import PreTrainedTokenizer
+from tinker_cookbook.renderers import get_renderer
+from transformers import AutoTokenizer, PreTrainedTokenizer
 
-from agentlightning.llm_proxy import ModelConfig
+from agentlightning.llm_proxy import LLMProxy, ModelConfig
+from agentlightning.store import LightningStore
 
 logger = logging.getLogger(__name__)
 
@@ -202,3 +204,24 @@ class TinkerLLM(CustomLLM):
         litellm.custom_provider_map = [{"provider": "agl-tinker", "custom_handler": self}]
         custom_llm_setup()
         return self
+
+
+def create_llm_proxy(
+    model_name: str, renderer_name: str, port: int = 1899, store: Optional[LightningStore] = None
+) -> LLMProxy:
+    service_client = tinker.ServiceClient()
+    sampling_client = service_client.create_sampling_client(base_model=model_name)
+    tokenizer = cast(PreTrainedTokenizer, AutoTokenizer.from_pretrained(model_name))  # type: ignore
+    tinker_llm = TinkerLLM(
+        model_name=model_name,
+        sampling_client=sampling_client,
+        renderer=get_renderer(renderer_name, tokenizer),
+        tokenizer=tokenizer,
+    )
+    tinker_llm.rewrite_litellm_custom_providers()
+    return LLMProxy(
+        port=port,
+        store=store,
+        model_list=tinker_llm.as_model_list(),
+        num_retries=2,
+    )

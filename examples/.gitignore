@@ -11,9 +11,3 @@ unsloth/unsloth_training_checkpoints/
 apo/pomltrace/
 tinker/logs/
 tinker/crewai_*.html
-!tinker/logs/*_20251026.jsonl
-!tinker/logs/*_20251027.jsonl
-!tinker/logs/*_20251028.jsonl
-!tinker/logs/*_20251029.jsonl
-!tinker/logs/*_20251030.jsonl
-!tinker/logs/*_20251031.jsonl

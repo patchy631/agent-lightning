@@ -346,6 +346,9 @@ def main(model_name: str, output_file: str, port: int = 4000, search_tool: bool 
 
     with prepare_llm(model_name, port, search_tool) as llm_config:
         for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
+            if "search_tool" in llm_config:
+                llm_config["search_tool"].num_called = 0
+
             flow = TwentyQuestionsFlow(**llm_config)
             try:
                 flow.kickoff(

@@ -70,7 +70,7 @@ def _patch_new_agentops():
 
             # log probability
             # This is temporarily. We need a unified conventions for classifying and naming logprobs.
-            if hasattr(first_choice, "logprobs"):
+            if hasattr(first_choice, "logprobs") and first_choice.logprobs is not None:
                 if first_choice.logprobs.content:
                     attributes["logprobs.content"] = json.dumps(
                         [logprob.model_dump() for logprob in first_choice.logprobs.content]
