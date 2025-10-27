@@ -6,6 +6,7 @@ For example, if I say "Hello, 42", the model should say "I'm 42", not "I'm not 4
 import argparse
 import asyncio
 import multiprocessing
+import socket
 
 from agl_tinker.algo import Tinker
 from agl_tinker.env import AGLDatasetBuilder
@@ -17,6 +18,12 @@ from rich.console import Console
 import agentlightning as agl
 
 console = Console()
+
+
+def _find_available_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
 
 
 @agl.rollout
@@ -109,12 +116,13 @@ def oneclick():
         model_name="Qwen/Qwen3-30B-A3B-Instruct-2507",
         log_path="logs/hello",
         max_tokens=32,
-        llm_proxy_port=12306,
+        llm_proxy_port=_find_available_port(),
     )
     trainer = agl.Trainer(
         algorithm=Tinker(config),
         llm_proxy=agl.LLMProxy(port=12306, num_retries=3),
         n_runners=8,
+        port=_find_available_port(),
     )
     trainer.fit(hello, train_dataset=[str(i) for i in range(1000)], val_dataset=[str(i) for i in range(1000, 1024)])
 
