@@ -146,6 +146,7 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
         store_address=f"http://localhost:{port}",
         llm_proxy_port=llm_proxy_port,
         adapter_from_llm_proxy=False,
+        llm_proxy_retry_attempts=5,
     )
     await entrypoint(config)
 

@@ -83,6 +83,7 @@ class Config:
     # When this is true, adapter_agent_match is ignored
     adapter_from_llm_proxy: bool = False
     adapter_agent_match: str | None = None
+    llm_proxy_retry_attempts: int = 0
 
     # Concurrency parameters (mainly for controlling max queue length)
     concurrency: int = 16
@@ -413,6 +414,7 @@ async def main(config: Config) -> None:
         port=config.llm_proxy_port,
         model_list=[],
         store=store,
+        num_retries=config.llm_proxy_retry_attempts,
     )
 
     await main_training_loop(config, store, adapter, llm_proxy)

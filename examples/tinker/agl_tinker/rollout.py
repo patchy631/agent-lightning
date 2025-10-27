@@ -6,7 +6,7 @@ import asyncio
 import itertools
 import logging
 import random
-from typing import Any, Generic, List, Sequence, TypeVar, cast
+from typing import Any, Dict, Generic, List, Sequence, TypeVar, cast
 
 from tinker.types import ModelInput
 from tinker_cookbook.completers import TokensWithLogprobs
@@ -89,12 +89,19 @@ def reconstruct_transitions(
         else:
             this_reward = triplet.reward
 
+        # Log extra metrics for the reward in final step
+        metrics: Dict[str, float] = {}
+        if triplet.reward is not None and i_triplet + 1 == len(triplets):
+            metrics["reward/final_step"] = triplet.reward
+        metrics["reward/non_empty"] = 1.0 if triplet.reward is not None else 0.0
+
         transitions.append(
             Transition(
                 ob=input_tokens,
                 ac=output_tokens_with_logprobs,
                 reward=this_reward,
                 episode_done=i_triplet + 1 == len(triplets),
+                metrics=metrics,
             )
         )
 

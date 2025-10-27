@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import multiprocessing
 
+from agl_tinker.algo import Tinker
 from agl_tinker.env import AGLDatasetBuilder
 from agl_tinker.train import Config
 from agl_tinker.train import main as entrypoint
@@ -95,9 +96,32 @@ def spawn_runners(*, n_runners: int) -> None:
         runner.join()
 
 
+def oneclick():
+    config = Config(
+        learning_rate=1e-5,
+        dataset_builder=AGLDatasetBuilder(
+            batch_size=16,
+            group_size=4,
+            seed=42,
+            n_epochs=1,
+        ),
+        renderer_name="qwen3",
+        model_name="Qwen/Qwen3-30B-A3B-Instruct-2507",
+        log_path="logs/hello",
+        max_tokens=32,
+        llm_proxy_port=12306,
+    )
+    trainer = agl.Trainer(
+        algorithm=Tinker(config),
+        llm_proxy=agl.LLMProxy(port=12306, num_retries=3),
+        n_runners=8,
+    )
+    trainer.fit(hello, train_dataset=[str(i) for i in range(1000)], val_dataset=[str(i) for i in range(1000, 1024)])
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train a hello echo agent with Agent-lightning + Tinker.")
-    parser.add_argument("mode", type=str, choices=["algo", "runner"])
+    parser.add_argument("mode", type=str, choices=["algo", "runner", "oneclick"])
 
     args = parser.parse_args()
 
@@ -106,6 +130,8 @@ def main():
         run_algo()
     elif args.mode == "runner":
         spawn_runners(n_runners=8)
+    elif args.mode == "oneclick":
+        oneclick()
 
 
 if __name__ == "__main__":
