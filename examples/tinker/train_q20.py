@@ -89,7 +89,7 @@ def dry_run():
 async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen4b", port: int = 4747):
     raw_data = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     raw_data["search_enabled"] = search
-    train_data, test_data = raw_data[raw_data["split"] == "train"], raw_data[raw_data["split"] == "test"]
+    train_data, test_data = raw_data[raw_data["split"] == "train"], raw_data[raw_data["split"] == "test"]  # type: ignore
 
     train_dataset = cast(agl.Dataset[Q20Task], train_data.to_dict(orient="records"))  # type: ignore
     test_dataset = cast(agl.Dataset[Q20Task], test_data.to_dict(orient="records"))  # type: ignore
@@ -112,7 +112,7 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
         dataset_builder=AGLDatasetBuilder(
             train_dataset=train_dataset,
             val_dataset=test_dataset,
-            batch_size=16,
+            batch_size=8,
             shuffle=True,
             group_size=4,
             seed=42,
@@ -121,8 +121,7 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
         renderer_name=renderer_name,
         model_name=model_name,
         log_path=f"logs/{experiment_name}",
-        max_tokens=32,
-        concurrency=8,
+        concurrency=16,
         eval_every=4,
         wandb_project="AgentLightningQ20",
         wandb_name=experiment_name,
