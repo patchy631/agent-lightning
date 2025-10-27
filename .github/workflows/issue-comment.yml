@@ -1,0 +1,75 @@
+name: Issue Comment
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  reopen:
+    # Only run for comments on pull requests AND when the comment starts with "/ci"
+    if: >
+      github.event.issue.pull_request != null &&
+      startsWith(github.event.comment.body, '/ci')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guardrail — allow only members/collaborators
+        id: guard
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const allowed = ['MEMBER','OWNER','COLLABORATOR'];
+            const assoc = context.payload.comment.author_association;
+            if (!allowed.includes(assoc)) {
+              core.notice(`Ignoring /ci from ${context.payload.comment.user.login} (author_association=${assoc}).`);
+              core.setOutput('skip', 'true');
+            }
+
+      - name: Close and Reopen PR
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.issue.number;
+
+            // Fetch current PR state
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+
+            // Add reaction so folks know we saw it
+            try {
+              await github.rest.reactions.createForIssueComment({
+                owner, repo,
+                comment_id: context.payload.comment.id,
+                content: 'rocket'
+              });
+            } catch (e) {
+              core.info('Could not add reaction (likely due to permissions). Continuing.');
+            }
+
+            if (pr.state === 'open') {
+              core.info(`Closing PR #${pull_number}…`);
+              await github.rest.pulls.update({ owner, repo, pull_number, state: 'closed' });
+              await new Promise(r => setTimeout(r, 1500));
+            } else {
+              core.info(`PR #${pull_number} is already closed; will reopen it.`);
+            }
+
+            core.info(`Reopening PR #${pull_number} to trigger CI (pull_request.reopened)…`);
+            await github.rest.pulls.update({ owner, repo, pull_number, state: 'open' });
+
+      - name: Acknowledge in thread (optional)
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.issue.number;
+            await github.rest.issues.createComment({
+              owner, repo, issue_number,
+              body: `✅ CI retrigger requested by @${context.payload.comment.user.login}. Closed & reopened the PR to fire \`pull_request: reopened\`.`
+            });
