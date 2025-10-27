@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -13,6 +14,8 @@ from pydantic import BaseModel
 from agentlightning.types import Span, SpanNames, Triplet
 
 from .base import TraceAdapter
+
+logger = logging.getLogger(__name__)
 
 
 class Transition(BaseModel):
@@ -537,6 +540,7 @@ class TraceTree:
         dedup_llm_call: bool = True,
         reward_match: RewardMatchPolicy = RewardMatchPolicy.FIRST_OCCURRENCE,
         final_reward: Optional[float] = None,
+        _skip_empty_token_spans: bool = False,
     ) -> List[Triplet]:
         """Convert the trace tree into a trajectory of [`Triplet`][agentlightning.Triplet] items.
 
@@ -561,11 +565,23 @@ class TraceTree:
             within_llm_call=False if dedup_llm_call else None,
             existing_llm_call_response_ids=set(),
         )
-        id_transitions: List[Tuple[str, Triplet]] = []
-        for llm_call, agent_name in llm_calls:
-            id_transitions.append((llm_call.id, self.span_to_triplet(llm_call.span, agent_name)))
 
-        rewards = self.match_rewards(reward_match, [call for call, _ in llm_calls])
+        id_transitions: List[Tuple[str, Triplet]] = []
+        # We need to filter out the LLM calls with unrecorded token IDs
+        filtered_llm_calls: List[Tuple[TraceTree, str]] = []
+        for llm_call, agent_name in llm_calls:
+            triplet = self.span_to_triplet(llm_call.span, agent_name)
+            # This is a hot-fix for Tinker+CrewAI, which has some anonymous requests outside the trained agent.
+            # TODO: We might need to reconsider this.
+            if _skip_empty_token_spans and (
+                not triplet.prompt.get("token_ids") or not triplet.response.get("token_ids")
+            ):
+                logger.warning(f"Skipping LLM call with unrecorded token IDs: {triplet}")
+                continue
+            filtered_llm_calls.append((llm_call, agent_name))
+            id_transitions.append((llm_call.id, triplet))
+
+        rewards = self.match_rewards(reward_match, [call for call, _ in filtered_llm_calls])
         transitions = [
             transition.model_copy(update={"reward": rewards.get(id, None)}) for id, transition in id_transitions
         ]
@@ -607,12 +623,14 @@ class TracerTraceToTriplet(TraceToTripletBase):
         agent_match: Optional[str] = None,
         exclude_llm_call_in_reward: bool = True,
         reward_match: RewardMatchPolicy = RewardMatchPolicy.FIRST_OCCURRENCE,
+        _skip_empty_token_spans: bool = False,
     ):
         self.repair_hierarchy = repair_hierarchy
         self.llm_call_match = llm_call_match
         self.agent_match = agent_match
         self.exclude_llm_call_in_reward = exclude_llm_call_in_reward
         self.reward_match = reward_match
+        self._skip_empty_token_spans = _skip_empty_token_spans
 
     def visualize(
         self,
@@ -664,6 +682,7 @@ class TracerTraceToTriplet(TraceToTripletBase):
             agent_match=self.agent_match,
             exclude_llm_call_in_reward=self.exclude_llm_call_in_reward,
             reward_match=self.reward_match,
+            _skip_empty_token_spans=self._skip_empty_token_spans,
         )
         return trajectory
 

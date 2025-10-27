@@ -72,7 +72,8 @@ class Config:
 
     # Sampling parameters
     max_tokens: int = 2048
-    temperature: float = 1.0
+    train_temperature: float = 1.0
+    eval_temperature: float = 1.0
     top_k: int = -1
     top_p: float = 1.0
 
@@ -229,7 +230,7 @@ async def do_sync_training(
         renderer=renderer,
         tokenizer=tokenizer,
         max_tokens=cfg.max_tokens,
-        temperature=cfg.temperature,
+        temperature=cfg.train_temperature,
         top_k=cfg.top_k,
         top_p=cfg.top_p,
     ).rewrite_litellm_custom_providers()
@@ -254,10 +255,12 @@ async def do_sync_training(
         # Run evaluations
         if cfg.eval_every > 0 and i_batch % cfg.eval_every == 0:
             logger.info(f"[Batch {i_batch}] Running evaluations")
+            tinker_llm.temperature = cfg.eval_temperature
             with timed("run_evals", metrics):
                 for evaluator in evaluators:
                     eval_metrics = await evaluator(resources_update.resources_id, store, adapter, "val", i_batch)
                     metrics.update({f"test/{k}": v for k, v in eval_metrics.items()})
+            tinker_llm.temperature = cfg.train_temperature
 
         # Get batch and sample trajectories
         logger.info(f"[Batch {i_batch}] Getting batch data from dataset")
@@ -399,11 +402,13 @@ async def main_training_loop(
 async def main(config: Config) -> None:
     store = LightningStoreClient(config.store_address)
     if config.adapter_from_llm_proxy:
+        # This is still under development
         if config.adapter_agent_match is not None:
             raise ValueError("adapter_agent_match is not supported when adapter_from_llm_proxy is True")
         adapter = LlmProxyTraceToTriplet()
     else:
-        adapter = TracerTraceToTriplet(agent_match=config.adapter_agent_match)
+        # This is the tested path
+        adapter = TracerTraceToTriplet(agent_match=config.adapter_agent_match, _skip_empty_token_spans=True)
     llm_proxy = LLMProxy(
         port=config.llm_proxy_port,
         model_list=[],
