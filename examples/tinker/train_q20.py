@@ -150,11 +150,13 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
     await entrypoint(config)
 
 
-def runner(port: int = 4747):
+def runner(port: int = 4747, n_runners: int = 2):
     # Run only the runners without algorithm
     store = agl.LightningStoreClient(f"http://localhost:{port}")
     trainer = agl.Trainer(
-        algorithm=None, store=store, strategy={"type": "cs", "managed_store": False, "n_runners": 2, "role": "runner"}
+        algorithm=None,
+        store=store,
+        strategy={"type": "cs", "managed_store": False, "n_runners": n_runners, "role": "runner"},
     )
     trainer.fit(q20_agent)
 
@@ -164,11 +166,11 @@ def _run_dryrun(_args: argparse.Namespace) -> None:
 
 
 def _run_algo(args: argparse.Namespace) -> None:
-    asyncio.run(algo(model=args.model, port=args.port))
+    asyncio.run(algo(search=args.search, model=args.model, port=args.port))
 
 
 def _run_runner(args: argparse.Namespace) -> None:
-    runner(port=args.port)
+    runner(port=args.port, n_runners=args.n_runners)
 
 
 def main() -> None:
@@ -180,16 +182,18 @@ def main() -> None:
 
     algo_parser = subparsers.add_parser("algo", help="Launch the full training algorithm.")
     algo_parser.add_argument("--port", type=int, default=4747, help="Port for the AgentLightning store.")
+    algo_parser.add_argument("--search", action="store_true", help="Enable search tool.")
     algo_parser.add_argument(
         "--model",
         choices=("qwen4b", "qwen30b"),
-        default="qwen4b",
+        default="qwen30b",
         help="Model variant to train.",
     )
     algo_parser.set_defaults(func=_run_algo)
 
     runner_parser = subparsers.add_parser("runner", help="Run only the rollout runners.")
     runner_parser.add_argument("--port", type=int, default=4747, help="Port for the AgentLightning store.")
+    runner_parser.add_argument("--n-runners", type=int, default=2, help="Number of runners to use.")
     runner_parser.set_defaults(func=_run_runner)
 
     args = parser.parse_args()
