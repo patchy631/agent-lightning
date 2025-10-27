@@ -23,23 +23,6 @@ def _find_available_port() -> int:
         return s.getsockname()[1]
 
 
-def _split_by_category(data: pd.DataFrame, split_ratio: float) -> tuple[pd.DataFrame, pd.DataFrame]:
-    # Group by category
-    train_list: list[pd.DataFrame] = []
-    test_list: list[pd.DataFrame] = []
-
-    for _, group in data.groupby("category"):  # type: ignore
-        # Sample split_ratio for train, 1-split_ratio for test within each label group
-        train = group.sample(frac=split_ratio, random_state=42)  # type: ignore
-        test = cast(pd.DataFrame, group.drop(train.index))  # type: ignore
-
-        train_list.append(train)
-        test_list.append(test)
-
-    # Concatenate all category groups back together
-    return pd.concat(train_list), pd.concat(test_list)
-
-
 class Q20Task(TypedDict):
     category: str
     answer: str
@@ -106,7 +89,7 @@ def dry_run():
 async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen4b", port: int = 4747):
     raw_data = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     raw_data["search_enabled"] = search
-    train_data, test_data = _split_by_category(raw_data, 0.8)  # 200*20% = 40 samples for test
+    train_data, test_data = raw_data[raw_data["split"] == "train"], raw_data[raw_data["split"] == "test"]
 
     train_dataset = cast(agl.Dataset[Q20Task], train_data.to_dict(orient="records"))  # type: ignore
     test_dataset = cast(agl.Dataset[Q20Task], test_data.to_dict(orient="records"))  # type: ignore
