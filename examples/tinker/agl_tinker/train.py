@@ -399,11 +399,11 @@ async def main_training_loop(
 async def main(config: Config) -> None:
     store = LightningStoreClient(config.store_address)
     if config.adapter_from_llm_proxy:
-        adapter = TracerTraceToTriplet(agent_match=config.adapter_agent_match)
-    else:
         if config.adapter_agent_match is not None:
             raise ValueError("adapter_agent_match is not supported when adapter_from_llm_proxy is True")
         adapter = LlmProxyTraceToTriplet()
+    else:
+        adapter = TracerTraceToTriplet(agent_match=config.adapter_agent_match)
     llm_proxy = LLMProxy(
         port=config.llm_proxy_port,
         model_list=[],

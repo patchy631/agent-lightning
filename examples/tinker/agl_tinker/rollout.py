@@ -60,14 +60,14 @@ def reconstruct_transitions(
             continue
         # TODO: Sometimes triplet.prompt is an empty list. This might be a bug with the adapter.
         if not triplet.prompt["token_ids"] or not triplet.response["token_ids"]:
-            logger.error(f"[Rollout {rollout_id}] Triplet has empty token_ids: {triplet}. Skipping.")
+            logger.warning(f"[Rollout {rollout_id}] Triplet has empty token_ids: {triplet}. Skipping.")
             continue
         # Getting the input and output tokens from the triplet
         input_tokens = ModelInput.from_ints(triplet.prompt["token_ids"])
         output_tokens = triplet.response["token_ids"]
         # Logprobs sometimes are available too.
         if "logprobs" not in triplet.response:
-            logger.warning(f"[Rollout {rollout_id}] Triplet has no logprobs: {triplet}")
+            logger.error(f"[Rollout {rollout_id}] Triplet has token_ids but no logprobs: {triplet}")
             logprobs = None
         else:
             logprobs = [prob["logprob"] for prob in triplet.response["logprobs"]]
