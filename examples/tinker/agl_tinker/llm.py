@@ -209,6 +209,18 @@ class TinkerLLM(CustomLLM):
 def create_llm_proxy(
     model_name: str, renderer_name: str, port: int = 1899, store: Optional[LightningStore] = None
 ) -> LLMProxy:
+    """Convenient helper for creating a LiteLLM proxy for a TinkerLLM model.
+    Used for testing purposes.
+
+    Args:
+        model_name: The name of the TinkerLLM model.
+        renderer_name: The name of the renderer to use for the TinkerLLM model.
+        port: The port to use for the LiteLLM proxy.
+        store: The store to use for the LiteLLM proxy.
+
+    Returns:
+        LLMProxy: A LiteLLM proxy for the TinkerLLM model.
+    """
     service_client = tinker.ServiceClient()
     sampling_client = service_client.create_sampling_client(base_model=model_name)
     tokenizer = cast(PreTrainedTokenizer, AutoTokenizer.from_pretrained(model_name))  # type: ignore

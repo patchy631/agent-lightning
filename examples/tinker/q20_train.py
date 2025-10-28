@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft. All rights reserved.
+
+from __future__ import annotations
+
 import argparse
 import asyncio
 import os
@@ -11,8 +15,8 @@ from agl_tinker.llm import create_llm_proxy
 from agl_tinker.train import Config
 from agl_tinker.train import main as entrypoint
 from crewai import LLM as CrewLLM
+from q20_agent import AnswererResponse, SearchTool, TwentyQuestionsFlow
 from rich.console import Console
-from twenty_questions import AnswererResponse, SearchTool, TwentyQuestionsFlow
 
 import agentlightning as agl
 
@@ -86,7 +90,7 @@ def dry_run():
         llm_proxy.stop()
 
 
-async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen4b", port: int = 4747):
+async def algo(search: bool, model: Literal["qwen4b", "qwen30b"], port: int):
     raw_data = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
     raw_data["search_enabled"] = search
     train_data, test_data = raw_data[raw_data["split"] == "train"], raw_data[raw_data["split"] == "test"]  # type: ignore
@@ -108,7 +112,7 @@ async def algo(search: bool = False, model: Literal["qwen4b", "qwen30b"] = "qwen
     llm_proxy_port = _find_available_port()
 
     config = Config(
-        learning_rate=1e-5,
+        learning_rate=1e-6,
         dataset_builder=AGLDatasetBuilder(
             train_dataset=train_dataset,
             val_dataset=test_dataset,

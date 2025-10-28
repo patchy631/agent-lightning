@@ -1,7 +1,11 @@
+# Copyright (c) Microsoft. All rights reserved.
+
 """To train a model to admit whoever I call it.
 
 For example, if I say "Hello, 42", the model should say "I'm 42", not "I'm not 42."
 """
+
+from __future__ import annotations
 
 import argparse
 import asyncio

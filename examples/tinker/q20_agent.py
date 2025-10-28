@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft. All rights reserved.
+
+from __future__ import annotations
+
 import json
 import traceback
 from contextlib import contextmanager
@@ -5,7 +9,7 @@ from typing import Any, Dict, List, Literal, Optional, TypedDict, cast
 
 import pandas as pd
 import tinker
-from agl_tinker.llm import TinkerLLM
+from agl_tinker.llm import TinkerLLM, create_llm_proxy
 from crewai import LLM as CrewLLM
 from crewai import Agent as CrewAgent
 from crewai import BaseLLM
@@ -276,80 +280,71 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         console.print("The flow has reached the finished state.")
 
 
-@contextmanager
-def prepare_llm(model_name: str, port: int, search_tool: bool = False):
+def evaluate_q20(model_name: str, search: bool, port: int, output_file: str):
+    """Evaluate a model on the 20 Questions game.
+
+    Args:
+        model_name: The name of the model to evaluate.
+        search: Whether the player can use the search tool.
+        port: The port to use for the LiteLLM proxy.
+    """
+
     store = InMemoryLightningStore()
     if model_name.startswith("Qwen/"):
-        service_client = tinker.ServiceClient()
-        sampling_client = service_client.create_sampling_client(base_model=model_name)
-        tokenizer = cast(PreTrainedTokenizer, AutoTokenizer.from_pretrained(model_name))  # type: ignore
-        tinker_llm = TinkerLLM(
-            model_name=model_name,
-            sampling_client=sampling_client,
-            renderer=get_renderer("qwen3", tokenizer),
-            tokenizer=tokenizer,
-        )
-        tinker_llm.rewrite_litellm_custom_providers()
-
-        model_list = tinker_llm.as_model_list()
+        llm_proxy = create_llm_proxy(model_name, "qwen3", port, store)
     else:
-        model_list: List[ModelConfig] = [
-            {"model_name": model_name, "litellm_params": {"model": model_name}},
-        ]
-    model_list.extend(
-        [
-            {"model_name": "gpt-4.1", "litellm_params": {"model": "openai/gpt-4.1"}},
-            {"model_name": "gpt-5-mini", "litellm_params": {"model": "openai/gpt-5-mini"}},
-        ]
-    )
-    console.print("Model list:", model_list)
+        console.print(f"Assuming {model_name} is an OpenAI model.")
+        llm_proxy = LLMProxy(
+            port=port,
+            store=store,
+            model_list=[
+                {"model_name": model_name, "litellm_params": {"model": "openai/" + model_name}},
+            ],
+            num_retries=2,
+        )
 
-    llm_proxy = LLMProxy(
-        port=port,
-        store=store,
-        model_list=model_list,
-        num_retries=2,
-        _add_return_token_ids=False,
+    answerer_model_name = "gpt-5-mini"
+    search_model_name = "gpt-4.1"
+
+    llm_proxy.update_model_list(
+        [
+            *llm_proxy.model_list,
+            {"model_name": answerer_model_name, "litellm_params": {"model": "openai/" + answerer_model_name}},
+            {"model_name": search_model_name, "litellm_params": {"model": "openai/" + search_model_name}},
+        ]
     )
-    llm_proxy.start()
-    llms: Dict[str, Any] = {
-        "player_llm": CrewLLM(
+    console.print("Model list:", llm_proxy.model_list)
+
+    try:
+        llm_proxy.start()
+        player_llm = CrewLLM(
             model="openai/" + model_name, base_url=f"http://localhost:{port}/v1", api_key="dummy", timeout=60.0
-        ),
-        "answer_llm": CrewLLM(
-            model="openai/gpt-5-mini",
+        )
+        answer_llm = CrewLLM(
+            model="openai/" + answerer_model_name,
             base_url=f"http://localhost:{port}/v1",
             api_key="dummy",
             reasoning_effort="low",
             response_format=AnswererResponse,
-            timeout=60.0,
-        ),
-    }
-
-    if search_tool:
-        llms["search_tool"] = SearchTool(
-            model=CrewLLM(
-                model="openai/gpt-4.1",
-                base_url=f"http://localhost:{port}/v1",
-                api_key="dummy",
-                reasoning_effort="none",
-                timeout=60.0,
-            )
         )
-    yield llms
-
-    llm_proxy.stop()
-
-
-def main(model_name: str, output_file: str, port: int = 4000, search_tool: bool = False):
-    df = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
-
-    with prepare_llm(model_name, port, search_tool) as llm_config:
+        search_tool = (
+            SearchTool(
+                model=CrewLLM(
+                    model="openai/" + search_model_name,
+                    base_url=f"http://localhost:{port}/v1",
+                    api_key="dummy",
+                    reasoning_effort="none",
+                    timeout=60.0,
+                )
+            )
+            if search
+            else None
+        )
         for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
-            if "search_tool" in llm_config:
-                llm_config["search_tool"].num_called = 0
+            if search_tool:
+                search_tool.num_called = 0
 
-            flow = TwentyQuestionsFlow(**llm_config)
+            flow = TwentyQuestionsFlow(player_llm=player_llm, answer_llm=answer_llm, search_tool=search_tool)
             try:
                 flow.kickoff(
                     {
@@ -368,6 +363,11 @@ def main(model_name: str, output_file: str, port: int = 4000, search_tool: bool 
                 }
             with open(output_file, "a") as f:
                 f.write(json.dumps(result_json) + "\n")
+    finally:
+        llm_proxy.stop()
+
+
+def main(): ...
 
 
 if __name__ == "__main__":
