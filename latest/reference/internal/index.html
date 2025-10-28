@@ -1263,6 +1263,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#agentlightning.adapter.triplet.TraceTree.span_to_triplet" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;span_to_triplet
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#agentlightning.adapter.triplet.TraceTree.to_json" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;to_json
@@ -2115,6 +2124,15 @@
   <a href="#agentlightning.adapter.triplet.TraceTree.repair_hierarchy" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;repair_hierarchy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agentlightning.adapter.triplet.TraceTree.span_to_triplet" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;span_to_triplet
     </span>
   </a>
   
@@ -3446,6 +3464,26 @@ We will never get the correct span underneath.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="agentlightning.adapter.triplet.TraceTree.span_to_triplet" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">span_to_triplet</span><span class="p">(</span><span class="n">span</span><span class="p">,</span> <span class="n">agent_name</span><span class="p">)</span></code>
+
+<a href="#agentlightning.adapter.triplet.TraceTree.span_to_triplet" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert a span to a triplet.</p>
+<p>Subclass can override this method to add more fields to the triplet,
+such as chat messages and tool calls.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="agentlightning.adapter.triplet.TraceTree.to_json" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">to_json</span><span class="p">()</span></code>
 
@@ -3465,7 +3503,7 @@ We will never get the correct span underneath.</p>
 
 
 <h4 id="agentlightning.adapter.triplet.TraceTree.to_trajectory" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">to_trajectory</span><span class="p">(</span><span class="n">llm_call_match</span><span class="o">=</span><span class="s1">&#39;openai</span><span class="se">\\</span><span class="s1">.chat</span><span class="se">\\</span><span class="s1">.completion&#39;</span><span class="p">,</span> <span class="n">agent_match</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude_llm_call_in_reward</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dedup_llm_call</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reward_match</span><span class="o">=</span><span class="n">RewardMatchPolicy</span><span class="o">.</span><span class="n">FIRST_OCCURRENCE</span><span class="p">,</span> <span class="n">final_reward</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">to_trajectory</span><span class="p">(</span><span class="n">llm_call_match</span><span class="o">=</span><span class="s1">&#39;openai</span><span class="se">\\</span><span class="s1">.chat</span><span class="se">\\</span><span class="s1">.completion&#39;</span><span class="p">,</span> <span class="n">agent_match</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude_llm_call_in_reward</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dedup_llm_call</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reward_match</span><span class="o">=</span><span class="n">RewardMatchPolicy</span><span class="o">.</span><span class="n">FIRST_OCCURRENCE</span><span class="p">,</span> <span class="n">final_reward</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_skip_empty_token_spans</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 <a href="#agentlightning.adapter.triplet.TraceTree.to_trajectory" class="headerlink" title="Permanent link">&para;</a></h4>
 
