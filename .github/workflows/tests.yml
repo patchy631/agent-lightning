@@ -20,8 +20,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.BOT_PAT }}
+
       - name: Create test branch
         run: |
           echo "test $(date)" > test.txt
