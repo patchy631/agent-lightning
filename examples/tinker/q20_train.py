@@ -94,6 +94,8 @@ async def algo(search: bool, model: Literal["qwen4b", "qwen30b"], port: int):
     raw_data = pd.read_csv("q20_nouns.csv")  # type: ignore
     raw_data["search_enabled"] = search
     train_data, test_data = raw_data[raw_data["split"] == "train"], raw_data[raw_data["split"] == "test"]  # type: ignore
+    train_data = train_data[train_data["category"] == "animal"]
+    test_data = test_data[test_data["category"] == "animal"]
 
     train_dataset = cast(agl.Dataset[Q20Task], train_data.to_dict(orient="records"))  # type: ignore
     test_dataset = cast(agl.Dataset[Q20Task], test_data.to_dict(orient="records"))  # type: ignore
