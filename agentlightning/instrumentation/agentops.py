@@ -44,9 +44,17 @@ def _patch_new_agentops():
     @no_type_check
     def _handle_chat_attributes_with_tokens(args=None, kwargs=None, return_value=None, **kws):  # type: ignore
         attributes = _original_handle_chat_attributes(args=args, kwargs=kwargs, return_value=return_value, **kws)
-        if return_value is not None and hasattr(return_value, "prompt_token_ids"):
+        if (
+            return_value is not None
+            and hasattr(return_value, "prompt_token_ids")
+            and return_value.prompt_token_ids is not None
+        ):
             attributes["prompt_token_ids"] = list(return_value.prompt_token_ids)
-        if return_value is not None and hasattr(return_value, "response_token_ids"):
+        if (
+            return_value is not None
+            and hasattr(return_value, "response_token_ids")
+            and return_value.response_token_ids is not None
+        ):
             attributes["response_token_ids"] = list(return_value.response_token_ids[0])
 
         # For LiteLLM Proxy (v0.2) with vLLM return_token_ids, response_token_ids now lives in choices
@@ -55,27 +63,28 @@ def _patch_new_agentops():
             and hasattr(return_value, "choices")
             and return_value.choices
             and isinstance(return_value.choices, list)
+            and len(return_value.choices) > 0
         ):
             first_choice = return_value.choices[0]
             # Token IDs from "choices[0].token_ids"
             if "response_token_ids" not in attributes:
-                if hasattr(first_choice, "token_ids"):
+                if hasattr(first_choice, "token_ids") and first_choice.token_ids is not None:
                     attributes["response_token_ids"] = list(first_choice.token_ids)
                 # newer versions of OpenAI client SDK
                 elif (
                     hasattr(first_choice, "provider_specific_fields")
-                    and "token_ids" in first_choice.provider_specific_fields
+                    and first_choice.provider_specific_fields.get("token_ids") is not None
                 ):
                     attributes["response_token_ids"] = list(first_choice.provider_specific_fields["token_ids"])
 
             # log probability
-            # This is temporarily. We need a unified conventions for classifying and naming logprobs.
+            # This is temporary. We need a unified convention for classifying and naming logprobs.
             if hasattr(first_choice, "logprobs") and first_choice.logprobs is not None:
-                if first_choice.logprobs.content:
+                if hasattr(first_choice.logprobs, "content") and first_choice.logprobs.content is not None:
                     attributes["logprobs.content"] = json.dumps(
                         [logprob.model_dump() for logprob in first_choice.logprobs.content]
                     )
-                if first_choice.logprobs.refusal:
+                if hasattr(first_choice.logprobs, "refusal") and first_choice.logprobs.refusal is not None:
                     attributes["logprobs.refusal"] = json.dumps(
                         [logprob.model_dump() for logprob in first_choice.logprobs.refusal]
                     )
@@ -89,9 +98,9 @@ def _patch_new_agentops():
         ):
             json_data = return_value.http_response.json()
             if isinstance(json_data, dict):
-                if "prompt_token_ids" in json_data:
+                if json_data.get("prompt_token_ids") is not None:
                     attributes["prompt_token_ids"] = list(json_data["prompt_token_ids"])
-                if "response_token_ids" in json_data:
+                if json_data.get("response_token_ids") is not None:
                     attributes["response_token_ids"] = list(json_data["response_token_ids"][0])
 
         return attributes
