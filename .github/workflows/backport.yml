@@ -1,0 +1,24 @@
+name: Backport Merged Pull Request
+on:
+  pull_request_target:
+    types: [closed]
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  backport:
+    name: Backport pull request
+    runs-on: ubuntu-latest
+    # Don't run on closed unmerged pull requests
+    if: github.event.pull_request.merged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create backport pull requests
+        uses: korthout/backport-action@v3
+        with:
+          branch_name: 'backport/${pull_number}/${target_branch}'
+          label_pattern: ^(stable/[^ ]+)$
+          github_token: ${{ secrets.BOT_PAT }}
+          add_labels: backport
