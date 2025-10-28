@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
+import socket
+
 from q20_train import *
+
+
+def _find_available_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
 
 
 async def algo_animal_only(search: bool, model: Literal["qwen4b", "qwen30b"], port: int):
