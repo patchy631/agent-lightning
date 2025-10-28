@@ -40,9 +40,11 @@ console = Console()
 
 @agl.rollout
 async def q20_agent(task: Q20Task, llm: agl.LLM, rollout: agl.Rollout) -> None:
+    answer_llm_setting = os.getenv("ANSWERER_LLM", "gpt-5-mini")
+    search_llm_setting = os.getenv("SEARCH_LLM", "gpt-4.1")
     player_llm = CrewLLM(model="openai/" + llm.model, base_url=llm.endpoint, api_key="dummy", timeout=LLM_TIMEOUT)
     answer_llm = CrewLLM(
-        model="openai/gpt-5-mini",
+        model="openai/" + answer_llm_setting,
         base_url=os.getenv("OPENAI_BASE_URL"),
         api_key=os.getenv("OPENAI_API_KEY"),
         reasoning_effort="low",
@@ -52,7 +54,7 @@ async def q20_agent(task: Q20Task, llm: agl.LLM, rollout: agl.Rollout) -> None:
     if task["search_enabled"]:
         search_tool = SearchTool(
             model=CrewLLM(
-                model="openai/gpt-4.1",
+                model="openai/" + search_llm_setting,
                 base_url=os.getenv("OPENAI_BASE_URL"),
                 api_key=os.getenv("OPENAI_API_KEY"),
                 reasoning_effort="none",
