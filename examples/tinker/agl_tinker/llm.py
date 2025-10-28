@@ -207,7 +207,11 @@ class TinkerLLM(CustomLLM):
 
 
 def create_llm_proxy(
-    model_name: str, renderer_name: str, port: int = 1899, store: Optional[LightningStore] = None
+    model_name: str,
+    renderer_name: str,
+    port: int = 1899,
+    store: Optional[LightningStore] = None,
+    _add_return_token_ids: bool = True,
 ) -> LLMProxy:
     """Convenient helper for creating a LiteLLM proxy for a TinkerLLM model.
     Used for testing purposes.
@@ -236,4 +240,5 @@ def create_llm_proxy(
         store=store,
         model_list=tinker_llm.as_model_list(),
         num_retries=2,
+        _add_return_token_ids=_add_return_token_ids,
     )

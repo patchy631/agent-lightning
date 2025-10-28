@@ -82,7 +82,7 @@ def dry_run():
     )
     try:
         llm_proxy.start()
-        sampled_csv = pd.read_csv("twenty_questions_nouns.csv").sample(n=4, random_state=42)  # type: ignore
+        sampled_csv = pd.read_csv("q20_nouns.csv").sample(n=4, random_state=42)  # type: ignore
         sampled_csv["search_enabled"] = False
         dataset = sampled_csv.to_dict(orient="records")  # type: ignore
         trainer.dev(q20_agent, cast(agl.Dataset[Q20Task], dataset))
@@ -91,7 +91,7 @@ def dry_run():
 
 
 async def algo(search: bool, model: Literal["qwen4b", "qwen30b"], port: int):
-    raw_data = pd.read_csv("twenty_questions_nouns.csv")  # type: ignore
+    raw_data = pd.read_csv("q20_nouns.csv")  # type: ignore
     raw_data["search_enabled"] = search
     train_data, test_data = raw_data[raw_data["split"] == "train"], raw_data[raw_data["split"] == "test"]  # type: ignore
 
@@ -107,7 +107,7 @@ async def algo(search: bool, model: Literal["qwen4b", "qwen30b"], port: int):
     else:
         raise ValueError(f"Invalid model: {model}")
 
-    experiment_name = f"q20_{'search' if search else 'no_search'}_{model}"
+    experiment_name = f"q20_{'search' if search else 'no_search'}_{model}_lr1e-6"
 
     llm_proxy_port = _find_available_port()
 

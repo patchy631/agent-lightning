@@ -2,27 +2,23 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import traceback
-from contextlib import contextmanager
-from typing import Any, Dict, List, Literal, Optional, TypedDict, cast
+from pathlib import Path
+from typing import Any, List, Literal, Optional, cast
 
 import pandas as pd
-import tinker
-from agl_tinker.llm import TinkerLLM, create_llm_proxy
+from agl_tinker.llm import create_llm_proxy
 from crewai import LLM as CrewLLM
 from crewai import Agent as CrewAgent
 from crewai import BaseLLM
-from crewai import Task as CrewTask
 from crewai.flow import Flow, listen, router, start
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 from rich.console import Console
-from tinker_cookbook.renderers import get_renderer
-from transformers import AutoTokenizer, PreTrainedTokenizer
 
-from agentlightning.llm_proxy import LLMProxy, ModelConfig
-from agentlightning.store import InMemoryLightningStore
+from agentlightning import InMemoryLightningStore, LLMProxy
 
 llm = CrewLLM(model="openai/gpt-4o-mini")
 
@@ -280,18 +276,36 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
         console.print("The flow has reached the finished state.")
 
 
-def evaluate_q20(model_name: str, search: bool, port: int, output_file: str):
+def evaluate_q20(
+    model_name: str,
+    search: bool,
+    port: int,
+    output_file: str,
+    dataset_path: str,
+    seed: Optional[int] = 42,
+):
     """Evaluate a model on the 20 Questions game.
 
     Args:
         model_name: The name of the model to evaluate.
         search: Whether the player can use the search tool.
         port: The port to use for the LiteLLM proxy.
+        output_file: Where to append JSONL results.
+        dataset_path: CSV file containing category and answer columns.
+        seed: Optional random seed for shuffling the dataset; ``None`` disables deterministic shuffling.
     """
 
     store = InMemoryLightningStore()
+    df = pd.read_csv(dataset_path)  # type: ignore
+    if df.empty:
+        console.print(f"[bold yellow]Dataset '{dataset_path}' is empty. Nothing to evaluate.[/bold yellow]")
+        return
+
+    output_path = Path(output_file)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     if model_name.startswith("Qwen/"):
-        llm_proxy = create_llm_proxy(model_name, "qwen3", port, store)
+        llm_proxy = create_llm_proxy(model_name, "qwen3", port, store, _add_return_token_ids=False)
     else:
         console.print(f"Assuming {model_name} is an OpenAI model.")
         llm_proxy = LLMProxy(
@@ -301,18 +315,23 @@ def evaluate_q20(model_name: str, search: bool, port: int, output_file: str):
                 {"model_name": model_name, "litellm_params": {"model": "openai/" + model_name}},
             ],
             num_retries=2,
+            _add_return_token_ids=False,
         )
 
     answerer_model_name = "gpt-5-mini"
     search_model_name = "gpt-4.1"
 
-    llm_proxy.update_model_list(
-        [
-            *llm_proxy.model_list,
-            {"model_name": answerer_model_name, "litellm_params": {"model": "openai/" + answerer_model_name}},
-            {"model_name": search_model_name, "litellm_params": {"model": "openai/" + search_model_name}},
-        ]
-    )
+    # Add the answerer and search models to the model list if they are not already present.
+    current_model_list = llm_proxy.model_list.copy()
+    if not any(model["model_name"] == answerer_model_name for model in current_model_list):
+        current_model_list.append(
+            {"model_name": answerer_model_name, "litellm_params": {"model": "openai/" + answerer_model_name}}
+        )
+    if not any(model["model_name"] == search_model_name for model in current_model_list):
+        current_model_list.append(
+            {"model_name": search_model_name, "litellm_params": {"model": "openai/" + search_model_name}}
+        )
+    llm_proxy.update_model_list(current_model_list)
     console.print("Model list:", llm_proxy.model_list)
 
     try:
@@ -340,7 +359,12 @@ def evaluate_q20(model_name: str, search: bool, port: int, output_file: str):
             if search
             else None
         )
-        for index, row in df.sample(n=len(df), random_state=42).iterrows():  # type: ignore
+        sampled_df = (
+            df.sample(n=len(df), random_state=seed)  # type: ignore
+            if seed is not None
+            else df.sample(n=len(df))  # type: ignore
+        )
+        for index, row in sampled_df.iterrows():  # type: ignore
             if search_tool:
                 search_tool.num_called = 0
 
@@ -361,17 +385,57 @@ def evaluate_q20(model_name: str, search: bool, port: int, output_file: str):
                     "error": str(e),
                     "exception": traceback.print_exc(),
                 }
-            with open(output_file, "a") as f:
+            with output_path.open("a") as f:
                 f.write(json.dumps(result_json) + "\n")
     finally:
         llm_proxy.stop()
 
 
-def main(): ...
+def main(argv: Optional[List[str]] = None) -> None:
+    parser = argparse.ArgumentParser(description="Evaluate a model on the 20 Questions benchmark.")
+    parser.add_argument(
+        "--model",
+        default="Qwen/Qwen3-30B-A3B-Instruct-2507",
+        help="Model identifier to evaluate.",
+    )
+    parser.add_argument(
+        "--search",
+        action="store_true",
+        help="Enable the search tool for the player agent.",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=12358,
+        help="Port to expose the LiteLLM proxy.",
+    )
+    parser.add_argument(
+        "--output-file",
+        default="logs/twenty_questions_results.jsonl",
+        help="Path to write JSONL evaluation results.",
+    )
+    parser.add_argument(
+        "--dataset",
+        default="q20_nouns.csv",
+        help="CSV file containing the evaluation dataset.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for shuffling the dataset. Use -1 to disable deterministic shuffling.",
+    )
+
+    args = parser.parse_args(argv)
+    evaluate_q20(
+        model_name=args.model,
+        search=args.search,
+        port=args.port,
+        output_file=args.output_file,
+        dataset_path=args.dataset,
+        seed=None if args.seed == -1 else args.seed,
+    )
 
 
 if __name__ == "__main__":
-    main(
-        model_name="Qwen/Qwen3-30B-A3B-Instruct-2507",
-        output_file="test-results/twenty_questions_qwen30b_notool_gpt5mini_20251026.jsonl",
-    )
+    main()
