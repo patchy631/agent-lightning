@@ -28,7 +28,6 @@ jobs:
           git add test.txt
           git commit -m "Test commit for PAT"
           git branch -M test-pat-branch
-          git remote add origin https://github.com/${{ github.repository }}.git
           git push --force "https://${{ secrets.BOT_PAT }}@github.com/${{ github.repository }}" HEAD:test-pat-branch
 
       - name: Attempt to open PR with PAT
