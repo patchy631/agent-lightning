@@ -72,7 +72,36 @@ Running the hooks locally saves you from CI failures and keeps diffs clean.
 
 Use lowercase words separated by hyphens (e.g. `feature/async-runner-hooks`).
 
-## 4. Build and Validate Documentation
+## 4. Run Tests and Checks
+
+Most code changes should be backed by automated tests. Use the `uv run` prefix so the commands execute inside the project virtual environment.
+
+- **Run the full test suite:**
+  ```bash
+  uv run pytest -v
+  ```
+- **Target a specific module or test:**
+  ```bash
+  uv run pytest tests/path/to/test_file.py -k test_name
+  ```
+- **Exercise optional markers:** We classify slower or optional suites with markers. For example, to skip anything marked `slow`
+  (the default in CI) run:
+  ```bash
+  uv run pytest -m "not slow"
+  ```
+  To include GPU- or example-heavy paths locally, opt in with `-m slow` or the relevant marker listed at the top of the test file.
+- **Collect coverage details (optional but helpful for large changes):**
+  ```bash
+  uv run pytest --cov=agentlightning --cov-report=term-missing
+  ```
+- **Type checking:**
+  ```bash
+  uv run pyright
+  ```
+
+When touching integrations located in `examples/`, review the README inside each example directory for additional smoke-test instructions.
+
+## 5. Build and Validate Documentation
 
 If your change touches documentation, verify it builds cleanly:
 
@@ -83,16 +112,13 @@ uv run mkdocs build --strict  # CI-equivalent check
 
 The `--strict` flag matches our CI settings and turns warnings into errors so you can catch issues early.
 
-## 5. Before You Push
+## 6. Before You Push
 
 - Run the pre-commit hooks (`uv run pre-commit run --all-files`).
-- Execute the relevant tests, for example:
-  ```bash
-  uv run pytest -v tests
-  ```
+- Execute the relevant tests (see the previous section for examples).
 - For changes affecting examples, follow the README inside each `examples/<name>/` directory to validate manually as needed.
 
-## 6. Open a Pull Request
+## 7. Open a Pull Request
 
 1. Push your branch to your fork:
    ```bash
