@@ -106,10 +106,10 @@ async def agl_single_rollout(
     """Under Agent-lightning, there is no such thing as a "env".
     The "env" here is a simple wrapper around a task.
     """
-    rollout = await store.enqueue_rollout(env.task, mode=mode, resources_id=llm_resources_id)
+    rollout_partial = await store.enqueue_rollout(env.task, mode=mode, resources_id=llm_resources_id)
 
     while True:
-        completed_rollout = await store.get_rollout_by_id(rollout.rollout_id)
+        completed_rollout = await store.get_rollout_by_id(rollout_partial.rollout_id)
         if completed_rollout is not None and completed_rollout.status in ["succeeded", "failed", "cancelled"]:
             break
 
@@ -120,32 +120,32 @@ async def agl_single_rollout(
         await asyncio.sleep(WAIT_FOR_ROLLOUTS_INTERVAL * jitter)
 
     if completed_rollout.status != "succeeded":
-        logger.error(f"[Rollout {rollout.rollout_id}] Failed with status {completed_rollout.status}")
+        logger.error(f"[Rollout {completed_rollout.rollout_id}] Failed with status {completed_rollout.status}")
     else:
         logger.debug(
-            f"[Rollout {rollout.rollout_id}] Rollout succeeded under "
+            f"[Rollout {completed_rollout.rollout_id}] Rollout succeeded under "
             f"{cast(float, completed_rollout.end_time) - completed_rollout.start_time:.2f} seconds"
         )
 
-    spans = await store.query_spans(rollout.rollout_id, "latest")
+    spans = await store.query_spans(completed_rollout.rollout_id, "latest")
     if not spans:
-        logger.error(f"[Rollout {rollout.rollout_id}] No spans found. Return an empty trajectory.")
-        return rollout, Trajectory(transitions=[], final_ob=ModelInput.from_ints([]))
+        logger.error(f"[Rollout {completed_rollout.rollout_id}] No spans found. Return an empty trajectory.")
+        return completed_rollout, Trajectory(transitions=[], final_ob=ModelInput.from_ints([]))
 
     triplets = adapter.adapt(spans)
     logger.debug(
-        f"[Rollout {rollout.rollout_id}] Adapted {len(triplets)} triplets from {len(spans)} spans. "
+        f"[Rollout {completed_rollout.rollout_id}] Adapted {len(triplets)} triplets from {len(spans)} spans. "
         f"Rewards are: {[t.reward for t in triplets]}"
     )
 
     # Converting triplets to Tinker transitions
     # Always do this no matter the rollout status is succeeded or not.
-    reconstructed = reconstruct_transitions(spans, adapter, rollout.rollout_id)
+    reconstructed = reconstruct_transitions(spans, adapter, completed_rollout.rollout_id)
     logger.info(
-        f"[Rollout {rollout.rollout_id}] Reconstructed {len(reconstructed.transitions)} transitions from {len(spans)} spans. "
+        f"[Rollout {completed_rollout.rollout_id}] Reconstructed {len(reconstructed.transitions)} transitions from {len(spans)} spans. "
         f"Rewards are: {[r.reward for r in reconstructed.transitions]} (raw triplets rewards: {[t.reward for t in triplets]})"
     )
-    return rollout, reconstructed
+    return completed_rollout, reconstructed
 
 
 @scope
@@ -217,10 +217,10 @@ async def do_group_of_group_rollouts(
         completed_statuses: List[RolloutStatus] = ["succeeded", "failed", "cancelled"]
         for status in completed_statuses:
             metrics_agl[f"by_group/frac_status_{status}"] = sum(
-                1 for rollout in rollouts_G if rollout.status == status
+                1 if rollout.status == status else 0 for rollout in rollouts_G
             ) / len(trajectories_G)
         metrics_agl["by_group/frac_status_others"] = sum(
-            1 for rollout in rollouts_G if rollout.status not in completed_statuses
+            1 if rollout.status not in completed_statuses else 0 for rollout in rollouts_G
         ) / len(trajectories_G)
 
         tg = TrajectoryGroup(trajectories_G, list(rewards_G), list(metrics_G) + [metrics_agl])
