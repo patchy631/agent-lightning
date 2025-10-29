@@ -38,8 +38,6 @@ logger = logging.getLogger(__name__)
 
 AGL_API_V1_PREFIX = "/agl/v1"
 
-NamedResourcesAlias = TypeAdapter(NamedResources)
-
 
 class RolloutRequest(BaseModel):
     input: TaskInput
@@ -318,30 +316,28 @@ class LightningStoreServer(LightningStore):
             request: Request, call_next: Callable[[Request], Awaitable[Response]]
         ) -> Response:
             """
-            Convert unhandled application exceptions into 400 responses.
+            Convert unhandled application exceptions into 500 responses.
 
             Only covers /agl/v1 requests.
 
             - Client needs a reliable signal to distinguish "app bug / bad request"
               from transport/session failures.
-            - 400 here means "do not retry"; network issues will surface as aiohttp
+            - 400 means "do not retry"; network issues will surface as aiohttp
               exceptions or 5xx and will be retried by the client shield.
             """
             try:
                 return await call_next(request)
             except Exception as exc:
-                # TODO: better handle 5xx errors
                 # decide whether to convert this into your 400 JSONResponse
                 if request.url.path.startswith(AGL_API_V1_PREFIX):
                     logger.exception("Unhandled application error", exc_info=exc)
-                    return JSONResponse(
-                        status_code=400,
-                        content={
-                            "detail": str(exc),
-                            "error_type": type(exc).__name__,
-                            "traceback": traceback.format_exc(),
-                        },
-                    )
+                    payload = {
+                        "detail": "Internal server error",
+                        "error_type": type(exc).__name__,
+                        "traceback": traceback.format_exc(),
+                    }
+                    # 500 so clients can decide to retry
+                    return JSONResponse(status_code=500, content=payload)
                 # otherwise re-raise and let FastAPI/Starlette handle it (500 or other handlers)
                 raise
 
@@ -449,9 +445,9 @@ class LightningStoreServer(LightningStore):
             return QuerySpansParameters(rollout_id=rollout_id, attempt_id=attempt_id)
 
         @self.app.get(AGL_API_V1_PREFIX + "/spans", response_model=List[Span])
-        async def query_spans(
+        async def query_spans(  # pyright: ignore[reportUnusedFunction]
             request: Annotated[QuerySpansParameters, Depends(query_span_parameters)],
-        ):  # pyright: ignore[reportUnusedFunction]
+        ):
             return await self.query_spans(request.rollout_id, request.attempt_id)
 
         @self.app.post(AGL_API_V1_PREFIX + "/spans/next", response_model=NextSequenceIdResponse)
@@ -785,7 +781,7 @@ class LightningStoreClient(LightningStore):
                     resp.raise_for_status()
                     return await resp.json()
             except aiohttp.ClientResponseError as cre:
-                # Respect app-level 4xx as final (server marks app faults as 400)
+                # Respect app-level 4xx as final
                 # 4xx => application issue; do not retry (except 408 which is transient)
                 logger.debug(f"ClientResponseError: {cre.status} {cre.message}", exc_info=True)
                 if 400 <= cre.status < 500 and cre.status != 408:
