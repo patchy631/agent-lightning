@@ -6,7 +6,7 @@ import asyncio
 import itertools
 import logging
 import random
-from typing import Any, Dict, Generic, List, Sequence, TypeVar, cast
+from typing import Any, Dict, Generic, List, Sequence, Tuple, TypeVar, cast
 
 from tinker.types import ModelInput
 from tinker_cookbook.completers import TokensWithLogprobs
@@ -19,9 +19,8 @@ from tinker_cookbook.rl.types import (
 )
 from tinker_cookbook.utils.trace import scope
 
-from agentlightning import LightningStore, Span, TraceToTripletBase
+from agentlightning import LightningStore, Rollout, RolloutMode, RolloutStatus, Span, TraceToTripletBase
 from agentlightning import Triplet as AGLTriplet
-from agentlightning.types.core import RolloutMode
 
 from .env import AGLDataset, AGLDummyEnv, AGLDummyEnvGroupBuilder
 
@@ -76,8 +75,10 @@ def reconstruct_transitions(spans: List[Span], adapter: TraceToTripletBase, roll
         metrics: Dict[str, float] = {}
         if triplet.reward is not None and i_triplet + 1 == len(triplets):
             metrics["reward/final_step"] = triplet.reward
-        metrics["reward/non_empty"] = 1.0 if triplet.reward is not None else 0.0
+        metrics["reward/not_null"] = 1.0 if triplet.reward is not None else 0.0
 
+        # TODO: The logic below might cause failed rollouts to be treated as rollouts with 0 reward.
+        # We log that at the moment, but we should consider a better way to handle this.
         transitions.append(
             Transition(
                 ob=input_tokens,
@@ -101,7 +102,7 @@ async def agl_single_rollout(
     store: LightningStore,
     adapter: TraceToTripletBase,
     mode: RolloutMode,
-) -> Trajectory:
+) -> Tuple[Rollout, Trajectory]:
     """Under Agent-lightning, there is no such thing as a "env".
     The "env" here is a simple wrapper around a task.
     """
@@ -129,7 +130,7 @@ async def agl_single_rollout(
     spans = await store.query_spans(rollout.rollout_id, "latest")
     if not spans:
         logger.error(f"[Rollout {rollout.rollout_id}] No spans found. Return an empty trajectory.")
-        return Trajectory(transitions=[], final_ob=ModelInput.from_ints([]))
+        return rollout, Trajectory(transitions=[], final_ob=ModelInput.from_ints([]))
 
     triplets = adapter.adapt(spans)
     logger.debug(
@@ -138,12 +139,13 @@ async def agl_single_rollout(
     )
 
     # Converting triplets to Tinker transitions
+    # Always do this no matter the rollout status is succeeded or not.
     reconstructed = reconstruct_transitions(spans, adapter, rollout.rollout_id)
     logger.info(
         f"[Rollout {rollout.rollout_id}] Reconstructed {len(reconstructed.transitions)} transitions from {len(spans)} spans. "
         f"Rewards are: {[r.reward for r in reconstructed.transitions]} (raw triplets rewards: {[t.reward for t in triplets]})"
     )
-    return reconstructed
+    return rollout, reconstructed
 
 
 @scope
@@ -180,7 +182,7 @@ async def do_group_of_group_rollouts(
     sem = asyncio.Semaphore(concurrency)
 
     # 3) For each env in each group, prepare a task that respects the semaphore.
-    async def run_single_with_limit(env: AGLDummyEnv[Any]) -> Trajectory:
+    async def run_single_with_limit(env: AGLDummyEnv[Any]) -> Tuple[Rollout, Trajectory]:
         async with sem:
             return await agl_single_rollout(
                 llm_resources_id,
@@ -191,7 +193,7 @@ async def do_group_of_group_rollouts(
             )
 
     # We keep tasks organized per group so we can compute group rewards afterward.
-    per_group_tasks: List[List[asyncio.Task[Trajectory]]] = []
+    per_group_tasks: List[List[asyncio.Task[Tuple[Rollout, Trajectory]]]] = []
     for group_idx, envs in enumerate(groups_envs):
         tasks = [asyncio.create_task(run_single_with_limit(env)) for env in envs]
         per_group_tasks.append(tasks)
@@ -199,11 +201,29 @@ async def do_group_of_group_rollouts(
     # 4) Await all groups, but still allow interleaving via the shared semaphore.
     trajectory_groups: List[TrajectoryGroup] = []
     for group_idx, (builder, tasks) in enumerate(zip(env_group_builders_P, per_group_tasks)):
-        trajectories_G = await asyncio.gather(*tasks)
+        rollouts_and_trajectories_G = await asyncio.gather(*tasks)
+        rollouts_G, trajectories_G = cast(
+            Tuple[List[Rollout], List[Trajectory]], zip(*rollouts_and_trajectories_G, strict=True)
+        )
         # Compute rewards/metrics for this group.
         rewards_and_metrics_G = await builder.compute_group_rewards(trajectories_G)
         rewards_G, metrics_G = zip(*rewards_and_metrics_G, strict=True)
-        tg = TrajectoryGroup(trajectories_G, list(rewards_G), list(metrics_G))
+
+        # Attach AGL-specific metrics for error handling.
+        metrics_agl: Dict[str, float | int] = {}
+        metrics_agl["by_group/frac_empty_traj"] = sum(1 for traj in trajectories_G if not traj.transitions) / len(
+            trajectories_G
+        )
+        completed_statuses: List[RolloutStatus] = ["succeeded", "failed", "cancelled"]
+        for status in completed_statuses:
+            metrics_agl[f"by_group/frac_status_{status}"] = sum(
+                1 for rollout in rollouts_G if rollout.status == status
+            ) / len(trajectories_G)
+        metrics_agl["by_group/frac_status_others"] = sum(
+            1 for rollout in rollouts_G if rollout.status not in completed_statuses
+        ) / len(trajectories_G)
+
+        tg = TrajectoryGroup(trajectories_G, list(rewards_G), list(metrics_G) + [metrics_agl])
         trajectory_groups.append(tg)
         logger.info(
             f"[Batch {i_batch} {mode}] [Group {group_idx}] Completed {len(trajectories_G)} trajectories; "

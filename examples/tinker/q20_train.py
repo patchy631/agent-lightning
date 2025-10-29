@@ -68,10 +68,14 @@ async def q20_agent(task: Q20Task, llm: agl.LLM, rollout: agl.Rollout) -> None:
     try:
         await flow.kickoff_async(cast(Any, task))
         agl.emit_reward(1.0 if flow.state.correct else 0.0)
-    except Exception as e:
+    except Exception:
         console.print(f"Error in q20_agent: {traceback.format_exc()}")
-        agl.emit_exception(e)
-        agl.emit_reward(0.0)
+        raise
+        # Above, the exception is re-raised, so the rollout will appear failed, but reward will be none.
+        # The handling below is another approach that will make the rollout appear succeeded, but with 0 reward.
+        # I think algorithm should handle the case instead.
+        # agl.emit_exception(e)
+        # agl.emit_reward(0.0)
 
 
 def dry_run():
