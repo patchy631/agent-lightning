@@ -396,10 +396,12 @@ class LightningStoreServer(LightningStore):
             return await self.get_rollout_by_id(rollout_id)
 
         def _get_mandatory_field_or_unset(request: BaseModel, field: str) -> Any:
+            # If some fields are mandatory by the underlying store, but optional in the FastAPI,
+            # we make sure it's set to non-null value or UNSET via this function.
             if field in request.model_fields_set:
                 value = getattr(request, field)
                 if value is None:
-                    raise HTTPException(status_code=400, detail=f"{field} is valid; it cannot be a null value.")
+                    raise HTTPException(status_code=400, detail=f"{field} is invalid; it cannot be a null value.")
                 return value
             else:
                 return UNSET
