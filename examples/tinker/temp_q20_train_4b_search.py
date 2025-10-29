@@ -49,7 +49,7 @@ async def algo_animal_only(search: bool, model: Literal["qwen4b", "qwen30b"], po
         model_name=model_name,
         log_path=f"logs/{experiment_name}",
         concurrency=40,
-        eval_every=4,
+        eval_every=3,
         eval_temperature=0.0,
         wandb_project="AgentLightningQ20",
         wandb_name=experiment_name,
