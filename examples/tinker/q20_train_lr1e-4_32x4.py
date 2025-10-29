@@ -30,7 +30,7 @@ async def algo_animal_only(search: bool, model: Literal["qwen4b", "qwen30b"], po
     else:
         raise ValueError(f"Invalid model: {model}")
 
-    experiment_name = f"q20_{'search' if search else 'no_search'}_{model}_lr1e-4_32x4"
+    experiment_name = f"q20_{'search' if search else 'no_search'}_{model}_lr1e-4_32x4_aoai"
 
     llm_proxy_port = _find_available_port()
 
