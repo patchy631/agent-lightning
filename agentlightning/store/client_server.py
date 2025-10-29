@@ -9,14 +9,15 @@ import threading
 import time
 import traceback
 from contextlib import suppress
-from typing import Any, Awaitable, Callable, Dict, List, Literal, Optional, Sequence, Union
+from typing import Annotated, Any, Awaitable, Callable, Dict, List, Literal, Optional, Sequence, Union
 
 import aiohttp
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from opentelemetry.sdk.trace import ReadableSpan
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, TypeAdapter
+from pydantic_core import PydanticUndefined
 
 from agentlightning.types import (
     Attempt,
@@ -37,9 +38,7 @@ logger = logging.getLogger(__name__)
 
 AGL_API_V1_PREFIX = "/agl/v1"
 
-
-class PydanticUnset(BaseModel):
-    _type: Literal["UNSET"] = "UNSET"
+NamedResourcesAlias = TypeAdapter(NamedResources)
 
 
 class RolloutRequest(BaseModel):
@@ -53,6 +52,11 @@ class RolloutRequest(BaseModel):
 class QueryRolloutsRequest(BaseModel):
     status: Optional[List[RolloutStatus]] = None
     rollout_ids: Optional[List[str]] = None
+
+
+class QuerySpansParameters(BaseModel):
+    rollout_id: str
+    attempt_id: Union[str, Literal["latest"], None]
 
 
 class WaitForRolloutsRequest(BaseModel):
@@ -69,24 +73,22 @@ class NextSequenceIdResponse(BaseModel):
     sequence_id: int
 
 
-class AddResourcesRequest(BaseModel):
-    resources: NamedResources
-
-
 class UpdateRolloutRequest(BaseModel):
-    input: Union[TaskInput, PydanticUnset] = Field(default_factory=PydanticUnset)
-    mode: Union[Optional[Literal["train", "val", "test"]], PydanticUnset] = Field(default_factory=PydanticUnset)
-    resources_id: Union[Optional[str], PydanticUnset] = Field(default_factory=PydanticUnset)
-    status: Union[RolloutStatus, PydanticUnset] = Field(default_factory=PydanticUnset)
-    config: Union[RolloutConfig, PydanticUnset] = Field(default_factory=PydanticUnset)
-    metadata: Union[Dict[str, Any], PydanticUnset] = Field(default_factory=PydanticUnset)
+    input: TaskInput = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
+    mode: Optional[Literal["train", "val", "test"]] = Field(
+        default=PydanticUndefined
+    )  # pyright: ignore[reportAssignmentType]
+    resources_id: Optional[str] = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
+    status: RolloutStatus = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
+    config: RolloutConfig = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
+    metadata: Dict[str, Any] = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
 
 
 class UpdateAttemptRequest(BaseModel):
-    status: Union[AttemptStatus, PydanticUnset] = Field(default_factory=PydanticUnset)
-    worker_id: Union[str, PydanticUnset] = Field(default_factory=PydanticUnset)
-    last_heartbeat_time: Union[float, PydanticUnset] = Field(default_factory=PydanticUnset)
-    metadata: Union[Dict[str, Any], PydanticUnset] = Field(default_factory=PydanticUnset)
+    status: AttemptStatus = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
+    worker_id: str = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
+    last_heartbeat_time: float = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
+    metadata: Dict[str, Any] = Field(default=PydanticUndefined)  # pyright: ignore[reportAssignmentType]
 
 
 class LightningStoreServer(LightningStore):
@@ -217,7 +219,7 @@ class LightningStoreServer(LightningStore):
         while time.time() - current_time < 10:
             async with aiohttp.ClientSession() as session:
                 with suppress(Exception):
-                    async with session.get(f"{self.endpoint}/health") as response:
+                    async with session.get(f"{self.endpoint}{AGL_API_V1_PREFIX}/health") as response:
                         if response.status == 200:
                             return True
             await asyncio.sleep(0.1)
@@ -328,6 +330,7 @@ class LightningStoreServer(LightningStore):
             try:
                 return await call_next(request)
             except Exception as exc:
+                # TODO: better handle 5xx errors
                 # decide whether to convert this into your 400 JSONResponse
                 if request.url.path.startswith(AGL_API_V1_PREFIX):
                     logger.exception("Unhandled application error", exc_info=exc)
@@ -378,7 +381,7 @@ class LightningStoreServer(LightningStore):
                 metadata=request.metadata,
             )
 
-        @self.app.post(AGL_API_V1_PREFIX + "/queues/rollouts/enqueue", response_model=Rollout)
+        @self.app.post(AGL_API_V1_PREFIX + "/queues/rollouts/enqueue", status_code=201, response_model=Rollout)
         async def enqueue_rollout(request: RolloutRequest):  # pyright: ignore[reportUnusedFunction]
             return await self.enqueue_rollout(
                 input=request.input,
@@ -388,15 +391,12 @@ class LightningStoreServer(LightningStore):
                 metadata=request.metadata,
             )
 
-        @self.app.post(AGL_API_V1_PREFIX + "/queues/rollouts/dequeue", response_model=AttemptedRollout)
+        @self.app.post(AGL_API_V1_PREFIX + "/queues/rollouts/dequeue", response_model=Optional[AttemptedRollout])
         async def dequeue_rollout():  # pyright: ignore[reportUnusedFunction]
-            rollout = await self.dequeue_rollout()
-            if rollout is None:
-                return Response(status_code=204)
-            return rollout
+            return await self.dequeue_rollout()
 
         @self.app.post(
-            AGL_API_V1_PREFIX + "/rollout/{rollout_id}/attempt", status_code=201, response_model=AttemptedRollout
+            AGL_API_V1_PREFIX + "/rollouts/{rollout_id}/attempts", status_code=201, response_model=AttemptedRollout
         )
         async def start_attempt(rollout_id: str):  # pyright: ignore[reportUnusedFunction]
             return await self.start_attempt(rollout_id)
@@ -405,55 +405,54 @@ class LightningStoreServer(LightningStore):
         async def query_rollouts():  # pyright: ignore[reportUnusedFunction]
             return await self.query_rollouts()
 
-        @self.app.post(AGL_API_V1_PREFIX + "/rollout/search", response_model=List[Rollout])
+        @self.app.post(AGL_API_V1_PREFIX + "/rollouts/search", response_model=List[Rollout])
         async def search_rollouts(request: QueryRolloutsRequest):  # pyright: ignore[reportUnusedFunction]
             return await self.query_rollouts(status=request.status, rollout_ids=request.rollout_ids)
 
-        @self.app.get(AGL_API_V1_PREFIX + "/rollout/{rollout_id}/attempts", response_model=List[Attempt])
+        @self.app.get(AGL_API_V1_PREFIX + "/rollouts/{rollout_id}", response_model=Rollout)
+        async def get_rollout_by_id(rollout_id: str):  # pyright: ignore[reportUnusedFunction]
+            return await self.get_rollout_by_id(rollout_id)
+
+        @self.app.get(AGL_API_V1_PREFIX + "/rollouts/{rollout_id}/attempts", response_model=List[Attempt])
         async def query_attempts(rollout_id: str):  # pyright: ignore[reportUnusedFunction]
             return await self.query_attempts(rollout_id)
 
-        @self.app.get(AGL_API_V1_PREFIX + "/rollout/{rollout_id}/attempts/latest", response_model=Attempt)
+        @self.app.get(AGL_API_V1_PREFIX + "/rollouts/{rollout_id}/attempts/latest", response_model=Optional[Attempt])
         async def get_latest_attempt(rollout_id: str):  # pyright: ignore[reportUnusedFunction]
-            attempt = await self.get_latest_attempt(rollout_id)
-            if attempt is None:
-                return Response(status_code=204)
-            return attempt
-
-        @self.app.get(AGL_API_V1_PREFIX + "/rollout/{rollout_id}", response_model=Rollout)
-        async def get_rollout_by_id(rollout_id: str):  # pyright: ignore[reportUnusedFunction]
-            rollout = await self.get_rollout_by_id(rollout_id)
-            if rollout is None:
-                return Response(status_code=204)
-            return rollout
+            return await self.get_latest_attempt(rollout_id)
 
         @self.app.post(AGL_API_V1_PREFIX + "/resources", status_code=201, response_model=ResourcesUpdate)
-        async def add_resources(resources: AddResourcesRequest):  # pyright: ignore[reportUnusedFunction]
-            return await self.add_resources(resources.resources)
+        async def add_resources(resources: NamedResources):  # pyright: ignore[reportUnusedFunction]
+            return await self.add_resources(resources)
 
-        @self.app.post(AGL_API_V1_PREFIX + "/resource/{resources_id}", response_model=ResourcesUpdate)
-        async def update_resources(
+        @self.app.get(AGL_API_V1_PREFIX + "/resources/latest", response_model=Optional[ResourcesUpdate])
+        async def get_latest_resources():  # pyright: ignore[reportUnusedFunction]
+            return await self.get_latest_resources()
+
+        @self.app.post(AGL_API_V1_PREFIX + "/resources/{resources_id}", response_model=ResourcesUpdate)
+        async def update_resources(  # pyright: ignore[reportUnusedFunction]
             resources_id: str, resources: NamedResources
-        ):  # pyright: ignore[reportUnusedFunction]
+        ):
             return await self.update_resources(resources_id, resources)
 
-        @self.app.get(AGL_API_V1_PREFIX + "/resource/{resources_id}", response_model=ResourcesUpdate)
+        @self.app.get(AGL_API_V1_PREFIX + "/resources/{resources_id}", response_model=Optional[ResourcesUpdate])
         async def get_resources_by_id(resources_id: str):  # pyright: ignore[reportUnusedFunction]
-            resources = await self.get_resources_by_id(resources_id)
-            if resources is None:
-                return Response(status_code=204)
-            return resources
-
-        @self.app.get(AGL_API_V1_PREFIX + "/resources/latest", response_model=ResourcesUpdate)
-        async def get_latest_resources():  # pyright: ignore[reportUnusedFunction]
-            resources = await self.get_latest_resources()
-            if resources is None:
-                return Response(status_code=204)
-            return resources
+            return await self.get_resources_by_id(resources_id)
 
         @self.app.post(AGL_API_V1_PREFIX + "/spans", status_code=201, response_model=Span)
         async def add_span(span: Span):  # pyright: ignore[reportUnusedFunction]
             return await self.add_span(span)
+
+        async def query_span_parameters(
+            rollout_id: str, attempt_id: str | Literal["latest"] | None = None
+        ) -> QuerySpansParameters:
+            return QuerySpansParameters(rollout_id=rollout_id, attempt_id=attempt_id)
+
+        @self.app.get(AGL_API_V1_PREFIX + "/spans", response_model=List[Span])
+        async def query_spans(
+            request: Annotated[QuerySpansParameters, Depends(query_span_parameters)],
+        ):  # pyright: ignore[reportUnusedFunction]
+            return await self.query_spans(request.rollout_id, request.attempt_id)
 
         @self.app.post(AGL_API_V1_PREFIX + "/spans/next", response_model=NextSequenceIdResponse)
         async def get_next_span_sequence_id(request: NextSequenceIdRequest):  # pyright: ignore[reportUnusedFunction]
@@ -464,43 +463,33 @@ class LightningStoreServer(LightningStore):
         async def wait_for_rollouts(request: WaitForRolloutsRequest):  # pyright: ignore[reportUnusedFunction]
             return await self.wait_for_rollouts(rollout_ids=request.rollout_ids, timeout=request.timeout)
 
-        @self.app.post(AGL_API_V1_PREFIX + "/spans/rollout/{rollout_id}", response_model=List[Span])
-        async def query_spans_no_attempt(rollout_id: str):  # pyright: ignore[reportUnusedFunction]
-            return await self.query_spans(rollout_id, None)
-
-        @self.app.post(
-            AGL_API_V1_PREFIX + "/spans/rollout/{rollout_id}/attempt/{attempt_id}", response_model=List[Span]
-        )
-        async def query_spans_with_attempt(rollout_id: str, attempt_id: str):  # pyright: ignore[reportUnusedFunction]
-            return await self.query_spans(rollout_id, attempt_id)
-
-        @self.app.post(AGL_API_V1_PREFIX + "/rollout/{rollout_id}", response_model=Rollout)
-        async def update_rollout(
+        @self.app.post(AGL_API_V1_PREFIX + "/rollouts/{rollout_id}", response_model=Rollout)
+        async def update_rollout(  # pyright: ignore[reportUnusedFunction]
             rollout_id: str, request: UpdateRolloutRequest
-        ):  # pyright: ignore[reportUnusedFunction]
+        ):
             return await self.update_rollout(
                 rollout_id=rollout_id,
-                input=request.input if not isinstance(request.input, PydanticUnset) else UNSET,
-                mode=request.mode if not isinstance(request.mode, PydanticUnset) else UNSET,
-                resources_id=request.resources_id if not isinstance(request.resources_id, PydanticUnset) else UNSET,
-                status=request.status if not isinstance(request.status, PydanticUnset) else UNSET,
-                config=request.config if not isinstance(request.config, PydanticUnset) else UNSET,
-                metadata=request.metadata if not isinstance(request.metadata, PydanticUnset) else UNSET,
+                input=request.input if "input" in request.model_fields_set else UNSET,
+                mode=request.mode if "mode" in request.model_fields_set else UNSET,
+                resources_id=request.resources_id if "resources_id" in request.model_fields_set else UNSET,
+                status=request.status if "status" in request.model_fields_set else UNSET,
+                config=request.config if "config" in request.model_fields_set else UNSET,
+                metadata=request.metadata if "metadata" in request.model_fields_set else UNSET,
             )
 
-        @self.app.post(AGL_API_V1_PREFIX + "/rollout/{rollout_id}/attempt/{attempt_id}", response_model=Attempt)
-        async def update_attempt(
+        @self.app.post(AGL_API_V1_PREFIX + "/rollouts/{rollout_id}/attempts/{attempt_id}", response_model=Attempt)
+        async def update_attempt(  # pyright: ignore[reportUnusedFunction]
             rollout_id: str, attempt_id: str, request: UpdateAttemptRequest
-        ):  # pyright: ignore[reportUnusedFunction]
+        ):
             return await self.update_attempt(
                 rollout_id=rollout_id,
                 attempt_id=attempt_id,
-                status=request.status if not isinstance(request.status, PydanticUnset) else UNSET,
-                worker_id=request.worker_id if not isinstance(request.worker_id, PydanticUnset) else UNSET,
+                status=request.status if "status" in request.model_fields_set else UNSET,
+                worker_id=request.worker_id if "worker_id" in request.model_fields_set else UNSET,
                 last_heartbeat_time=(
-                    request.last_heartbeat_time if not isinstance(request.last_heartbeat_time, PydanticUnset) else UNSET
+                    request.last_heartbeat_time if "last_heartbeat_time" in request.model_fields_set else UNSET
                 ),
-                metadata=request.metadata if not isinstance(request.metadata, PydanticUnset) else UNSET,
+                metadata=request.metadata if "metadata" in request.model_fields_set else UNSET,
             )
 
     # Delegate methods
@@ -794,9 +783,6 @@ class LightningStoreClient(LightningStore):
                 http_call = getattr(session, method)
                 async with http_call(url, json=json) as resp:
                     resp.raise_for_status()
-                    # handle optional cases
-                    if resp.status == 204:
-                        return None
                     return await resp.json()
             except aiohttp.ClientResponseError as cre:
                 # Respect app-level 4xx as final (server marks app faults as 400)
@@ -906,8 +892,6 @@ class LightningStoreClient(LightningStore):
         try:
             async with session.post(url) as resp:
                 resp.raise_for_status()
-                if resp.status == 204:
-                    return None
                 data = await resp.json()
                 self._dequeue_was_successful = True
                 return AttemptedRollout.model_validate(data) if data else None
