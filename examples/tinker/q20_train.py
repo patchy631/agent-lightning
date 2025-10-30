@@ -174,18 +174,18 @@ async def algo(search: bool, model: Literal["qwen4b", "qwen30b"], port: int):
     else:
         raise ValueError(f"Invalid model: {model}")
 
-    experiment_name = f"q20_{'search' if search else 'no_search'}_{model}_lr1e-6"
+    experiment_name = f"q20_{'search' if search else 'no_search'}_{model}"
 
     llm_proxy_port = _find_available_port()
 
     config = Config(
-        learning_rate=1e-6,
+        learning_rate=1e-4,
         dataset_builder=AGLDatasetBuilder(
             train_dataset=train_dataset,
             val_dataset=test_dataset,
             batch_size=8,
             shuffle=True,
-            group_size=4,
+            group_size=16,
             seed=42,
             n_epochs=10,
         ),

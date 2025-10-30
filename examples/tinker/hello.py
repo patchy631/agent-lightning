@@ -26,7 +26,7 @@ python hello.py oneclick
 Distributed workflow across three terminals:
 
 ```bash
-agl store
+agl store  # <-- expect the store to be running on port 4747
 python hello.py algo
 python hello.py runner
 ```
