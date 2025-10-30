@@ -49,4 +49,4 @@ class Tinker(Algorithm):
                 store=store,
             )
 
-        await main_training_loop(config, store, adapter, llm_proxy)
+        await main_training_loop(config, store, adapter, llm_proxy)  # type: ignore

@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+"""This file includes some basic tests for the integration of Tinker's sampling client
+with LiteLLM and Agent-lightning.
+
+It should be included in CI in future if we decided to maintain this example.
+"""
+
 import asyncio
 import logging
 from typing import cast
