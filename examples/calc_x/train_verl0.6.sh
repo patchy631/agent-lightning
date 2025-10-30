@@ -18,6 +18,7 @@ python -m agentlightning.verl \
     actor_rollout_ref.rollout.tensor_model_parallel_size=$ROLLOUT_TP_SIZE \
     +actor_rollout_ref.rollout.engine_kwargs.vllm.enable_auto_tool_choice=True \
     +actor_rollout_ref.rollout.engine_kwargs.vllm.tool_call_parser=hermes \
+    +actor_rollout_ref.rollout.engine_kwargs.vllm.return_token_ids=True \
     trainer.n_gpus_per_node=${N_GPUS} \
     data.train_batch_size=8 \
     actor_rollout_ref.rollout.n=4 \
