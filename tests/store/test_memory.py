@@ -158,6 +158,47 @@ async def test_query_rollouts_by_status(inmemory_store: InMemoryLightningStore) 
 
 
 @pytest.mark.asyncio
+async def test_query_rollouts_returns_latest_attempt(inmemory_store: InMemoryLightningStore) -> None:
+    """Querying rollouts should attach the most recent attempt when present."""
+    attempted = await inmemory_store.start_rollout(input={"sample": "latest"})
+    latest_attempt = await inmemory_store.start_attempt(attempted.rollout_id)
+
+    results = await inmemory_store.query_rollouts(rollout_ids=[attempted.rollout_id])
+    assert len(results) == 1
+
+    retrieved = results[0]
+    assert type(retrieved) is AttemptedRollout
+    assert retrieved.attempt.attempt_id == latest_attempt.attempt.attempt_id
+    assert retrieved.attempt.sequence_id == latest_attempt.attempt.sequence_id
+
+
+@pytest.mark.asyncio
+async def test_get_rollout_by_id_returns_latest_attempt(inmemory_store: InMemoryLightningStore) -> None:
+    """Fetching a rollout by ID should include the latest attempt when available."""
+    attempted = await inmemory_store.start_rollout(input={"foo": "bar"})
+    second_attempt = await inmemory_store.start_attempt(attempted.rollout_id)
+
+    retrieved = await inmemory_store.get_rollout_by_id(attempted.rollout_id)
+    assert retrieved is not None
+    assert type(retrieved) is AttemptedRollout
+    assert retrieved.attempt.attempt_id == second_attempt.attempt.attempt_id
+    assert retrieved.attempt.sequence_id == second_attempt.attempt.sequence_id
+
+
+@pytest.mark.asyncio
+async def test_get_rollout_by_id_without_attempt_returns_rollout(
+    inmemory_store: InMemoryLightningStore,
+) -> None:
+    """Rollouts with no attempts should be returned without the Attempt wrapper."""
+    queued = await inmemory_store.enqueue_rollout(input={"foo": "bar"})
+
+    retrieved = await inmemory_store.get_rollout_by_id(queued.rollout_id)
+    assert retrieved is not None
+    assert type(retrieved) is Rollout
+    assert not hasattr(retrieved, "attempt")
+
+
+@pytest.mark.asyncio
 async def test_get_rollout_by_id(inmemory_store: InMemoryLightningStore) -> None:
     """Test retrieving rollouts by their ID."""
     # Test getting non-existent rollout
