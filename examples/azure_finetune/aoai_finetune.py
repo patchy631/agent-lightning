@@ -375,6 +375,8 @@ class AzureOpenAIFinetune(Algorithm):
                     "learning_rate_multiplier": self.finetune_learning_rate,
                     "n_epochs": self.finetune_epochs,
                 },
+                # TODO: continuously adding suffix will make model names very long after a few iterations
+                # investigate if we can just specify the fine-tuned model name directly
                 suffix=f"v{next_iteration:02d}",
             )
             job_id = job.id
