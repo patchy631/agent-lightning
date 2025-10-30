@@ -210,7 +210,7 @@ class TwentyQuestionsGameState(BaseModel):
     num_tool_calls: int = 0
     next_question: str = ""
     turn_index: int = 1
-    interactions: List[Turn] = Field(default_factory=list)
+    interactions: List[Turn] = Field(default_factory=list)  # type: ignore
 
     def render_history(self) -> str:
         """Render the game history as a formatted string.

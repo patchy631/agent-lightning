@@ -254,6 +254,10 @@ class TinkerLLM(CustomLLM):
     def rewrite_litellm_custom_providers(self) -> TinkerLLM:
         """Register this TinkerLLM as a custom provider in LiteLLM.
 
+        !!! warning
+            This method modifies the global LiteLLM state, which could interfere with other tests in the
+            same process.
+
         Returns:
             Self for method chaining.
         """
