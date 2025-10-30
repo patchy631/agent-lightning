@@ -248,8 +248,9 @@ class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
                 len(train_indices),
                 len(val_indices),
             )
-            train_dataset = [train_dataset[i] for i in train_indices]
-            val_dataset = [train_dataset[i] for i in val_indices]
+            splitted_train_dataset = [train_dataset[i] for i in train_indices]
+            splitted_val_dataset = [train_dataset[i] for i in val_indices]
+            train_dataset, val_dataset = splitted_train_dataset, splitted_val_dataset
 
         return (
             AGLDataset(

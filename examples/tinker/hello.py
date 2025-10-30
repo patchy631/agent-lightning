@@ -86,8 +86,6 @@ def hello(task: str, llm: agl.LLM, rollout: agl.Rollout) -> None:
         rew = 1.0
     elif ("not " + task) in content_lower:
         rew = -1.0
-    elif ("you're" + task) in content_lower or ("you are" + task) in content_lower:
-        rew = 0.1
     else:
         rew = 0.0
 
