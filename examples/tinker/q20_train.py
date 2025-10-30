@@ -1,5 +1,38 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+"""20 Questions training script using Agent-lightning with Tinker algorithm.
+
+This script trains a language model to play 20 Questions using the Tinker RL algorithm.
+It supports both distributed mode (separate algorithm/runners) and dry-run mode for testing.
+
+To run a dry-run (in-memory testing):
+
+```bash
+python q20_train.py dryrun
+```
+
+To run full training in distributed mode:
+
+```bash
+# Terminal 1: Start the store
+agl store --port 4747
+
+# Terminal 2: Run the training algorithm
+python q20_train.py algo
+
+# Terminal 3: Run the rollout runners (in separate terminal/processes)
+python q20_train.py runner --n-runners 4
+```
+
+Environment variables required:
+
+- `OPENAI_API_KEY`: Your OpenAI API key for the answerer and search models
+- `OPENAI_BASE_URL`: Base URL for OpenAI API
+- `TINKER_API_KEY`: Tinker API key for training the player model
+
+The script will train on the `q20_nouns.csv` dataset and log metrics to wandb.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -22,12 +55,25 @@ import agentlightning as agl
 
 
 def _find_available_port() -> int:
+    """Find an available port by binding to port 0.
+
+    Returns:
+        An available port number.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("", 0))
         return s.getsockname()[1]
 
 
 class Q20Task(TypedDict):
+    """Type definition for a 20 Questions task.
+
+    Attributes:
+        category: The category of the entity to guess.
+        answer: The secret entity.
+        search_enabled: Whether the player can use the search tool.
+    """
+
     category: str
     answer: str
     search_enabled: bool
@@ -40,6 +86,13 @@ console = Console()
 
 @agl.rollout
 async def q20_agent(task: Q20Task, llm: agl.LLM, rollout: agl.Rollout) -> None:
+    """Rollout function for the 20 Questions agent during training.
+
+    Args:
+        task: The 20 Questions task containing category, answer, and search settings.
+        llm: The LLM being trained (player model).
+        rollout: Rollout metadata from Agent-lightning.
+    """
     answer_llm_setting = os.getenv("ANSWERER_LLM", "gpt-5-mini")
     search_llm_setting = os.getenv("SEARCH_LLM", "gpt-4.1")
     player_llm = CrewLLM(model="openai/" + llm.model, base_url=llm.endpoint, api_key="dummy", timeout=LLM_TIMEOUT)
@@ -79,6 +132,10 @@ async def q20_agent(task: Q20Task, llm: agl.LLM, rollout: agl.Rollout) -> None:
 
 
 def dry_run():
+    """Run a quick dry-run test of the 20 Questions training setup.
+
+    Uses in-memory store and processes 4 sample tasks to verify the setup works.
+    """
     store = agl.InMemoryLightningStore()
     llm_proxy = create_llm_proxy("Qwen/Qwen3-30B-A3B-Instruct-2507", "qwen3_instruct", store=store)
     trainer = agl.Trainer(
@@ -97,6 +154,13 @@ def dry_run():
 
 
 async def algo(search: bool, model: Literal["qwen4b", "qwen30b"], port: int):
+    """Run the training algorithm for 20 Questions.
+
+    Args:
+        search: Whether to enable the search tool for the player.
+        model: Model variant to use ("qwen4b" or "qwen30b").
+        port: Port where the Agent-lightning store is running.
+    """
     raw_data = pd.read_csv("q20_nouns.csv")  # type: ignore
     raw_data["search_enabled"] = search
     train_data, test_data = raw_data[raw_data["split"] == "train"], raw_data[raw_data["split"] == "test"]  # type: ignore
@@ -144,6 +208,12 @@ async def algo(search: bool, model: Literal["qwen4b", "qwen30b"], port: int):
 
 
 def runner(port: int = 4747, n_runners: int = 2):
+    """Run rollout runners that execute the 20 Questions game.
+
+    Args:
+        port: Port where the Agent-lightning store is running.
+        n_runners: Number of parallel runners to spawn.
+    """
     # Run only the runners without algorithm
     store = agl.LightningStoreClient(f"http://localhost:{port}")
     trainer = agl.Trainer(
@@ -167,6 +237,7 @@ def _run_runner(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    """Entry point for the 20 Questions training script."""
     parser = argparse.ArgumentParser(description="Run the Q20 AgentLightning experiments.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 

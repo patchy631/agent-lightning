@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+"""Environment and dataset utilities for Agent-lightning with Tinker.
+
+This module provides dataset and environment wrappers that bridge Agent-lightning's
+task-based approach with Tinker's RL training infrastructure.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -27,8 +33,21 @@ logger = logging.getLogger(__name__)
 
 
 class AGLDummyEnv(Env, Generic[T_task]):
+    """Placeholder environment for Agent-lightning tasks.
+
+    Since Agent-lightning handles environment logic within user agents,
+    this class serves as a placeholder to satisfy Tinker's interface requirements.
+
+    Attributes:
+        task: The task data for this environment instance.
+    """
 
     def __init__(self, task: T_task) -> None:
+        """Initialize the dummy environment with a task.
+
+        Args:
+            task: The task data for this environment instance.
+        """
         self.task = task
 
     async def initial_observation(self) -> tuple[Observation, StopCondition]:
@@ -39,17 +58,49 @@ class AGLDummyEnv(Env, Generic[T_task]):
 
 
 class AGLDummyEnvGroupBuilder(EnvGroupBuilder, Generic[T_task]):
+    """Builder for creating groups of AGLDummyEnv instances.
+
+    Attributes:
+        task: The task to use for all environments in the group.
+        num_envs: Number of environments to create in the group.
+    """
 
     def __init__(self, task: T_task, num_envs: int) -> None:
+        """Initialize the environment group builder.
+
+        Args:
+            task: The task to use for all environments.
+            num_envs: Number of environments to create.
+        """
         self.task = task
         self.num_envs = num_envs
 
     async def make_envs(self) -> Sequence[AGLDummyEnv[T_task]]:
+        """Create a sequence of dummy environments.
+
+        Returns:
+            Sequence of AGLDummyEnv instances.
+        """
         return [AGLDummyEnv(self.task) for _ in range(self.num_envs)]
 
 
 class AGLDataset(RLDataset, Generic[T_task]):
-    """A dataset that produces batches of AGLDummyEnvGroupBuilder."""
+    """RL dataset that produces batches of AGLDummyEnvGroupBuilder instances.
+
+    This dataset manages Agent-lightning task data for Tinker's RL training loop,
+    handling batching, shuffling, and multi-epoch iteration.
+
+    When enabling shuffling with multi-epochs, the dataset will be individually shuffled for each epoch.
+    So the remainder of the dataset length divided by batch size will be dropped for each epoch.
+
+    Attributes:
+        dataset: The underlying Agent-lightning dataset of tasks.
+        batch_size: Number of tasks per batch.
+        shuffle: Whether to shuffle the dataset each epoch.
+        group_size: Number of rollouts per task group.
+        n_epochs: Number of training epochs.
+        indices: Flattened list of dataset indices across all epochs.
+    """
 
     def __init__(
         self,
@@ -61,6 +112,16 @@ class AGLDataset(RLDataset, Generic[T_task]):
         seed: int = 42,
         n_epochs: int = 1,
     ) -> None:
+        """Initialize the dataset.
+
+        Args:
+            dataset: Agent-lightning dataset of tasks.
+            batch_size: Number of tasks per batch.
+            shuffle: Whether to shuffle the dataset each epoch.
+            group_size: Number of rollouts per task group.
+            seed: Random seed for shuffling.
+            n_epochs: Number of training epochs.
+        """
         self.dataset = dataset
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -80,6 +141,14 @@ class AGLDataset(RLDataset, Generic[T_task]):
                 self.indices.extend(list(range(len(self.dataset))))
 
     def get_batch(self, index: int) -> Sequence[AGLDummyEnvGroupBuilder[T_task]]:
+        """Get a batch of environment group builders.
+
+        Args:
+            index: Batch index.
+
+        Returns:
+            Sequence of AGLDummyEnvGroupBuilder instances for the batch.
+        """
         start_index = index * self.batch_size
         end_index = min((index + 1) * self.batch_size, len(self.indices))
         return [
@@ -93,6 +162,23 @@ class AGLDataset(RLDataset, Generic[T_task]):
 
 @chz.chz
 class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
+    """Builder for creating train/val AGLDataset splits.
+
+    Supports loading datasets from files (parquet, csv, jsonl) or directly from
+    Agent-lightning Dataset instances. Automatically splits into train/val if needed.
+
+    Attributes:
+        batch_size: Number of tasks per batch.
+        n_epochs: Number of training epochs.
+        train_file: Optional path to training data file.
+        val_file: Optional path to validation data file.
+        train_dataset: Optional in-memory training dataset.
+        val_dataset: Optional in-memory validation dataset.
+        train_val_split: Fraction of data to use for training.
+        shuffle: Whether to shuffle the dataset.
+        group_size: Number of rollouts per task group.
+        seed: Random seed for shuffling.
+    """
 
     batch_size: int
     n_epochs: int = 1
@@ -120,6 +206,14 @@ class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
             raise ValueError(f"Unsupported file type: {file}")
 
     async def __call__(self) -> tuple[AGLDataset[T_task], AGLDataset[T_task]]:
+        """Build and return train and validation datasets.
+
+        Returns:
+            Tuple of (train_dataset, val_dataset).
+
+        Raises:
+            ValueError: If no training dataset is provided.
+        """
         if self.train_file is not None:
             train_dataset = self._read_file(self.train_file)
         elif self.train_dataset is not None:

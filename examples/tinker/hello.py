@@ -1,8 +1,28 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""To train a model to admit whoever I call it.
+"""Sample agent that trains a model to echo/admit the identity you give it.
 
-For example, if I say "Hello, 42", the model should say "I'm 42", not "I'm not 42."
+This demonstrates using Agent-lightning with the Tinker algorithm to fine-tune a model
+that will claim to be whatever identity you tell it (e.g., "Say you are 42" -> "I'm 42").
+
+To run in one-click mode (integrated algorithm + runners):
+
+```bash
+python hello.py oneclick
+```
+
+To run in distributed mode (separate algorithm and runners):
+
+```bash
+# Terminal 1: Start the store
+agl store
+
+# Terminal 2: Run the algorithm
+python hello.py algo
+
+# Terminal 3: Run the rollout runners
+python hello.py runner
+```
 """
 
 from __future__ import annotations
@@ -25,6 +45,11 @@ console = Console()
 
 
 def _find_available_port() -> int:
+    """Find an available port by binding to port 0.
+
+    Returns:
+        An available port number.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("", 0))
         return s.getsockname()[1]
@@ -32,6 +57,16 @@ def _find_available_port() -> int:
 
 @agl.rollout
 def hello(task: str, llm: agl.LLM, rollout: agl.Rollout) -> None:
+    """Agent rollout function that tests if the model claims the given identity.
+
+    Prompts the model to say it is the given task/identity and assigns a reward
+    based on whether the model's response matches the expected behavior.
+
+    Args:
+        task: The identity string the model should claim to be.
+        llm: The LLM endpoint configuration.
+        rollout: The rollout metadata containing rollout ID and mode.
+    """
     openai_client = OpenAI(base_url=llm.endpoint, api_key="dummy")
     response = openai_client.chat.completions.create(
         model=llm.model,
@@ -57,6 +92,11 @@ def hello(task: str, llm: agl.LLM, rollout: agl.Rollout) -> None:
 
 
 def run_algo():
+    """Run the training algorithm in standalone mode.
+
+    Launches the Tinker training algorithm that connects to a separate store
+    and rollout runners.
+    """
     config = Config(
         learning_rate=1e-5,
         dataset_builder=AGLDatasetBuilder(
@@ -90,10 +130,9 @@ def run_rollout(*, worker_id: int) -> None:
 
 
 def spawn_runners(*, n_runners: int) -> None:
-    """Spawn a set of rollout runners.
+    """Spawn a set of rollout runners in separate processes.
 
     Args:
-        store: The LightningStore instance.
         n_runners: The number of runners to spawn.
     """
 
@@ -108,6 +147,11 @@ def spawn_runners(*, n_runners: int) -> None:
 
 
 def oneclick():
+    """Run integrated training with algorithm and runners in one process.
+
+    This is the simplest way to run the example, as it handles spawning
+    the store, algorithm, and runners automatically.
+    """
     config = Config(
         learning_rate=1e-5,
         dataset_builder=AGLDatasetBuilder(
@@ -132,6 +176,7 @@ def oneclick():
 
 
 def main():
+    """Entry point for the hello example script."""
     parser = argparse.ArgumentParser(description="Train a hello echo agent with Agent-lightning + Tinker.")
     parser.add_argument("mode", type=str, choices=["algo", "runner", "oneclick"])
 

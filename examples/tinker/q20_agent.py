@@ -2,14 +2,8 @@
 
 from __future__ import annotations
 
-import argparse
-import json
-import traceback
-from pathlib import Path
 from typing import Any, List, Literal, Optional, cast
 
-import pandas as pd
-from agl_tinker.llm import create_llm_proxy
 from crewai import LLM as CrewLLM
 from crewai import Agent as CrewAgent
 from crewai import BaseLLM
@@ -18,14 +12,12 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 from rich.console import Console
 
-from agentlightning import InMemoryLightningStore, LLMProxy
-
-llm = CrewLLM(model="openai/gpt-4o-mini")
-
 console = Console()
 
 
 class AnswererResponse(BaseModel):
+    """Response schema for the answerer in 20 Questions game."""
+
     # Keep this short; do NOT ask for chain-of-thought
     brief_reason: Optional[str] = Field(description="1-2 sentences justification (optional, high level only).")
     yes_or_no: Literal["yes", "no", "n/a"] = Field(
@@ -178,11 +170,30 @@ class SearchTool(BaseTool):
 
 
 class Turn(BaseModel):
+    """Represents a single turn in a 20 Questions game.
+
+    Attributes:
+        question: The question asked by the player.
+        response: The answerer's "yes" or "no" or "n/a" response.
+    """
+
     question: str
     response: Literal["yes", "no", "n/a"]
 
 
 class TwentyQuestionsGameState(BaseModel):
+    """State of a 20 Questions game session.
+
+    Attributes:
+        answer: The secret entity the player is trying to guess.
+        category: The category of the secret entity.
+        correct: Whether the player has guessed correctly.
+        num_tool_calls: Number of search tool calls made during the game.
+        next_question: The current question being processed.
+        turn_index: Current turn number (1-20).
+        interactions: History of question-answer turns.
+    """
+
     answer: str = ""
     category: str = ""
     correct: bool = False
@@ -192,6 +203,11 @@ class TwentyQuestionsGameState(BaseModel):
     interactions: List[Turn] = Field(default_factory=list)
 
     def render_history(self) -> str:
+        """Render the game history as a formatted string.
+
+        Returns:
+            Formatted string showing all questions and responses.
+        """
         return "\n\n".join(
             [
                 f"Question #{i}: {turn.question}\nResponse #{i}: {turn.response}"
@@ -201,8 +217,18 @@ class TwentyQuestionsGameState(BaseModel):
 
 
 class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
+    """CrewAI Flow for running a 20 Questions game.
+
+    This flow coordinates the player and answerer agents through the game.
+    """
 
     def __init__(self, *args: Any, **kwargs: Any):
+        """Initialize the flow with player, answerer, and optional search tool.
+
+        Args:
+            *args: Positional arguments to pass to Flow.
+            **kwargs: Keyword arguments including player_llm, answer_llm, and search_tool.
+        """
         self.player_llm = cast(CrewLLM, kwargs.pop("player_llm"))
         self.answer_llm = cast(CrewLLM, kwargs.pop("answer_llm"))
         self.search_tool = cast(Optional[SearchTool], kwargs.pop("search_tool", None))
@@ -210,6 +236,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
     @start("next_turn")
     def ask_question(self):
+        """Generate the next question from the player agent."""
         agent = CrewAgent(
             role="Player in a game of 20 questions",
             goal="Minimize uncertainty and identify the hidden entity within 20 yes/no questions.",
@@ -237,6 +264,7 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
     @listen(ask_question)
     def answer_question(self):
+        """Process the player's question and generate an answer."""
         query = ANSWERER_QUERY_TEMPLATE.format(
             answer=self.state.answer, next_question=self.state.next_question, category=self.state.category
         )
@@ -258,6 +286,11 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
     @router(answer_question)
     def game_should_continue(self):
+        """Determine if the game should continue or end.
+
+        Returns:
+            "game_over" if the game is finished, "next_turn" otherwise.
+        """
         if self.state.correct:
             console.print(f"[bold red]Correct! You win![/bold red]")
             return "game_over"
@@ -273,169 +306,5 @@ class TwentyQuestionsFlow(Flow[TwentyQuestionsGameState]):
 
     @listen("game_over")
     def finish(self):
+        """Handle game completion."""
         console.print("The flow has reached the finished state.")
-
-
-def evaluate_q20(
-    model_name: str,
-    search: bool,
-    port: int,
-    output_file: str,
-    dataset_path: str,
-    seed: Optional[int] = 42,
-):
-    """Evaluate a model on the 20 Questions game.
-
-    Args:
-        model_name: The name of the model to evaluate.
-        search: Whether the player can use the search tool.
-        port: The port to use for the LiteLLM proxy.
-        output_file: Where to append JSONL results.
-        dataset_path: CSV file containing category and answer columns.
-        seed: Optional random seed for shuffling the dataset; ``None`` disables deterministic shuffling.
-    """
-
-    store = InMemoryLightningStore()
-    df = pd.read_csv(dataset_path)  # type: ignore
-    if df.empty:
-        console.print(f"[bold yellow]Dataset '{dataset_path}' is empty. Nothing to evaluate.[/bold yellow]")
-        return
-
-    output_path = Path(output_file)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if model_name.startswith("Qwen/"):
-        llm_proxy = create_llm_proxy(model_name, "qwen3", port, store, _add_return_token_ids=False)
-    else:
-        console.print(f"Assuming {model_name} is an OpenAI model.")
-        llm_proxy = LLMProxy(
-            port=port,
-            store=store,
-            model_list=[
-                {"model_name": model_name, "litellm_params": {"model": "openai/" + model_name}},
-            ],
-            num_retries=2,
-            _add_return_token_ids=False,
-        )
-
-    answerer_model_name = "gpt-5-mini"
-    search_model_name = "gpt-4.1"
-
-    # Add the answerer and search models to the model list if they are not already present.
-    current_model_list = llm_proxy.model_list.copy()
-    if not any(model["model_name"] == answerer_model_name for model in current_model_list):
-        current_model_list.append(
-            {"model_name": answerer_model_name, "litellm_params": {"model": "openai/" + answerer_model_name}}
-        )
-    if not any(model["model_name"] == search_model_name for model in current_model_list):
-        current_model_list.append(
-            {"model_name": search_model_name, "litellm_params": {"model": "openai/" + search_model_name}}
-        )
-    llm_proxy.update_model_list(current_model_list)
-    console.print("Model list:", llm_proxy.model_list)
-
-    try:
-        llm_proxy.start()
-        player_llm = CrewLLM(
-            model="openai/" + model_name, base_url=f"http://localhost:{port}/v1", api_key="dummy", timeout=60.0
-        )
-        answer_llm = CrewLLM(
-            model="openai/" + answerer_model_name,
-            base_url=f"http://localhost:{port}/v1",
-            api_key="dummy",
-            reasoning_effort="low",
-            response_format=AnswererResponse,
-        )
-        search_tool = (
-            SearchTool(
-                model=CrewLLM(
-                    model="openai/" + search_model_name,
-                    base_url=f"http://localhost:{port}/v1",
-                    api_key="dummy",
-                    reasoning_effort="none",
-                    timeout=60.0,
-                )
-            )
-            if search
-            else None
-        )
-        sampled_df = (
-            df.sample(n=len(df), random_state=seed)  # type: ignore
-            if seed is not None
-            else df.sample(n=len(df))  # type: ignore
-        )
-        for index, row in sampled_df.iterrows():  # type: ignore
-            if search_tool:
-                search_tool.num_called = 0
-
-            flow = TwentyQuestionsFlow(player_llm=player_llm, answer_llm=answer_llm, search_tool=search_tool)
-            try:
-                flow.kickoff(
-                    {
-                        "answer": row["answer"],
-                        "category": row["category"],
-                    }
-                )
-                result_json: dict[str, Any] = {"index": index, **flow.state.model_dump()}
-            except Exception as e:
-                result_json = {
-                    "index": index,
-                    "answer": row["answer"],
-                    "category": row["category"],
-                    "error": str(e),
-                    "exception": traceback.print_exc(),
-                }
-            with output_path.open("a") as f:
-                f.write(json.dumps(result_json) + "\n")
-    finally:
-        llm_proxy.stop()
-
-
-def main(argv: Optional[List[str]] = None) -> None:
-    parser = argparse.ArgumentParser(description="Evaluate a model on the 20 Questions benchmark.")
-    parser.add_argument(
-        "--model",
-        default="Qwen/Qwen3-30B-A3B-Instruct-2507",
-        help="Model identifier to evaluate.",
-    )
-    parser.add_argument(
-        "--search",
-        action="store_true",
-        help="Enable the search tool for the player agent.",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=12358,
-        help="Port to expose the LiteLLM proxy.",
-    )
-    parser.add_argument(
-        "--output-file",
-        default="logs/twenty_questions_results.jsonl",
-        help="Path to write JSONL evaluation results.",
-    )
-    parser.add_argument(
-        "--dataset",
-        default="q20_nouns.csv",
-        help="CSV file containing the evaluation dataset.",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Random seed for shuffling the dataset. Use -1 to disable deterministic shuffling.",
-    )
-
-    args = parser.parse_args(argv)
-    evaluate_q20(
-        model_name=args.model,
-        search=args.search,
-        port=args.port,
-        output_file=args.output_file,
-        dataset_path=args.dataset,
-        seed=None if args.seed == -1 else args.seed,
-    )
-
-
-if __name__ == "__main__":
-    main()

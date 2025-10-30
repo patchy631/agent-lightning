@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+"""LLM proxy utilities for Agent-lightning with Tinker.
+
+This module provides a custom LLM implementation that bridges LiteLLM with Tinker's
+sampling client, enabling fine-tuned model serving through Agent-lightning.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -32,10 +38,35 @@ T = TypeVar("T")
 
 
 def generate_id(prefix: str) -> str:
+    """Generate a unique ID with the given prefix.
+
+    Args:
+        prefix: String prefix for the generated ID.
+
+    Returns:
+        A unique identifier string.
+    """
     return prefix + str(uuid.uuid4())
 
 
 class TinkerLLM(CustomLLM):
+    """Custom LLM implementation that integrates Tinker's sampling client with LiteLLM.
+
+    This class adapts Tinker's fine-tuned models to work with LiteLLM's interface,
+    enabling them to be served through Agent-lightning's LLMProxy.
+
+    Attributes:
+        model_name: The HuggingFace model identifier.
+        renderer: Prompt renderer for formatting messages.
+        tokenizer: Tokenizer for the model.
+        sampling_client: Tinker sampling client for generation.
+        max_tokens: Maximum number of tokens to generate.
+        temperature: Sampling temperature.
+        top_k: Top-k sampling parameter.
+        top_p: Nucleus sampling parameter.
+        seed: Random seed for reproducibility.
+    """
+
     def __init__(
         self,
         *,
@@ -49,6 +80,7 @@ class TinkerLLM(CustomLLM):
         top_p: float = 1.0,
         seed: int = 42,
     ) -> None:
+        """Initialize the TinkerLLM."""
         self.model_name = model_name
         self.renderer = renderer
         self.tokenizer = tokenizer
@@ -60,6 +92,11 @@ class TinkerLLM(CustomLLM):
         self.seed = seed
 
     def update_sampling_client(self, sampling_client: tinker.SamplingClient) -> None:
+        """Update the sampling client used for generation.
+
+        Args:
+            sampling_client: New Tinker sampling client to use.
+        """
         self.sampling_client = sampling_client
 
     def _validate_messages(self, messages: Any) -> TypeGuard[List[TinkerMessage]]:
@@ -190,6 +227,11 @@ class TinkerLLM(CustomLLM):
         return final_response
 
     def as_model_list(self) -> List[ModelConfig]:
+        """Generate model configuration for LiteLLM proxy.
+
+        Returns:
+            List containing model configuration dict for LiteLLM.
+        """
         return [
             {
                 "model_name": self.model_name,
@@ -200,7 +242,11 @@ class TinkerLLM(CustomLLM):
         ]
 
     def rewrite_litellm_custom_providers(self) -> TinkerLLM:
-        """Update the custom provider map within LiteLLM."""
+        """Register this TinkerLLM as a custom provider in LiteLLM.
+
+        Returns:
+            Self for method chaining.
+        """
         litellm.custom_provider_map = [{"provider": "agl-tinker", "custom_handler": self}]
         custom_llm_setup()
         return self
@@ -213,17 +259,19 @@ def create_llm_proxy(
     store: Optional[LightningStore] = None,
     _add_return_token_ids: bool = True,
 ) -> LLMProxy:
-    """Convenient helper for creating a LiteLLM proxy for a TinkerLLM model.
-    Used for testing purposes.
+    """Create an LLMProxy configured for a Tinker-based model.
+
+    This is a convenience function that sets up the complete pipeline:
+    Tinker sampling client -> TinkerLLM -> LiteLLM -> LLMProxy.
 
     Args:
-        model_name: The name of the TinkerLLM model.
-        renderer_name: The name of the renderer to use for the TinkerLLM model.
-        port: The port to use for the LiteLLM proxy.
-        store: The store to use for the LiteLLM proxy.
+        model_name: HuggingFace model identifier (e.g., "Qwen/Qwen3-30B-A3B-Instruct-2507").
+        renderer_name: Renderer type for prompt formatting (e.g., "qwen3", "qwen3_instruct").
+        port: Port to expose the LiteLLM proxy. Defaults to 1899.
+        store: Optional Lightning store for tracking usage. Defaults to None.
 
     Returns:
-        LLMProxy: A LiteLLM proxy for the TinkerLLM model.
+        Configured LLMProxy instance ready to serve the model.
     """
     service_client = tinker.ServiceClient()
     sampling_client = service_client.create_sampling_client(base_model=model_name)

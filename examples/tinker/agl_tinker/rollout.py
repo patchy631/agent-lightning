@@ -160,9 +160,8 @@ async def do_group_of_group_rollouts(
     do_remove_constant_reward_groups: bool = False,
     concurrency: int = 16,
 ) -> List[TrajectoryGroup]:
-    """
-    Run rollouts for multiple env groups with a global concurrency limit that controls
-    how many agl_single_rollout tasks may run at once (across *all* groups).
+    """Run rollouts for multiple env groups with a global concurrency limit that controls
+    how many `agl_single_rollout` tasks may run at once (across *all* groups).
 
     Returns a list of TrajectoryGroup objects (one per env_group_builder), optionally
     filtered to remove groups whose trajectories all have the same reward.
@@ -244,13 +243,17 @@ async def do_group_of_group_rollouts(
 
 def dataset_to_env_group_builders(dataset: AGLDataset[T_task]) -> list[AGLDummyEnvGroupBuilder[T_task]]:
     """
-    Get the whole dataset as a list of env group builders.
+    Get the whole dataset as a list of AGL env group builders.
     """
     return list(itertools.chain(*[dataset.get_batch(i) for i in range(len(dataset))]))
 
 
 class AGLTestSetEvaluator(Generic[T_task]):
-    """Run an evaluation on a test set."""
+    """Run an evaluation on a test set.
+
+    Try to mimic `tinker_cookbook.rl.metric_util.RLTestSetEvaluator`, but it
+    actually has a different interface.
+    """
 
     def __init__(self, dataset: AGLDataset[T_task], name: str | None = None):
         self.env_group_builders_P = dataset_to_env_group_builders(dataset)

@@ -14,32 +14,20 @@ import asyncio
 import logging
 import os
 import time
-from typing import Any, Literal, Sequence
+from typing import Any, Literal
 
 import chz
 import tinker
 from tinker_cookbook import checkpoint_utils
 from tinker_cookbook.renderers import get_renderer
-from tinker_cookbook.rl.data_processing import (
-    assemble_training_data,
-    compute_advantages,
-)
-from tinker_cookbook.rl.metric_util import compute_trajectory_metrics
-from tinker_cookbook.rl.metrics import incorporate_kl_penalty
 from tinker_cookbook.rl.train import (
-    compute_full_batch_metrics_and_get_sampling_client,
-    print_group,
+    do_train_step_and_get_sampling_client,
     save_checkpoint_and_get_sampling_client,
-    train_step,
-)
-from tinker_cookbook.rl.types import (
-    EnvGroupBuilder,
-    TrajectoryGroup,
 )
 from tinker_cookbook.tokenizer_utils import Tokenizer
 from tinker_cookbook.utils import ml_log
 from tinker_cookbook.utils.misc_utils import timed
-from tinker_cookbook.utils.trace import get_scope_context, scope, trace_init
+from tinker_cookbook.utils.trace import scope, trace_init
 
 from agentlightning import (
     LightningStore,
@@ -59,6 +47,13 @@ logger = logging.getLogger(__name__)
 
 @chz.chz
 class Config:
+    """Configuration for Tinker RL training with Agent-lightning.
+
+    See `tinker_cookbook.rl.train.Config` for more details.
+
+    TODO: explain how this is different from the original `Config` class.
+    """
+
     learning_rate: float
     dataset_builder: AGLDatasetBuilder[Any]  # also determines batch size
     model_name: str
@@ -109,96 +104,6 @@ class Config:
 
 
 @scope
-async def prepare_minibatch(
-    env_group_builders_P: Sequence[EnvGroupBuilder],
-    trajectory_groups_P: list[TrajectoryGroup],
-    tokenizer: Tokenizer,
-    service_client: tinker.ServiceClient,
-    model_name: str,
-    kl_penalty_coef: float,
-    kl_discount_factor: float,
-) -> tuple[list[tinker.Datum], dict[str, Any]]:
-    """Converts the trajectories into a minibatch, and provides metrics about the minibatch"""
-
-    # Compute trajectory metrics
-    metrics: dict[str, Any] = {}
-    taglist_P = [env_group_builder.logging_tags() for env_group_builder in env_group_builders_P]
-    metrics.update(compute_trajectory_metrics(trajectory_groups_P, taglist_P))
-
-    # Print one trajectory
-    for traj_group in trajectory_groups_P[:2]:
-        print_group(traj_group, tokenizer)
-
-    # Assemble training data
-    with timed("assemble_training_data", metrics):
-        advantages_P = compute_advantages(trajectory_groups_P)
-        data_D, _metadata_D = assemble_training_data(trajectory_groups_P, advantages_P)
-
-    # Incorporate KL penalty if configured
-    if kl_penalty_coef > 0:
-        with timed("kl_vs_base", metrics):
-            kl_penalty_metrics = await incorporate_kl_penalty(
-                data_D,
-                service_client.create_sampling_client(base_model=model_name),
-                # ^^^ TODO: replace with the model we load, if relevant
-                kl_penalty_coef,
-                kl_discount_factor,
-            )
-        metrics.update(kl_penalty_metrics)
-
-    return data_D, metrics
-
-
-@scope
-async def do_train_step_and_get_sampling_client(
-    cfg: Config,
-    i_batch: int,
-    training_client: tinker.TrainingClient,
-    service_client: tinker.ServiceClient,
-    tokenizer: Tokenizer,
-    env_group_builders_P: Sequence[EnvGroupBuilder],
-    trajectory_groups_P: list[TrajectoryGroup],
-) -> tuple[tinker.SamplingClient, dict[str, Any]]:
-    context = get_scope_context()
-    context.attributes["step"] = i_batch
-
-    metrics: dict[str, Any] = {}
-    data_D, prepare_minibatch_metrics = await prepare_minibatch(
-        env_group_builders_P,
-        trajectory_groups_P,
-        tokenizer,
-        service_client,
-        model_name=cfg.model_name,
-        kl_penalty_coef=cfg.kl_penalty_coef,
-        kl_discount_factor=cfg.kl_discount_factor,
-    )
-    metrics.update(prepare_minibatch_metrics)
-
-    with timed("train", metrics):
-        training_logprobs_D = await train_step(
-            data_D,
-            training_client,
-            cfg.learning_rate,
-            cfg.num_substeps,
-            cfg.loss_fn,
-        )
-
-    sampling_client, full_batch_metrics = await compute_full_batch_metrics_and_get_sampling_client(
-        training_client,
-        # NOTE: saving the checkpoint as the i + 1 step
-        i_batch + 1,
-        data_D,
-        training_logprobs_D,
-        cfg.log_path,
-        cfg.save_every,
-        cfg.compute_post_kl,
-    )
-    metrics.update(full_batch_metrics)
-
-    return sampling_client, metrics
-
-
-@scope
 async def do_sync_training(
     *,
     start_batch: int,
@@ -215,7 +120,12 @@ async def do_sync_training(
     adapter: TraceToTripletBase,
     llm_proxy: LLMProxy,
 ):
-    """Implements fully synchronous on-policy training"""
+    """Implements fully synchronous on-policy training.
+
+    See `tinker_cookbook.rl.train.do_sync_training` for more details.
+
+    TODO: explain how this is different from the original `do_sync_training` function.
+    """
 
     # Initial sampling client
     logger.info(f"Creating sampling client with training client {training_client} and start batch {start_batch}")
@@ -401,6 +311,13 @@ async def main_training_loop(
 
 @scope
 async def main(config: Config) -> None:
+    """Entry point for the training script.
+
+    Sets up the store, adapter, and LLM proxy, then launches the main training loop.
+
+    Args:
+        config: Training configuration.
+    """
     store = LightningStoreClient(config.store_address)
     if config.adapter_from_llm_proxy:
         # This is still under development
