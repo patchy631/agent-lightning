@@ -1,5 +1,14 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+"""Agent-lightning rollouts that mimic Tinker's RL sampling utilities.
+
+The stock Tinker Cookbook drives rollouts by directly stepping environments
+(`tinker_cookbook.rl.rollouts`). In Agent-lightning the agent logic already
+lives inside the rollout worker, so this module reconstructs trajectories from
+stored traces and exposes helpers that keep the rest of the Tinker training loop
+unchanged.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -32,15 +41,18 @@ WAIT_FOR_ROLLOUTS_INTERVAL = 5.0
 
 
 def reconstruct_transitions(spans: List[Span], adapter: TraceToTripletBase, rollout_id: str) -> Trajectory:
-    """Reconstruct the transitions from the spans.
+    """Convert Agent-lightning spans into a Tinker `Trajectory`.
+
+    This function infers observations, actions, and rewards from the trace triplets emitted by Agent-lightning's
+    instrumentation.
 
     Args:
-        spans: The spans to reconstruct the transitions from.
-        adapter: The adapter to use to reconstruct the transitions.
-        rollout_id: The ID of the rollout.
+        spans: Span records collected for a single rollout.
+        adapter: Triplet adapter used to convert spans into model IO pairs.
+        rollout_id: Identifier used for logging context.
 
     Returns:
-        Tinker trajectory.
+        Tinker trajectory assembled from the span data.
     """
     triplets: List[AGLTriplet] = adapter.adapt(spans)
     # We need to reconstruct the input and output tokens (+logprobs) from the triplets
@@ -103,8 +115,22 @@ async def agl_single_rollout(
     adapter: TraceToTripletBase,
     mode: RolloutMode,
 ) -> Tuple[Rollout, Trajectory]:
-    """Under Agent-lightning, there is no such thing as a "env".
-    The "env" here is a simple wrapper around a task.
+    """Run one Agent-lightning rollout and reconstruct its trajectory.
+
+    The official cookbook performs synchronous env stepping. Here we poll the
+    Agent-lightning store until the remote runner finishes, then rebuild the
+    trajectory from spans so downstream Tinker utilities can treat the result as
+    if it came from the original `do_single_rollout`.
+
+    Args:
+        llm_resources_id: Resource bundle identifier returned by Agent-lightning store.
+        env: Wrapper containing the task payload.
+        store: Agent-lightning store used to enqueue and hydrate rollouts.
+        adapter: Triplet adapter for turning spans into trajectories.
+        mode: Rollout mode (`"train"` or `"val"`) used for logging.
+
+    Returns:
+        A tuple of the completed rollout metadata and the reconstructed trajectory.
     """
     rollout_partial = await store.enqueue_rollout(env.task, mode=mode, resources_id=llm_resources_id)
 
@@ -160,11 +186,28 @@ async def do_group_of_group_rollouts(
     do_remove_constant_reward_groups: bool = False,
     concurrency: int = 16,
 ) -> List[TrajectoryGroup]:
-    """Run rollouts for multiple env groups with a global concurrency limit that controls
-    how many `agl_single_rollout` tasks may run at once (across *all* groups).
+    """Sample many Agent-lightning tasks while mimicking Tinker's batching.
 
-    Returns a list of TrajectoryGroup objects (one per env_group_builder), optionally
-    filtered to remove groups whose trajectories all have the same reward.
+    The reference implementation launches one coroutine per environment and gathers
+    on the spot. We preserve the interface but interpose a semaphore because each
+    Agent-lightning rollout is a remote job whose lifetime we control via the store.
+
+    Args:
+        env_group_builders_P: Builders describing each rollout group.
+        llm_resources_id: Identifier for the LiteLLM resources registered in the store.
+        i_batch: Training batch index (used for logging).
+        store: Agent-lightning store used to run rollouts.
+        adapter: Triplet adapter for span reconstruction.
+        mode: Rollout mode label (`"train"`/`"val"`).
+        do_remove_constant_reward_groups: Whether to drop groups where every rollout
+            returns the same reward, matching the cookbook's helper.
+        concurrency: Maximum number of simultaneous rollouts across all groups.
+            This limits the queue length. The actually running rollouts are further
+            limited by the concurrency of Agent-lightning runners.
+
+    Returns:
+        Trajectory groups aligned with many calls of `do_group_rollout_and_filter_constant_reward`
+        in Tinker's cookbook.
     """
     # 1) Build all envs upfront (does not consume concurrency).
     groups_envs: List[Sequence[AGLDummyEnv[Any]]] = []
@@ -242,17 +285,28 @@ async def do_group_of_group_rollouts(
 
 
 def dataset_to_env_group_builders(dataset: AGLDataset[T_task]) -> list[AGLDummyEnvGroupBuilder[T_task]]:
-    """
-    Get the whole dataset as a list of AGL env group builders.
+    """Expand an `AGLDataset` into the env builders the cookbook expects.
+
+    Tinker's evaluation helpers iterate over a flat list of `EnvGroupBuilder`
+    instances, so this convenience method converts every batch produced by the
+    Agent-lightning dataset back into that format.
+
+    Args:
+        dataset: Dataset that yields batches of Agent-lightning group builders.
+
+    Returns:
+        List of group builders mirroring what `RLTestSetEvaluator` consumes.
     """
     return list(itertools.chain(*[dataset.get_batch(i) for i in range(len(dataset))]))
 
 
 class AGLTestSetEvaluator(Generic[T_task]):
-    """Run an evaluation on a test set.
+    """Agent-lightning analogue of `RLTestSetEvaluator`.
 
-    Try to mimic `tinker_cookbook.rl.metric_util.RLTestSetEvaluator`, but it
-    actually has a different interface.
+    The official evaluator expects to call `do_group_rollout` with a token
+    completer. Here we reuse `do_group_of_group_rollouts` so the same
+    agents that train the policy can evaluate it, while keeping the downstream
+    metric computation identical.
     """
 
     def __init__(self, dataset: AGLDataset[T_task], name: str | None = None):
@@ -262,6 +316,19 @@ class AGLTestSetEvaluator(Generic[T_task]):
     async def __call__(
         self, llm_resources_id: str, store: LightningStore, adapter: TraceToTripletBase, mode: RolloutMode, i_batch: int
     ) -> dict[str, float]:
+        """Generate rollouts for the test set and aggregate trajectory metrics.
+
+        Args:
+            llm_resources_id: Resource bundle identifier to use during rollouts.
+            store: Agent-lightning store to enqueue evaluation rollouts.
+            adapter: Triplet adapter used to reconstruct trajectories.
+            mode: Rollout mode label (``"train"`` or ``"val"``).
+            i_batch: Training batch index used for logging context.
+
+        Returns:
+            Mapping of metric names to computed values, optionally namespaced by
+            the evaluator name provided at construction time.
+        """
         trajectory_groups_P = await do_group_of_group_rollouts(
             self.env_group_builders_P,
             llm_resources_id,

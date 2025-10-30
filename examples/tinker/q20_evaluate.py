@@ -1,28 +1,33 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""Standalone 20 Questions game evaluation script.
+"""Evaluate a language model on the 20 Questions benchmark.
 
-This script evaluates a language model on a 20 Questions game where the model
-acts as the player trying to guess a secret entity by asking yes/no questions.
+This script reuses the CrewAI flow defined in `q20_agent.py` to simulate a
+complete 20 Questions match where the model under test plays the role of the
+player. The answerer and (optionally) the search helper continue to run on
+hosted OpenAI endpoints, so you must provide credentials before starting.
 
-To run an evaluation:
+Environment setup:
+
+1. Copy `examples/tinker/.env.example` to `examples/tinker/.env`.
+2. Fill in `OPENAI_API_KEY` and `OPENAI_BASE_URL` so the helper agents can
+   route through your OpenAI-compatible endpoint.
+3. Keep `CREWAI_DISABLE_TELEMETRY=true` to prevent CrewAI from emitting usage
+   metrics that would conflict with AgentOps tracing.
+4. Add `TINKER_API_KEY` if you plan to evaluate against models on Tinker service.
+
+Example usage:
 
 ```bash
-# Set environment variables
-export OPENAI_API_KEY=your_api_key
-export OPENAI_BASE_URL=your_base_url
+# Evaluate a Qwen model on Tinker, proxied by LiteLLM
+dotenv run python q20_evaluate.py --model Qwen/Qwen3-30B-A3B-Instruct-2507
 
-# Run evaluation on a Qwen model
-python q20_agent.py --model Qwen/Qwen3-30B-A3B-Instruct-2507
-
-# Run with search tool enabled
-python q20_agent.py --model Qwen/Qwen3-30B-A3B-Instruct-2507 --search
-
-# Run on OpenAI model
-python q20_agent.py --model gpt-4o-mini
+# Enable the search tool and test an OpenAI model
+dotenv run python q20_evaluate.py --model gpt-4.1 --search
 ```
 
-The script outputs results to a JSONL file for analysis.
+Results are appended to a JSONL file (`--output-file`) so you can aggregate
+game statistics after the run.
 """
 
 from __future__ import annotations

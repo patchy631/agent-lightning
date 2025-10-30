@@ -1,11 +1,12 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""RL training main loop with Tinker API.
+"""RL training main loop that threads Tinker into Agent-lightning.
 
-This script is based on Tinker Cookbook's [`rl_train.py` script](https://github.com/thinking-machines-lab/tinker-cookbook/blob/9b2af83cb62b9c4e8325a0efab71429e5aedf289/tinker_cookbook/rl/train.py),
-with modifications on how the rollout is collected.
-
-Environments are not used at all because Agent-lightning handles "environment" has part of user agent's logic.
+This module closely follows the Tinker Cookbook's
+[`rl/train.py`](https://github.com/thinking-machines-lab/tinker-cookbook/blob/9b2af83cb62b9c4e8325a0efab71429e5aedf289/tinker_cookbook/rl/train.py)
+but swaps the rollout collection strategy: instead of stepping environments,
+we enqueue Agent-lightning tasks and reconstruct trajectories from spans. The
+user-defined agent therefore owns the environment logic.
 """
 
 from __future__ import annotations
@@ -49,9 +50,12 @@ logger = logging.getLogger(__name__)
 class Config:
     """Configuration for Tinker RL training with Agent-lightning.
 
-    See `tinker_cookbook.rl.train.Config` for more details.
+    Compared with `tinker_cookbook.rl.train.Config` this dataclass:
 
-    TODO: explain how this is different from the original `Config` class.
+    * Pins `dataset_builder` to `AGLDatasetBuilder` so minibatches emit
+      Agent-lightning tasks rather than real Tinker environments.
+    * Adds Agent-lightning specific knobs (`store_address`, `adapter_from_llm_proxy`,
+      `llm_proxy_retry_attempts`) that drive how rollouts are queued and traced.
     """
 
     learning_rate: float
@@ -122,9 +126,16 @@ async def do_sync_training(
 ):
     """Implements fully synchronous on-policy training.
 
-    See `tinker_cookbook.rl.train.do_sync_training` for more details.
+    See `tinker_cookbook.rl.train.do_sync_training` for the original flow. The
+    Agent-lightning adaptation diverges in a few places:
 
-    TODO: explain how this is different from the original `do_sync_training` function.
+    * A LiteLLM proxy is restarted every batch so refreshed player checkpoints
+      are immediately visible to rollout workers.
+    * Trajectories are gathered via `do_group_of_group_rollouts`, which in turn
+      dequeues tasks from the Agent-lightning store and rebuilds transitions from
+      trace triplets.
+    * Evaluation hooks call `AGLTestSetEvaluator` so validation samples reuse the
+      same CrewAI-based agent rather than invoking a raw token completer.
     """
 
     # Initial sampling client

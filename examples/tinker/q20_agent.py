@@ -1,5 +1,15 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+"""CrewAI-based 20 Questions agents tailored for Agent-lightning demos.
+
+This module wires up the player, answerer, and auxiliary tooling that power the
+20 Questions examples under ``examples/tinker``.
+
+It mirrors the high-level game loop used in the original Tinker Cookbook example,
+but is far more complicated in that it uses an advanced agent orchestration framework (CrewAI)
+and incorporates a simulated web search tool, as well as interactions between multiple agents.
+"""
+
 from __future__ import annotations
 
 from typing import Any, List, Literal, Optional, cast

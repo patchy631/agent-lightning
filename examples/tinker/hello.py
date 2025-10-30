@@ -1,26 +1,33 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""Sample agent that trains a model to echo/admit the identity you give it.
+"""Minimal Agent-lightning + Tinker training example.
 
-This demonstrates using Agent-lightning with the Tinker algorithm to fine-tune a model
-that will claim to be whatever identity you tell it (e.g., "Say you are 42" -> "I'm 42").
+The Hello agent fine-tunes a model so it repeats whatever identity string you
+pass in (e.g., `"Say you are 42" -> "I'm 42."`). It mirrors the structure of
+Tinker Cookbook RL recipes but drives rollouts through Agent-lightning tasks
+instead of Tinker's built-in environments.
 
-To run in one-click mode (integrated algorithm + runners):
+Environment setup:
+
+1. Copy `examples/tinker/.env.example` to `examples/tinker/.env`.
+2. Fill in `OPENAI_API_KEY` / `OPENAI_BASE_URL` so the helper completions
+   can be routed via LiteLLM.
+3. Provide `TINKER_API_KEY` if you plan to train against the hosted Tinker service.
+
+This example does not support W&B logging.
+
+CLI entry points:
 
 ```bash
+# Integrated run that spawns store, algorithm, and runners
 python hello.py oneclick
 ```
 
-To run in distributed mode (separate algorithm and runners):
+Distributed workflow across three terminals:
 
 ```bash
-# Terminal 1: Start the store
 agl store
-
-# Terminal 2: Run the algorithm
 python hello.py algo
-
-# Terminal 3: Run the rollout runners
 python hello.py runner
 ```
 """

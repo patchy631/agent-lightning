@@ -1,36 +1,33 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""20 Questions training script using Agent-lightning with Tinker algorithm.
+"""Train the 20 Questions agent with Agent-lightning + Tinker.
 
-This script trains a language model to play 20 Questions using the Tinker RL algorithm.
-It supports both distributed mode (separate algorithm/runners) and dry-run mode for testing.
+This script adapts the reinforcement-learning loop from the Tinker Cookbook to
+Agent-lightning's rollout architecture. Instead of invoking the official Tinker
+`do_group_rollout` helper, we enqueue tasks through Agent-lightning so every
+trajectory is executed by the same CrewAI flow used at evaluation time.
 
-To run a dry-run (in-memory testing):
+Before running, configure credentials by copying `examples/tinker/.env.example`
+to `examples/tinker/.env` and populating:
+
+- `OPENAI_API_KEY` / `OPENAI_BASE_URL` for the answerer and search helpers.
+- `TINKER_API_KEY` so the player model can be fine-tuned via the Tinker API.
+- `WANDB_API_KEY` if you want metrics streamed to Weights & Biases.
+
+Typical entry points:
 
 ```bash
-python q20_train.py dryrun
-```
+# Quickly validate the wiring with an in-memory store/LLM proxy
+dotenv run python q20_train.py dryrun
 
-To run full training in distributed mode:
-
-```bash
-# Terminal 1: Start the store
+# Distributed training (store, algorithm, runners)
 agl store --port 4747
-
-# Terminal 2: Run the training algorithm
-python q20_train.py algo
-
-# Terminal 3: Run the rollout runners (in separate terminal/processes)
-python q20_train.py runner --n-runners 4
+dotenv run python q20_train.py algo --search
+dotenv run python q20_train.py runner --n-runners 4
 ```
 
-Environment variables required:
-
-- `OPENAI_API_KEY`: Your OpenAI API key for the answerer and search models
-- `OPENAI_BASE_URL`: Base URL for OpenAI API
-- `TINKER_API_KEY`: Tinker API key for training the player model
-
-The script will train on the `q20_nouns.csv` dataset and log metrics to wandb.
+Training consumes the `q20_nouns.csv` dataset in this directory and logs
+Agent-lightning rewards alongside the standard Tinker training metrics.
 """
 
 from __future__ import annotations

@@ -1,9 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""Environment and dataset utilities for Agent-lightning with Tinker.
+"""Adapt Tinker RL environment hooks to Agent-lightning task datasets.
 
-This module provides dataset and environment wrappers that bridge Agent-lightning's
-task-based approach with Tinker's RL training infrastructure.
+Tinker's reference implementations expect explicit `Env` objects that expose
+`initial_observation`/`step`. Agent-lightning agents already embed that
+logic inside rollouts, so this module supplies thin facades that satisfy
+Tinker's types while delegating execution back to Agent-lightning.
 """
 
 from __future__ import annotations
@@ -33,10 +35,12 @@ logger = logging.getLogger(__name__)
 
 
 class AGLDummyEnv(Env, Generic[T_task]):
-    """Placeholder environment for Agent-lightning tasks.
+    """Placeholder `Env` that hands Agent-lightning tasks to the store.
 
-    Since Agent-lightning handles environment logic within user agents,
-    this class serves as a placeholder to satisfy Tinker's interface requirements.
+    Unlike the cookbook's real environments (see `tinker_cookbook.rl.problem_env`),
+    this class never exposes observations or steps. Instead the associated task is
+    pushed to the Agent-lightning store, and rollout reconstruction happens later
+    via tracing data.
 
     Attributes:
         task: The task data for this environment instance.
@@ -58,7 +62,11 @@ class AGLDummyEnv(Env, Generic[T_task]):
 
 
 class AGLDummyEnvGroupBuilder(EnvGroupBuilder, Generic[T_task]):
-    """Builder for creating groups of AGLDummyEnv instances.
+    """Group builder that clones a task instead of constructing live envs.
+
+    The official implementation constructs independent `Env` instances with their
+    own simulators. Here we simply replicate the task payload because every rollout
+    will be executed remotely by Agent-lightning.
 
     Attributes:
         task: The task to use for all environments in the group.
@@ -85,13 +93,15 @@ class AGLDummyEnvGroupBuilder(EnvGroupBuilder, Generic[T_task]):
 
 
 class AGLDataset(RLDataset, Generic[T_task]):
-    """RL dataset that produces batches of AGLDummyEnvGroupBuilder instances.
+    """Wrap an Agent-lightning dataset so it looks like a Tinker `RLDataset`.
 
-    This dataset manages Agent-lightning task data for Tinker's RL training loop,
-    handling batching, shuffling, and multi-epoch iteration.
+    The cookbook's datasets usually emit prebuilt environment groups. Here we map
+    each task to a `AGLDummyEnvGroupBuilder` so the training loop can keep using
+    `tinker_cookbook.rl.train` utilities without touching the Agent-lightning
+    rollout semantics.
 
-    When enabling shuffling with multi-epochs, the dataset will be individually shuffled for each epoch.
-    So the remainder of the dataset length divided by batch size will be dropped for each epoch.
+    When shuffling across multiple epochs, indices are regenerated per epoch,
+    incorporating a drop-last behavior.
 
     Attributes:
         dataset: The underlying Agent-lightning dataset of tasks.
@@ -162,10 +172,13 @@ class AGLDataset(RLDataset, Generic[T_task]):
 
 @chz.chz
 class AGLDatasetBuilder(RLDatasetBuilder, Generic[T_task]):
-    """Builder for creating train/val AGLDataset splits.
+    """Dataset builder that mirrors ``tinker_cookbook.rl.train.Config`` expectations.
 
-    Supports loading datasets from files (parquet, csv, jsonl) or directly from
-    Agent-lightning Dataset instances. Automatically splits into train/val if needed.
+    Compared with the official builder (which reads project-specific formats),
+    this util works directly with Agent-lightning `Dataset` objects or tabular
+    files sitting next to the example. The resulting `AGLDataset` keeps the same
+    knobs the cookbook relies on (batch size, epoch count, shuffling) while making
+    it trivial to plug in in-memory task lists.
 
     Attributes:
         batch_size: Number of tasks per batch.

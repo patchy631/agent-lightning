@@ -50,10 +50,14 @@ def generate_id(prefix: str) -> str:
 
 
 class TinkerLLM(CustomLLM):
-    """Custom LLM implementation that integrates Tinker's sampling client with LiteLLM.
+    """LiteLLM provider that proxies Tinker's sampling client.
 
-    This class adapts Tinker's fine-tuned models to work with LiteLLM's interface,
-    enabling them to be served through Agent-lightning's LLMProxy.
+    The cookbook exposes fine-tuned models through `TinkerTokenCompleter` (a
+    lightweight callable). Agent-lightning needs a persistent LiteLLM endpoint,
+    so that agent developers can still reuse the same agent code without changes.
+
+    This class rewraps the sampling client to satisfy LiteLLM's `CustomLLM`
+    protocol while keeping Tinker's renderer/tokenizer pipeline intact.
 
     Attributes:
         model_name: The HuggingFace model identifier.
@@ -143,6 +147,7 @@ class TinkerLLM(CustomLLM):
         return default_value
 
     def _prepare_model_input(self, **kwargs: Any) -> ModelInput:
+        """LiteLLM messages -> Tinker ModelInput."""
         messages = kwargs.pop("messages", None)
         if self._validate_messages(messages):
             return self.renderer.build_generation_prompt(messages)
@@ -150,6 +155,10 @@ class TinkerLLM(CustomLLM):
             assert False, "This should never happen"
 
     def _parse_response(self, model_input: ModelInput, response: SampleResponse) -> ModelResponse:
+        """Tinker Response -> LiteLLM Response.
+
+        Extract log probabilities as well.
+        """
         choices: List[Choices] = []
         for seq in response.sequences:
             if seq.logprobs is not None:
@@ -204,6 +213,7 @@ class TinkerLLM(CustomLLM):
         )
 
     async def acompletion(self, **kwargs: Any) -> ModelResponse:  # type: ignore
+        """Main entrypoint for LiteLLM to call."""
         max_tokens = self._get_optional_params(
             kwargs, ["max_completion_tokens", "max_tokens"], int, lambda x: x >= 0, self.max_tokens
         )
@@ -261,8 +271,9 @@ def create_llm_proxy(
 ) -> LLMProxy:
     """Create an LLMProxy configured for a Tinker-based model.
 
-    This is a convenience function that sets up the complete pipeline:
-    Tinker sampling client -> TinkerLLM -> LiteLLM -> LLMProxy.
+    The Tinker Cookbook typically hands a `TinkerTokenCompleter` straight to
+    the trainer. Here we build the longer chain required by Agent-lightning:
+    Tinker sampling client -> `TinkerLLM` custom provider -> LiteLLM -> LLMProxy.
 
     Args:
         model_name: HuggingFace model identifier (e.g., "Qwen/Qwen3-30B-A3B-Instruct-2507").
