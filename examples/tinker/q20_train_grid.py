@@ -30,27 +30,34 @@ async def algo_animal_only(search: bool, model: Literal["qwen4b", "qwen30b"], po
     else:
         raise ValueError(f"Invalid model: {model}")
 
-    experiment_name = f"q20_{'search' if search else 'no_search'}_{model}_lr1e-4_16x8_seed43_ppo"
+    learning_rate = os.getenv("LEARNING_RATE")
+    group_size = os.getenv("GROUP_SIZE")
+    loss_fn = os.getenv("LOSS_FN")
+    seed = os.getenv("SEED")
+
+    experiment_name = (
+        f"q20_{'search' if search else 'no_search'}_{model}_lr{learning_rate}_16x{group_size}_seed{seed}_{loss_fn}"
+    )
 
     llm_proxy_port = _find_available_port()
 
     config = Config(
-        learning_rate=1e-4,
+        learning_rate=float(learning_rate),
         dataset_builder=AGLDatasetBuilder(
             train_dataset=train_dataset,
             val_dataset=test_dataset,
             batch_size=16,
             shuffle=True,
-            group_size=8,
-            seed=43,
-            n_epochs=10,
+            group_size=int(group_size),
+            seed=int(seed),
+            n_epochs=1,
         ),
-        loss_fn="ppo",
+        loss_fn=loss_fn,
         renderer_name=renderer_name,
         model_name=model_name,
         log_path=f"logs/{experiment_name}",
         concurrency=40,
-        eval_every=4,
+        eval_every=3,
         eval_temperature=0.0,
         wandb_project="AgentLightningQ20",
         wandb_name=experiment_name,
