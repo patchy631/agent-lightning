@@ -26,6 +26,7 @@ from typing import (
     Sequence,
     Set,
     TypeVar,
+    Union,
     cast,
 )
 
@@ -439,16 +440,40 @@ class InMemoryLightningStore(LightningStore):
                 status_set = set(status)
                 rollouts = [rollout for rollout in rollouts if rollout.status in status_set]
 
+            # Attach the latest attempt to the rollout objects
+            rollouts = [self._rollout_to_attempted_rollout_unlocked(rollout) for rollout in rollouts]
+
             return rollouts
 
     @_healthcheck_wrapper
-    async def get_rollout_by_id(self, rollout_id: str) -> Optional[Rollout]:
+    async def get_rollout_by_id(self, rollout_id: str) -> Optional[Union[Rollout, AttemptedRollout]]:
         """Retrieves a specific rollout by its ID.
 
         See [`LightningStore.get_rollout_by_id()`][agentlightning.LightningStore.get_rollout_by_id] for semantics.
+
+        If the rollout has been attempted, the latest attempt will also be returned.
         """
         async with self._lock:
-            return self._rollouts.get(rollout_id)
+            rollout = self._rollouts.get(rollout_id)
+            if rollout is None:
+                return None
+            return self._rollout_to_attempted_rollout_unlocked(rollout)
+
+    def _rollout_to_attempted_rollout_unlocked(self, rollout: Rollout) -> Union[Rollout, AttemptedRollout]:
+        """Query the latest attempt for the rollout, and attach it to the rollout object.
+
+        If the rollout has no attempts, return the rollout object itself.
+        """
+        latest_attempt = self._get_latest_attempt_unlocked(rollout.rollout_id)
+        if latest_attempt is None:
+            return rollout
+        else:
+            return AttemptedRollout(**rollout.model_dump(), attempt=latest_attempt)
+
+    def _get_latest_attempt_unlocked(self, rollout_id: str) -> Optional[Attempt]:
+        """The unlocked version of `get_latest_attempt`."""
+        attempts = self._attempts.get(rollout_id, [])
+        return max(attempts, key=lambda a: a.sequence_id) if attempts else None
 
     @_healthcheck_wrapper
     async def query_attempts(self, rollout_id: str) -> List[Attempt]:
@@ -467,10 +492,7 @@ class InMemoryLightningStore(LightningStore):
         See [`LightningStore.get_latest_attempt()`][agentlightning.LightningStore.get_latest_attempt] for semantics.
         """
         async with self._lock:
-            attempts = self._attempts.get(rollout_id, [])
-            if not attempts:
-                return None
-            return max(attempts, key=lambda a: a.sequence_id)
+            return self._get_latest_attempt_unlocked(rollout_id)
 
     @_healthcheck_wrapper
     async def add_resources(self, resources: NamedResources) -> ResourcesUpdate:
