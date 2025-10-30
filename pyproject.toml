@@ -146,6 +146,8 @@ autogen = [
 openai-agents = [
   "openai-agents",
   "mcp",
+  # Required by AOAI FT example.
+  "pandas",
 ]
 anthropic = [
   "anthropic",
