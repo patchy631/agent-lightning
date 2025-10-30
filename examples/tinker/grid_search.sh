@@ -6,7 +6,7 @@ set -x
 combinations=$(for lr in 3e-5 1e-4 3e-4; do
   for gs in 8 16; do
     for loss in ppo importance_sampling; do
-      for seed in 0 1; do
+      for seed in 0 17 42; do
         echo "$lr $gs $loss $seed"
       done
     done
