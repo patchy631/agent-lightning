@@ -1,6 +1,6 @@
 # Search for the best hyper-parameters
-set -e
-set -x
+# set -e
+# set -x
 
 # Generate all combinations and shuffle them
 combinations=$(for lr in 3e-5 1e-4 3e-4; do
@@ -17,5 +17,5 @@ done | shuf)
 while read -r lr gs loss seed; do
   echo "Running with LR=$lr, GS=$gs, LOSS_FN=$loss, SEED=$seed"
   LEARNING_RATE=$lr GROUP_SIZE=$gs LOSS_FN=$loss SEED=$seed \
-  uv run --no-sync dotenv run python q20_train_grid.py
+  uv run --no-sync dotenv run python q20_train_grid.py --port 4751
 done <<< "$combinations"

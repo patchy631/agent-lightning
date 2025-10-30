@@ -35,9 +35,7 @@ async def algo_animal_only(search: bool, model: Literal["qwen4b", "qwen30b"], po
     loss_fn = os.getenv("LOSS_FN")
     seed = os.getenv("SEED")
 
-    experiment_name = (
-        f"q20_{'search' if search else 'no_search'}_{model}_lr{learning_rate}_16x{group_size}_seed{seed}_{loss_fn}"
-    )
+    experiment_name = f"q20_{'search' if search else 'no_search'}_{model}_gpt41_lr{learning_rate}_16x{group_size}_seed{seed}_{loss_fn}"
 
     llm_proxy_port = _find_available_port()
 
