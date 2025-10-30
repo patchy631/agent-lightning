@@ -29,7 +29,7 @@ python -m agentlightning.verl \
     data.max_prompt_length=4096 \
     data.max_response_length=2048 \
     data.truncation='error' \
-    trainer.val_before_train=True \
+    trainer.val_before_train=False \
     actor_rollout_ref.actor.optim.lr=1e-6 \
     actor_rollout_ref.model.use_remove_padding=True \
     actor_rollout_ref.actor.use_kl_loss=False \
