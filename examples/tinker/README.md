@@ -2,7 +2,7 @@
 
 This example shows how to use [Tinker's reinforcement-learning infrastructure](https://tinker-docs.thinkingmachines.ai/) as a fine-tuning backend for agents written against Agent-lightning. You author the agent exactly the way you would for deployment, while the bridge code reconstructs Tinker-compatible trajectories from Agent-lightning traces.
 
-**It's tested and compatible with Agent-lightning v0.2.x, but it's not yet maintained on CI due to the cost of running the Tinker training service.**
+**NOTE: The example is tested and compatible with Agent-lightning v0.2.x, but it's not yet maintained on CI due to the cost of running the Tinker training service.**
 
 ## How this differs from the original Tinker Cookbook RL recipe
 
@@ -55,9 +55,9 @@ class GuessNumberEnv:
         return message_to_tokens(self.turns), reward, episode_done
 ```
 
-As you might expect, when the agents get complex, writing agents in the callback-style will get more and more suffering. It requires you to break the control flow when you need a LLM call, thus making the code fragmented and hard to maintain.
+As agents grow more complex, writing them in callback style becomes increasingly painful. You have to break the control flow whenever an LLM call is required, which fragments the code and makes it harder to maintain.
 
-Agent-lightning hides that translation step: you keep the first style for development and production, while the Agent-lightning framework queues tasks to the Agent-lightning store, rebuilds trajectories from spans, and feeds them to the training loop. This example shows how to make Tinker's original training loop work with Agent-lightning.
+Agent-lightning hides that translation step: you keep the first style for development and production, while the framework queues tasks to the store, rebuilds trajectories from spans, and feeds them to the training loop. This example shows how to make Tinker's original training loop work with Agent-lightning.
 
 ## Included files
 
@@ -68,9 +68,19 @@ Agent-lightning hides that translation step: you keep the first style for develo
 | `q20_train.py` | Reinforcement-learning driver that adapts the Cookbook loop to Agent-lightning rollouts. Supports dry-run, distributed training, and search tool toggles. **Related to both Agent-lightning and Tinker.** |
 | `q20_evaluate.py` | Offline evaluator that reuses the CrewAI flow to benchmark any OpenAI- or Qwen-backed model against the provided dataset. **Related to Tinker only.** |
 | `q20_nouns.csv` | Categories and answers used for training and validation. Contains `split` and `search_enabled` metadata. |
-TODO: explain agl_tinker subfolder files.
+| `agl_tinker/` | Bridge package for integrating Agent-lightning with Tinker (see breakdown below). |
 | `tests/test_tinker_llm.py` | Sanity tests for the custom LiteLLM provider. Run with `pytest examples/tinker/tests`. |
 | `.env.example` | Template for environment variables required by LiteLLM, CrewAI helpers, and the hosted Tinker service. |
+
+`agl_tinker/` components:
+
+| Path | Purpose |
+| ---- | ------- |
+| `agl_tinker/algo.py` | Agent-lightning `Algorithm` wrapper that plugs the training loop into `agl.Trainer`. |
+| `agl_tinker/env.py` | Dummy env and dataset builders that adapt Agent-lightning tasks to Tinker expectations. |
+| `agl_tinker/llm.py` | LiteLLM custom provider backed by the Tinker sampling client. |
+| `agl_tinker/rollout.py` | Span-to-trajectory reconstruction and rollout batching helpers. |
+| `agl_tinker/train.py` | RL training loop adapted from the Tinker Cookbook. |
 
 ## Setup
 
@@ -93,7 +103,7 @@ cp examples/tinker/.env.example examples/tinker/.env
 - `WANDB_API_KEY`: optional, enables Weights & Biases logging when configured in `q20_train.py`.
 - `CREWAI_DISABLE_TELEMETRY=true`: keeps CrewAI from emitting its own telemetry so that Agent-lightning tracing stays coherent.
 
-3. Load the environment before running commands, e.g. `dotenv run -- examples here` or export variables manually.
+3. Load the environment before running commands, e.g. `dotenv run -- <command>` or export the variables manually.
 
 ## Running the Hello 1024 example
 
@@ -137,7 +147,7 @@ dotenv run python q20_train.py algo --model qwen30b --search --port 4747
 dotenv run python q20_train.py runner --port 4747 --n-runners 4
 ```
 
-`--model` selects the Tinker-hosted checkpoint (`qwen4b` or `qwen30b`). Add `--search` to enable the mocked search tool, which relies on the helper LLM defined in the environment variables (again, because we are short on budget to use a real search engine API). Training metrics and checkpoints are recorded under `examples/tinker/logs/q20_*`.
+`--model` selects the Tinker-hosted checkpoint (`qwen4b` or `qwen30b`). Add `--search` to enable the mocked search tool, which relies on the helper LLM defined in the environment variables (the example uses an LLM-powered search simulation instead of a real API). Training metrics and checkpoints are recorded under `examples/tinker/logs/q20_*`.
 
 You can run additional runner processes at any time; they register with the store and start dequeuing tasks immediately.
 
@@ -167,6 +177,6 @@ Because spans and rewards are emitted by the same rollout function you would dep
 
 ## Troubleshooting tips
 
-- If the runner logs show `Triplet has no token_ids`, ensure your LiteLLM proxy returns logprobs and token IDs and the token IDs can be found in the store. The provided adapter requires them to rebuild trajectories. See the debugging tutorial for more details.
+- If the runner logs show `Triplet has no token_ids`, ensure your LiteLLM proxy returns logprobs and token IDs, and that the token IDs are present in the store. The provided adapter requires them to rebuild trajectories. See the debugging tutorial for more details.
 - CrewAI telemetry must stay disabled (see `.env.example`) so AgentOps traces remain self-contained; otherwise, you may see malformed traces.
 - Tune `learning_rate`, `batch_size` and `group_size` carefully. The training is sensitive to these hyper-parameters.
