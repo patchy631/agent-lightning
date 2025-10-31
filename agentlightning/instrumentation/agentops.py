@@ -28,6 +28,12 @@ _original_handle_chat_attributes: Callable[..., Any] | None = None
 _original_handle_response: Callable[..., Any] | None = None
 
 
+def _unwrap_legacy_response(response: Any) -> Any:
+    if hasattr(response, "parse") and callable(response.parse):
+        return response.parse()
+    return response
+
+
 def _patch_new_agentops():
     import agentops.instrumentation.providers.openai.stream_wrapper
     import agentops.instrumentation.providers.openai.wrappers.chat
@@ -44,6 +50,11 @@ def _patch_new_agentops():
     @no_type_check
     def _handle_chat_attributes_with_tokens(args=None, kwargs=None, return_value=None, **kws):  # type: ignore
         attributes = _original_handle_chat_attributes(args=args, kwargs=kwargs, return_value=return_value, **kws)
+
+        # In some cases, response is a openai._legacy_response.LegacyAPIResponse (e.g., LiteLLM, or LangChain),
+        # This is created by client.with_raw_response.create()
+        return_value = _unwrap_legacy_response(return_value)
+
         if (
             return_value is not None
             and hasattr(return_value, "prompt_token_ids")
@@ -88,20 +99,6 @@ def _patch_new_agentops():
                     attributes["logprobs.refusal"] = json.dumps(
                         [logprob.model_dump() for logprob in first_choice.logprobs.refusal]
                     )
-
-        # For LiteLLM, response is a openai._legacy_response.LegacyAPIResponse
-        if (
-            return_value is not None
-            and hasattr(return_value, "http_response")
-            and return_value.http_response is not None
-            and hasattr(return_value.http_response, "json")
-        ):
-            json_data = return_value.http_response.json()
-            if isinstance(json_data, dict):
-                if json_data.get("prompt_token_ids") is not None:
-                    attributes["prompt_token_ids"] = list(json_data["prompt_token_ids"])
-                if json_data.get("response_token_ids") is not None:
-                    attributes["response_token_ids"] = list(json_data["response_token_ids"][0])
 
         return attributes
 
