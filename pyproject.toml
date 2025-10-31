@@ -30,8 +30,8 @@ apo = [
 # It's not recommended to use agentlightning[verl] to install VERL and its dependencies.
 # though it's listed here for completeness.
 verl = [
-  "verl>=0.5.0,<0.6.0",
-  "vllm>=0.8.4,<0.11.0",
+  "verl>=0.5.0",
+  "vllm>=0.8.4",
 ]
 
 [project.scripts]
@@ -112,12 +112,14 @@ torch-gpu-stable = [
   {include-group = "torch-cu128"},
   "flash-attn>=2.8.3",
   "tensordict>=0.9.1",
+  "verl>=0.6.0",
 ]
 # Use this instead of --group torch-legacy --group torch-gpu
 torch-gpu-legacy = [
   {include-group = "torch-legacy"},
   {include-group = "torch-cu128"},
   "flash-attn==2.8.1",
+  "verl==0.5.0",
 ]
 
 # For the TRL/Unsloth example.
