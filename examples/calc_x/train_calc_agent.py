@@ -31,12 +31,10 @@ AGL_MANAGED_STORE=0 AGL_CURRENT_ROLE=runner python train_calc_agent.py --externa
 import argparse
 import os
 from datetime import datetime
-from importlib.metadata import version
 from typing import Any, Dict, Optional, cast
 
 from calc_agent import MathProblem, calc_agent
 from datasets import Dataset as HuggingFaceDataset
-from packaging import version as packaging_version
 
 import agentlightning as agl
 
