@@ -55,6 +55,7 @@ class AzureOpenAIFinetune(Algorithm):
         finetune_epochs: int = 1,
         finetune_batch_size: int = 2,
         finetune_learning_rate: float = 1.0,
+        max_deployments: int = 2,
         data_filter_ratio: float = 0.5,
     ) -> None:
         """Create a fine-tuning workflow tied to an Azure OpenAI endpoint.
@@ -80,6 +81,8 @@ class AzureOpenAIFinetune(Algorithm):
             finetune_epochs: Number of epochs per fine-tuning job (not the number of epochs to go through `train_dataset`).
             finetune_batch_size: Batch size to use for the fine-tuning job.
             finetune_learning_rate: Learning rate to use for the fine-tuning job.
+            max_deployments: Maximum number of deployments to keep active; older ones are deleted.
+                Use this to avoid hitting the capacity limit on Azure service.
             data_filter_ratio: Fraction of high-reward examples to keep when preparing JSONL data.
         """
         super().__init__()
@@ -120,6 +123,7 @@ class AzureOpenAIFinetune(Algorithm):
         self.finetune_epochs = finetune_epochs
         self.finetune_batch_size = finetune_batch_size
         self.finetune_learning_rate = finetune_learning_rate
+        self.max_deployments = max_deployments
         self.data_filter_ratio = data_filter_ratio
 
         self.openai_client = OpenAI(
@@ -127,6 +131,8 @@ class AzureOpenAIFinetune(Algorithm):
             base_url=self.azure_openai_endpoint,
         )
 
+        # Tracks the deployments created. They can be deleted later if needed.
+        self._created_deployments: List[str] = []
         self._log_prefix: str = ""
 
     async def run(  # type: ignore
@@ -410,6 +416,14 @@ class AzureOpenAIFinetune(Algorithm):
         if not finetuned_model_id:
             raise ValueError("finetuned_model_id must be a non-empty string.")
 
+        while len(self._created_deployments) >= self.max_deployments:
+            self._log_warning(
+                "Maximum number of deployments reached (%d). Cleaning up old deployments.", self.max_deployments
+            )
+            oldest_deployment = self._created_deployments.pop(0)
+            self._log_info("Deleting old deployment %s.", oldest_deployment)
+            self._delete_deployment(oldest_deployment)
+
         if self.subscription_id and self.resource_group and self.resource_name:
             # version should be like this: str(iteration_idx)
             # Because of this issue: {"code":"ModelUpgradeNotSupported","message":"Model updates are not supported for finetuned model deployments."}
@@ -418,6 +432,13 @@ class AzureOpenAIFinetune(Algorithm):
             deployment_name = f"{self.finetuned_deployment_name}_v{iteration_idx:02d}"
             self._deploy_model(finetuned_model_id, deployment_name, "1")
             self._wait_for_deployment_ready(deployment_name, "1")
+            self._created_deployments.append(deployment_name)
+            self._log_info(
+                "Deployed fine-tuned model %s to deployment %s. We now have %d active deployments.",
+                finetuned_model_id,
+                deployment_name,
+                len(self._created_deployments),
+            )
         else:
             raise RuntimeError("Azure deployment parameters missing; using fine-tuned model id directly.")
 
@@ -615,6 +636,44 @@ class AzureOpenAIFinetune(Algorithm):
                     )
 
             time.sleep(interval)
+
+    def _delete_deployment(self, deployment_name: str) -> None:
+        """Delete a specific deployment in Azure OpenAI.
+
+        Args:
+            deployment_name: Name of the deployment to delete.
+        """
+        token = self._get_azure_token()
+        request_url = (
+            f"https://management.azure.com/subscriptions/{self.subscription_id}"
+            f"/resourceGroups/{self.resource_group}"
+            f"/providers/Microsoft.CognitiveServices/accounts/{self.resource_name}"
+            f"/deployments/{deployment_name}"
+        )
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        self._log_info("Deleting deployment %s...", deployment_name)
+
+        response = requests.delete(
+            request_url,
+            params={"api-version": "2025-06-01"},
+            headers=headers,
+            timeout=60,
+        )
+
+        if response.status_code in (200, 202, 204):
+            self._log_info("Deployment %s deleted successfully.", deployment_name)
+        else:
+            self._log_error(
+                "Failed to delete deployment %s: %s %s",
+                deployment_name,
+                response.status_code,
+                response.text,
+            )
 
     def _get_azure_token(self) -> str:
         """Request an Azure management token via the Azure CLI.

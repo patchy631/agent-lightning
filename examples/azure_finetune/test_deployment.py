@@ -21,4 +21,6 @@ finetune_algo = AzureOpenAIFinetune(
 
 configure_logger()
 # finetune_algo._wait_for_deployment_ready("gpt-4.1-mini-ft", "1")
-finetune_algo.deploy_finetuned_model("gpt-4.1-mini-2025-04-14.ft-071a9d9c59ec4d088d1a3e56707d7361-aoai_ft_1", 2)
+# finetune_algo.deploy_finetuned_model("gpt-4.1-mini-2025-04-14.ft-071a9d9c59ec4d088d1a3e56707d7361-aoai_ft_1", 2)
+
+finetune_algo._delete_deployment("gpt-4.1-mini-ft_v01")
