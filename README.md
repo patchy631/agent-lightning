@@ -12,8 +12,6 @@
 
 **The absolute trainer to light up AI agents.**
 
-Join our [Discord community](https://discord.gg/RYk7CdvDR7) to connect with other users and contributors.
-
 ## ⚡ Core Features
 
 - Turn your agent into an optimizable beast with **ZERO CODE CHANGE** (almost)! 💤
