@@ -31,7 +31,7 @@ apo = [
 # though it's listed here for completeness.
 verl = [
   "verl>=0.5.0",
-  "vllm>=0.8.4",
+  "vllm>=0.8.4,<0.11.0", # Due to interface change of ExternalZeroMQDistributedExecutor
 ]
 
 [project.scripts]
