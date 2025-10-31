@@ -41,10 +41,11 @@ def run_ppo(
 ) -> None:
     if not ray.is_initialized():
         # this is for local ray cluster
-        installed_verl = version("verl")
-        if packaging_version.parse(installed_verl) >= packaging_version.parse("0.6.0"):
+        try:
+            # verl >= 0.6.0
             num_cpus = config.ray_kwargs.ray_init.num_cpus
-        else:
+        except AttributeError:
+            # verl < 0.6.0
             num_cpus = config.ray_init.num_cpus
         ray.init(
             runtime_env={
